@@ -1,1 +1,2 @@
-export ./hooks/useImageUpload.ts;
+// Fixed invalid export
+export {};

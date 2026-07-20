@@ -1,1 +1,2 @@
-export ./hooks/useDiscounts.ts;
+// Fixed invalid export
+export {};
