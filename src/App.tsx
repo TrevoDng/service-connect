@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { AuthProvider } from './account/context/AuthContext';
-import { Navbar } from './nav/Navbar';
+import { TopNavbar } from './nav/TopNavbar';
 import { Footer } from './footer/Footer';
 import { About } from './about/About';
 import { AdminDashboard } from './account/components/Admin/AdminDashboard';
@@ -10,13 +10,39 @@ import './App.css';
 import './index.css';
 
 function App() {
-  // Simple routing demo - you can replace with React Router later
-  const [currentPage, setCurrentPage] = React.useState('home');
+  const [currentPage, setCurrentPage] = useState('home');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // Mock user data
+  const mockUser = {
+    name: 'John Doe',
+    email: 'john@example.com',
+    role: 'client' as 'client' | 'employee' | 'admin',
+  };
+
+  const handleLogin = () => {
+    setIsLoggedIn(true);
+    console.log('Login clicked');
+  };
+
+  const handleLogout = () => {
+    setIsLoggedIn(false);
+    console.log('Logout clicked');
+  };
+
+  const handleRegister = () => {
+    console.log('Register clicked');
+  };
 
   return (
     <AuthProvider>
       <div className="app">
-        <Navbar />
+        <TopNavbar 
+          user={isLoggedIn ? mockUser : undefined}
+          onLogin={handleLogin}
+          onLogout={handleLogout}
+          onRegister={handleRegister}
+        />
         <main className="main-content">
           {currentPage === 'home' && (
             <div className="home-page">
