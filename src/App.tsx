@@ -132,6 +132,19 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
+      <Router>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </Router>
+  );
+}
+
+export default App;
+
+
+/*
+
     <BrowserRouter basename={process.env.PUBLIC_URL}>
       <Router>
         <AuthProvider>
@@ -139,7 +152,4 @@ function App() {
         </AuthProvider>
       </Router>
     </BrowserRouter>
-  );
-}
-
-export default App;
+*/
