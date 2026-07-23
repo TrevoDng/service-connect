@@ -1,0 +1,23 @@
+/* ServicesGrid.css */
+.services-grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+@media (max-width: 768px) {
+  .services-grid-container {
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .services-grid-container {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}

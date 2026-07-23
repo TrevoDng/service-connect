@@ -55,7 +55,7 @@ const CustomerLogin: React.FC = () => {
       } else if (user.role === 'EMPLOYEE') {
         window.location.href = '/employee/dashboard';
       } else {
-        window.location.href = '/account';
+        window.location.href = '/services'; // Default for CLIENT or other roles
       }
     }
   }, [isAuthenticated, user]);

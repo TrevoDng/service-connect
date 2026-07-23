@@ -65,7 +65,7 @@ const RoleProtectedRoute: React.FC<{
 // Public route component (redirects if authenticated)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/account" /> : <>{children}</>;
+  return isAuthenticated ? <Navigate to="/services" /> : <>{children}</>;
 };
 
 // AppContent - Everything that needs Router context

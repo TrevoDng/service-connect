@@ -94,7 +94,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                     <span className="user-role-mobile">{user.role}</span>
                   </div>
                 </div>
-                <button className="logout-btn-mobile" onClick={handleLogout}>
+                <button className="logout-btn-mobile" onClick={logout}>
                   Logout
                 </button>
               </div>
