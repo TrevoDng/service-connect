@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/service-connect/static/css/main.13fd87e3.css",
+    "main.js": "/service-connect/static/js/main.0ad87761.js",
+    "static/js/453.dc7ac655.chunk.js": "/service-connect/static/js/453.dc7ac655.chunk.js",
+    "index.html": "/service-connect/index.html",
+    "main.13fd87e3.css.map": "/service-connect/static/css/main.13fd87e3.css.map",
+    "main.0ad87761.js.map": "/service-connect/static/js/main.0ad87761.js.map",
+    "453.dc7ac655.chunk.js.map": "/service-connect/static/js/453.dc7ac655.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.13fd87e3.css",
+    "static/js/main.0ad87761.js"
+  ]
+}
