@@ -111,11 +111,18 @@
   white-space: nowrap;
 }
 
+.login-btn a {
+  color: #667eea;
+}
 .login-btn:hover {
   background: #667eea;
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.login-btn:hover a {
+  color: #fff;
 }
 
 .register-btn {
@@ -129,6 +136,10 @@
   cursor: pointer;
   transition: all 0.3s ease;
   white-space: nowrap;
+}
+
+.register-btn a {
+  color: #fff;
 }
 
 .register-btn:hover {

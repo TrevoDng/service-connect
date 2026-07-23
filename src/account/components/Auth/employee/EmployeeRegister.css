@@ -1,0 +1,447 @@
+/* EmployeeRegister.css */
+
+.register-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+}
+
+.register-card {
+  background: white;
+  border-radius: 24px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.05);
+  width: 100%;
+  max-width: 520px;
+  overflow: hidden;
+  animation: slideUp 0.5s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.register-card-inner {
+  padding: 48px 40px;
+}
+
+/* Header Styles */
+.register-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.register-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0 0 8px 0;
+  letter-spacing: -0.5px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.register-subtitle {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+}
+
+/* Form Styles */
+.register-form,
+.code-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.register-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a2e;
+  letter-spacing: 0.3px;
+}
+
+.register-input {
+  padding: 12px 16px;
+  font-size: 16px;
+  border: 2px solid #e0e0e0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  outline: none;
+  font-family: inherit;
+  background: white;
+}
+
+.register-input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.register-input.error {
+  border-color: #f44336;
+  background-color: #fff5f5;
+}
+
+.register-input.error:focus {
+  border-color: #f44336;
+  box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+}
+
+.register-input::placeholder {
+  color: #b0b0b0;
+}
+
+/* Hint Text */
+.register-hint {
+  font-size: 12px;
+  color: #888;
+  margin: 4px 0 0 0;
+}
+
+/* Field Error */
+.register-field-error {
+  font-size: 12px;
+  color: #f44336;
+  margin: 4px 0 0 0;
+}
+
+/* Error Alert */
+.register-error {
+  background-color: #fee;
+  border-left: 4px solid #c62828;
+  padding: 12px 16px;
+  border-radius: 12px;
+  margin-bottom: 8px;
+}
+
+.register-error-text {
+  font-size: 14px;
+  color: #c62828;
+}
+
+/* Button Styles */
+.register-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 14px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: inherit;
+  position: relative;
+  overflow: hidden;
+  margin-top: 8px;
+}
+
+.register-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.register-button:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.register-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  animation: pulse 1.5s ease infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+/* Terms Section */
+.register-terms {
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+  line-height: 1.5;
+  margin: 8px 0 4px;
+}
+
+.register-terms a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.register-terms a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+/* Footer Links */
+.register-footer {
+  margin-top: 24px;
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+}
+
+.register-footer:first-of-type {
+  margin-top: 32px;
+}
+
+.register-footer a {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 500;
+  transition: color 0.3s ease;
+}
+
+.register-footer a:hover {
+  color: #764ba2;
+  text-decoration: underline;
+}
+
+/* Code Form Specific */
+.code-form {
+  animation: fadeIn 0.4s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .register-card-inner {
+    padding: 32px 24px;
+  }
+
+  .register-title {
+    font-size: 24px;
+  }
+
+  .register-button {
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+
+  .register-input {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .register-field {
+    gap: 6px;
+  }
+
+  .register-label {
+    font-size: 13px;
+  }
+
+  .register-terms {
+    font-size: 12px;
+  }
+
+  .register-footer {
+    font-size: 13px;
+  }
+}
+
+/* Animation for step change */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Loading State for Code Validation */
+.code-form .register-button:disabled {
+  position: relative;
+}
+
+.code-form .register-button:disabled::after {
+  content: '';
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  right: 20px;
+  margin-top: -8px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+  .register-card {
+    background: #1a1a2e;
+  }
+
+  .register-title {
+    background: linear-gradient(135deg, #8a9eff 0%, #9b6eff 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .register-subtitle {
+    color: #aaa;
+  }
+
+  .register-label {
+    color: #fff;
+  }
+
+  .register-input {
+    background: #2a2a3e;
+    border-color: #3a3a4e;
+    color: #fff;
+  }
+
+  .register-input:focus {
+    border-color: #8a9eff;
+  }
+
+  .register-input.error {
+    background-color: #2a1a1a;
+    border-color: #f44336;
+  }
+
+  .register-input::placeholder {
+    color: #6a6a8e;
+  }
+
+  .register-hint {
+    color: #888;
+  }
+
+  .register-error {
+    background-color: #2a1a1a;
+  }
+
+  .register-terms {
+    color: #aaa;
+  }
+
+  .register-terms a,
+  .register-footer a {
+    color: #8a9eff;
+  }
+
+  .register-terms a:hover,
+  .register-footer a:hover {
+    color: #9b6eff;
+  }
+
+  .register-footer {
+    color: #aaa;
+  }
+}
+
+/* Accessibility Focus States */
+.register-button:focus-visible,
+.register-input:focus-visible,
+.register-footer a:focus-visible,
+.register-terms a:focus-visible {
+  outline: 2px solid #667eea;
+  outline-offset: 2px;
+}
+
+/* Success State Animation (for future use) */
+@keyframes successPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+/* Optional: Add smooth transition for step changes */
+.register-card-inner > * {
+  transition: all 0.3s ease;
+}
+
+/* Additional styling for the two-step registration */
+.code-form .register-field:first-child {
+  margin-bottom: 8px;
+}
+
+/* Improve button spacing in mobile */
+@media (max-width: 480px) {
+  .register-card-inner {
+    padding: 24px 20px;
+  }
+
+  .register-button {
+    width: 100%;
+  }
+
+  .register-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .register-footer:first-of-type {
+    margin-top: 24px;
+  }
+}
+
+/* Styling for the security code input */
+.register-input[name="code"] {
+  font-family: monospace;
+  letter-spacing: 1px;
+  font-weight: 500;
+}
+
+/* Optional: Add a subtle pattern to the background */
+.register-container::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 25% 50%, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
+  background-size: 30px 30px;
+  pointer-events: none;
+}
+
+@media (prefers-color-scheme: dark) {
+  .register-container::before {
+    background-image: radial-gradient(circle at 25% 50%, rgba(0, 0, 0, 0.2) 1px, transparent 1px);
+  }
+}

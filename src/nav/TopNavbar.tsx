@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
+//@ts-ignore
 import './TopNavbar.css';
+import { User } from '../account/types/user';
 
 interface TopNavbarProps {
-  user?: {
-    name: string;
-    email: string;
-    role: 'client' | 'employee' | 'admin';
-  };
+  user?: User | null;
   onLogin?: () => void;
   onLogout?: () => void;
   onRegister?: () => void;
@@ -74,8 +72,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           {!user && (
             <div className="nav-actions-mobile">
               <div className="auth-buttons">
-                <button className="login-btn" onClick={handleLogin}>Login</button>
-                <button className="register-btn" onClick={handleRegister}>Register</button>
+                <button className="login-btn" onClick={handleLogin}><a href="/login">Login</a></button>
+                <button className="register-btn" onClick={handleRegister}><a href="/register">Register</a></button>
               </div>
             </div>
           )}
@@ -86,10 +84,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               <div className="user-menu-mobile">
                 <div className="user-info-mobile">
                   <span className="user-avatar-mobile">
-                    {user.name.charAt(0).toUpperCase()}
+                    {user.firstName.charAt(0).toUpperCase()}
                   </span>
                   <div className="user-details-mobile">
-                    <span className="user-name-mobile">{user.name}</span>
+                    <span className="user-name-mobile">{user.firstName} {user.lastName}</span>
                     <span className="user-email-mobile">{user.email}</span>
                     <span className="user-role-mobile">{user.role}</span>
                   </div>
@@ -111,16 +109,16 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                 onClick={toggleDropdown}
               >
                 <span className="user-avatar">
-                  {user.name.charAt(0).toUpperCase()}
+                  {user.firstName.charAt(0).toUpperCase()}
                 </span>
-                <span className="user-name">{user.name}</span>
+                <span className="user-name">{user.firstName} {user.lastName}</span>
                 <span className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>▼</span>
               </button>
               
               {isDropdownOpen && (
                 <div className="dropdown-menu">
                   <div className="dropdown-header">
-                    <p className="dropdown-name">{user.name}</p>
+                    <p className="dropdown-name">{user.firstName} {user.lastName}</p>
                     <p className="dropdown-email">{user.email}</p>
                     <p className="dropdown-role">{user.role}</p>
                   </div>
@@ -138,8 +136,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             </div>
           ) : (
             <div className="auth-buttons">
-              <button className="login-btn" onClick={handleLogin}>Login</button>
-              <button className="register-btn" onClick={handleRegister}>Register</button>
+              <button className="login-btn" onClick={handleLogin}><a href="/login">Login</a></button>
+              <button className="register-btn" onClick={handleRegister}><a href="/register">Register</a></button>
             </div>
           )}
         </div>

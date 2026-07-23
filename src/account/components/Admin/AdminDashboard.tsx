@@ -1,4 +1,5 @@
 import React from 'react';
+//@ts-ignore
 import './AdminDashboard.css';
 
 export const AdminDashboard: React.FC = () => {
