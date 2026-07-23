@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 //@ts-ignore
 import './TopNavbar.css';
 import { User } from '../account/types/user';
+import { useAuth } from '../account/context/AuthContext';
 
 interface TopNavbarProps {
   user?: User | null;
@@ -18,6 +19,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { logout } = useAuth();
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
@@ -64,7 +66,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           {user && (
             <>
               <a href="/dashboard" className="nav-link">Dashboard</a>
-              <a href="/profile" className="nav-link">Profile</a>
+              <a href="/account" className="nav-link">Profile</a>
             </>
           )}
           
@@ -123,11 +125,11 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                     <p className="dropdown-role">{user.role}</p>
                   </div>
                   <div className="dropdown-divider"></div>
-                  <a href="/profile" className="dropdown-item">My Profile</a>
+                  <a href="/account" className="dropdown-item">My Profile</a>
                   <a href="/settings" className="dropdown-item">Settings</a>
                   <button 
                     className="dropdown-item logout-btn"
-                    onClick={handleLogout}
+                    onClick={logout}
                   >
                     Logout
                   </button>
