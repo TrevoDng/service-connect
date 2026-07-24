@@ -82,21 +82,21 @@ const AppContent: React.FC = () => {
       <main className="main-content">
         <Routes>
           {/* Public Routes */}
-          <Route path="/" element={<Home currentPage={currentPage} setCurrentPage={setCurrentPage} />} />
-          <Route path="/services" element={<ClientServices />} />
-          <Route path="/services/:id" element={<ServiceDetails />} />
-          <Route path="/about" element={<About />} />
+          <Route path="/service-connect" element={<Home currentPage={currentPage} setCurrentPage={setCurrentPage} />} />
+          <Route path="/service-connect/services" element={<ClientServices />} />
+          <Route path="/service-connect/services/:id" element={<ServiceDetails />} />
+          <Route path="/service-connect/about" element={<About />} />
           
           {/* Auth Routes */}
-          <Route path="/login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
-          <Route path="/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
+          <Route path="/service-connect/login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
+          <Route path="/service-connect/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
           
           {/* Protected Routes */}
-          <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
+          <Route path="/service-connect/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
           
           {/* Role-based Routes */}
           <Route 
-            path="/admin-dashboard" 
+            path="service-connect/admin-dashboard" 
             element={
               <RoleProtectedRoute allowedRoles={['ADMIN']}>
                 <AdminDashboard />
@@ -104,7 +104,7 @@ const AppContent: React.FC = () => {
             } 
           />
           <Route 
-            path="/employee-dashboard" 
+            path="service-connect/employee-dashboard" 
             element={
               <RoleProtectedRoute allowedRoles={['EMPLOYEE', 'ADMIN']}>
                 <EmployeeDashboard />
@@ -112,7 +112,7 @@ const AppContent: React.FC = () => {
             } 
           />
           <Route 
-            path="/provider/dashboard" 
+            path="/service-connect/provider/dashboard" 
             element={
               <RoleProtectedRoute allowedRoles={['EMPLOYEE', 'ADMIN']}>
                 <ProviderDashboard />
