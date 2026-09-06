@@ -1,0 +1,429 @@
+/* AccountProfile.css */
+
+/* Base layout */
+.profile-page {
+  min-height: 100vh;
+  background-color: #f9fafb; /* gray-50 */
+  padding: 2rem 0; /* py-8 */
+}
+
+.profile-page__container {
+  max-width: 80rem; /* max-w-7xl */
+  margin: 0 auto;
+  padding: 0 1rem; /* px-4 */
+}
+
+@media (min-width: 640px) {
+  .profile-page__container {
+    padding: 0 1.5rem; /* sm:px-6 */
+  }
+}
+
+@media (min-width: 1024px) {
+  .profile-page__container {
+    padding: 0 2rem; /* lg:px-8 */
+  }
+}
+
+/* Main card */
+.profile-card {
+  background-color: #fff;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* shadow-xl */
+  border-radius: 0.75rem; /* rounded-lg */
+  overflow: hidden;
+}
+
+/* Header */
+.profile-header {
+  background: linear-gradient(to right, #6366f1, #9333ea); /* from-indigo-500 to-purple-600 */
+  padding: 2rem 1.5rem; /* px-6 py-8 */
+}
+
+.profile-header__content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.profile-header__title {
+  font-size: 1.875rem; /* text-3xl */
+  font-weight: 700; /* font-bold */
+  color: #fff;
+  margin: 0;
+}
+
+.profile-header__subtitle {
+  color: #e0e7ff; /* text-indigo-100 */
+  margin-top: 0.25rem; /* mt-1 */
+}
+
+.profile-header__logout {
+  padding: 0.5rem 1rem; /* px-4 py-2 */
+  background-color: #fff;
+  color: #4f46e5; /* text-indigo-600 */
+  font-weight: 500; /* font-medium */
+  border: none;
+  border-radius: 0.5rem; /* rounded-lg */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.profile-header__logout:hover {
+  background-color: #f9fafb; /* hover:bg-gray-50 */
+}
+
+.profile-header__logout:focus {
+  outline: none;
+  ring: 2px solid #fff;
+  ring-offset: 2px;
+  ring-offset-color: #4f46e5; /* focus:ring-offset-indigo-600 */
+}
+
+/* Main content area */
+.profile-main {
+  padding: 2rem 1.5rem; /* px-6 py-8 */
+}
+
+.profile-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem; /* gap-8 */
+}
+
+@media (min-width: 1024px) {
+  .profile-layout {
+    grid-template-columns: 2fr 1fr; /* lg:grid-cols-3 -> left spans 2, right spans 1 */
+  }
+}
+
+/* Left column */
+.profile-left {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem; /* space-y-8 */
+}
+
+/* Profile summary card */
+.profile-summary {
+  background-color: #fff;
+  border: 1px solid #e5e7eb; /* border-gray-200 */
+  border-radius: 0.75rem; /* rounded-xl */
+  padding: 1.5rem; /* p-6 */
+}
+
+.profile-summary__inner {
+  display: flex;
+  align-items: center;
+  gap: 1rem; /* space-x-4 */
+}
+
+.profile-avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.profile-avatar__img {
+  height: 6rem; /* h-24 */
+  width: 6rem; /* w-24 */
+  border-radius: 9999px; /* rounded-full */
+  border: 4px solid #fff;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+}
+
+.profile-avatar__edit {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: #4f46e5; /* bg-indigo-600 */
+  color: #fff;
+  padding: 0.5rem; /* p-2 */
+  border: none;
+  border-radius: 9999px; /* rounded-full */
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-avatar__edit:hover {
+  background-color: #4338ca; /* hover:bg-indigo-700 */
+}
+
+.profile-avatar__edit-icon {
+  width: 1rem; /* w-4 */
+  height: 1rem; /* h-4 */
+}
+
+.profile-info__name {
+  font-size: 1.5rem; /* text-2xl */
+  font-weight: 700; /* font-bold */
+  color: #111827; /* text-gray-900 */
+  margin: 0;
+}
+
+.profile-info__email {
+  color: #4b5563; /* text-gray-600 */
+  margin: 0.25rem 0 0;
+}
+
+.profile-info__member-since {
+  font-size: 0.875rem; /* text-sm */
+  color: #6b7280; /* text-gray-500 */
+  margin-top: 0.25rem; /* mt-1 */
+}
+
+/* Account details card */
+.profile-details {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.profile-details__title {
+  font-size: 1.25rem; /* text-xl */
+  font-weight: 600; /* font-semibold */
+  color: #111827;
+  margin: 0 0 1.5rem 0; /* mb-6 */
+}
+
+.profile-details__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* space-y-6 */
+}
+
+/* Form rows */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem; /* gap-6 */
+}
+
+@media (min-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr 1fr; /* md:grid-cols-2 */
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem; /* space-y-2 equivalent */
+}
+
+.form-label {
+  display: block;
+  font-size: 0.875rem; /* text-sm */
+  font-weight: 500; /* font-medium */
+  color: #374151; /* text-gray-700 */
+}
+
+.form-input,
+.form-textarea {
+  width: 100%;
+  padding: 0.75rem 1rem; /* px-4 py-3 */
+  border: 1px solid #d1d5db; /* border-gray-300 */
+  border-radius: 0.5rem; /* rounded-lg */
+  font-size: 1rem;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.form-input:focus,
+.form-textarea:focus {
+  outline: none;
+  ring: 2px solid #6366f1; /* focus:ring-indigo-500 */
+  border-color: transparent;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 6rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.75rem 1.5rem; /* px-6 py-3 */
+  font-weight: 500; /* font-medium */
+  border: none;
+  border-radius: 0.5rem; /* rounded-lg */
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.btn-primary {
+  background-color: #4f46e5; /* bg-indigo-600 */
+  color: #fff;
+}
+
+.btn-primary:hover {
+  background-color: #4338ca; /* hover:bg-indigo-700 */
+}
+
+.btn-primary:focus {
+  outline: none;
+  ring: 2px solid #6366f1; /* focus:ring-indigo-500 */
+  ring-offset: 2px;
+}
+
+/* Right column */
+.profile-right {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem; /* space-y-6 */
+}
+
+/* Stats card */
+.stats-card {
+  background: linear-gradient(to bottom right, #eef2ff, #f5f3ff); /* from-indigo-50 to-purple-50 */
+  border: 1px solid #e0e7ff; /* border-indigo-100 */
+  border-radius: 0.75rem; /* rounded-xl */
+  padding: 1.5rem; /* p-6 */
+}
+
+.stats-card__title {
+  font-weight: 600; /* font-semibold */
+  color: #111827;
+  margin: 0 0 1rem 0; /* mb-4 */
+}
+
+.stats-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* space-y-4 */
+}
+
+.stats-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.stats-item__label {
+  color: #4b5563; /* text-gray-600 */
+}
+
+.stats-item__value {
+  font-weight: 600; /* font-semibold */
+}
+
+/* Links card */
+.links-card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.links-card__title {
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1rem 0;
+}
+
+.links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem; /* space-y-3 */
+}
+
+.links-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem; /* space-x-3 */
+  padding: 0.75rem; /* p-3 */
+  border-radius: 0.5rem; /* rounded-lg */
+  text-decoration: none;
+  color: inherit;
+  transition: background-color 0.2s;
+}
+
+.links-item:hover {
+  background-color: #f9fafb; /* hover:bg-gray-50 */
+}
+
+.links-item__icon {
+  font-size: 1.125rem; /* text-lg */
+}
+
+.links-item__text {
+  color: #374151; /* text-gray-700 */
+}
+
+/* Activity card */
+.activity-card {
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.activity-card__title {
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 1rem 0;
+}
+
+.activity-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem; /* space-y-4 */
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem; /* space-x-3 */
+}
+
+.activity-dot {
+  width: 0.5rem; /* w-2 */
+  height: 0.5rem; /* h-2 */
+  margin-top: 0.375rem; /* mt-1.5 approx (mt-2 = 0.5rem, we need mt-2 which is 0.5rem, but we want the dot aligned with text) – we'll use margin-top: 0.5rem? Actually original had mt-2 on dot container (0.5rem), but we apply it to the dot itself. */
+  border-radius: 9999px; /* rounded-full */
+  flex-shrink: 0;
+}
+
+.activity-dot--green {
+  background-color: #10b981; /* bg-green-500 */
+}
+
+.activity-dot--blue {
+  background-color: #3b82f6; /* bg-blue-500 */
+}
+
+.activity-dot--yellow {
+  background-color: #f59e0b; /* bg-yellow-500 */
+}
+
+.activity-text {
+  font-size: 0.875rem; /* text-sm */
+  color: #374151; /* text-gray-700 */
+  margin: 0;
+}
+
+.activity-time {
+  font-size: 0.75rem; /* text-xs */
+  color: #6b7280; /* text-gray-500 */
+  margin: 0.125rem 0 0;
+}
+
+/* Utilities (if needed) – not used directly, but included for completeness */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
+

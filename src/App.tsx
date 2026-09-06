@@ -1,0 +1,187 @@
+// src/App.tsx
+import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate /*, BrowserRouter*/ } from 'react-router-dom';
+import { AuthProvider, useAuth } from './account/context/AuthContext';
+//import { TopNav } from './components/TopNav'; // Use only ONE TopNav
+import { Footer } from './footer/Footer';
+import { About } from './about/About';
+import AdminDashboard from './account/components/Admin/AdminDashboard';
+import { EmployeeDashboard } from './account/components/Employee/EmployeeDashboard';
+//@ts-ignore
+import './App.css';
+//@ts-ignore
+import './index.css';
+import CustomerLogin from './account/components/Auth/customer/CustomerLogin';
+import Home from './pages/Home';
+import { PageNotFound } from './pagenotfound/pagenotfound';
+import CustomerRegister from './account/components/Auth/customer/CustomerRegister';
+import AccountProfile from './account/components/customer/CustomerAccountProfile';
+import { ServiceDetails } from './pages/ServiceDetails';
+import { ClientServices } from './pages/ClientServices';
+import { ProviderDashboard } from './components/ServiceProvider/ProviderDashboard';
+import { TopNavbar } from './nav/TopNavbar';
+import EmployeeRegister from './account/components/Auth/employee/EmployeeRegister';
+import EmployeeLogin from './account/components/Auth/employee/EmployeeLogin';
+import { ThemeProvider } from './styles/context/ThemeContext';
+import { library } from '@fortawesome/fontawesome-svg-core';
+import { fas } from '@fortawesome/free-solid-svg-icons';
+
+library.add(fas); // Adds all solid icons globally
+
+// Protected route component
+const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600">loading...</div>
+      </div>
+    );
+  }
+
+  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+};
+
+// Role-based protected route
+const RoleProtectedRoute: React.FC<{ 
+  children: React.ReactNode; 
+  allowedRoles: ('ADMIN' | 'EMPLOYEE' | 'CLIENT')[];
+  currentPage?: string;
+}> = ({ children, allowedRoles}) => {
+
+  //}> = ({ children, allowedRoles, currentPage }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600">loading...</div>
+      </div>
+    );
+  }
+  //console.log('RoleProtectedRoute - isAuthenticated:', isAuthenticated, 'user:', user, 'allowedRoles:', allowedRoles);
+  console.log('children:', children);
+  /*
+  if (currentPage) {
+    console.log('Redirecting to currentPage:', currentPage);
+    return <Navigate to={currentPage} />;
+  }*/
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+
+  if (!user || !allowedRoles.includes(user.role as 'ADMIN' | 'EMPLOYEE' | 'CLIENT')) {
+    return <Navigate to="/" />;
+  }
+
+  return <>{children}</>;
+};
+
+// Public route component (redirects if authenticated)
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? <Navigate to="/services" /> : <>{children}</>;
+};
+
+// AppContent - Everything that needs Router context
+const AppContent: React.FC = () => {
+  const [currentPage, setCurrentPage] = useState('home');
+  const { isAuthenticated, user } = useAuth();
+
+  return (
+    <div className="app">
+      {/* Use ONLY ONE TopNav - I recommend TopNav since it has more features */}
+      <TopNavbar 
+      user={isAuthenticated ? user:  undefined}
+      currentPage={currentPage}
+      setCurrentPage={setCurrentPage}/>
+      
+      <main className="main-content">
+        <Routes>
+          {/* Public Routes */}
+          <Route path="/" element={<Home currentPage={currentPage} setCurrentPage={setCurrentPage} />} />
+          <Route path="/services" element={<ClientServices />} />
+          <Route path="/services/:id" element={<ServiceDetails />} />
+          <Route path="/about" element={<About />} />
+          
+          {/* Auth Routes */}
+          <Route path="/login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
+          <Route path="/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
+          <Route path="/service-provider-register" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
+          <Route path="/login/employee" element={<PublicRoute><EmployeeLogin /></PublicRoute>} />
+          {/* Protected Routes */}
+          <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
+          
+          {/* Role-based Routes */}
+          <Route 
+            path="/admin-dashboard" 
+            element={
+              <RoleProtectedRoute allowedRoles={['ADMIN']} currentPage={currentPage}>
+                <AdminDashboard />
+              </RoleProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/employee-dashboard" 
+            element={
+              <RoleProtectedRoute allowedRoles={['EMPLOYEE', 'ADMIN']} currentPage={currentPage}>
+                <EmployeeDashboard />
+              </RoleProtectedRoute>
+            } 
+          />
+	  {/*
+          <Route 
+            path="/provider/dashboard" 
+            element={
+              <RoleProtectedRoute allowedRoles={['EMPLOYEE', 'ADMIN']} currentPage={currentPage}>
+                <ProviderDashboard />
+              </RoleProtectedRoute>
+            } 
+          />
+	  */}
+
+	 <Route path="/provider/dashboard"
+          element={<ProviderDashboard />} />
+          
+          {/* 404 */}
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
+      </main>
+      
+      <Footer />
+    </div>
+  );
+};
+
+function App() {
+  return (
+      <Router basename={'/service-connect'}>
+        <ThemeProvider>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+        </ThemeProvider>
+      </Router>
+    // <Router basename={process.env.PUBLIC_URL}>
+    //   <AuthProvider>
+    //     <AppContent />
+    //   </AuthProvider>
+    // </Router>
+  );
+}
+
+export default App;
+
+
+/*
+
+    <BrowserRouter basename={process.env.PUBLIC_URL}>
+      <Router>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </Router>
+    </BrowserRouter>
+*/
