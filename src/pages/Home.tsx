@@ -1,8 +1,10 @@
+// src/pages/Home.tsx
+
 import { Link } from 'react-router-dom';
 import { getUrl } from '../services/getUrl';
 //import { useAuth } from '../account/context/AuthContext';
 //@ts-ignore
-import './Home.css';
+import styles from './Home.module.scss';
 
 interface HomeProps {
   currentPage: string;
