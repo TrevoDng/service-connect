@@ -6,7 +6,7 @@ import type { User } from '../account/types/user';
 import { useAuth } from '../account/context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 //@ts-ignore
-import './TopNavbar.css';
+import styles from  './TopNavbar.module.css';
 
 interface TopNavbarProps {
   user?: User | null;
