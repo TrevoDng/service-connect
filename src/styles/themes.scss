@@ -25,22 +25,22 @@
   
   // Shadows
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
   
-  // Navbar specific
+  // Navbar
   --navbar-bg: #ffffff;
   --navbar-text: #1a1a2e;
   --navbar-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
   --navbar-hover: rgba(102, 126, 234, 0.1);
   
-  // Button specific
+  // Buttons
   --btn-primary-bg: #667eea;
   --btn-primary-text: #ffffff;
   --btn-primary-hover: #5a6fd6;
   
-  // Input
+  // Inputs
   --input-bg: #ffffff;
   --input-border: #e9ecef;
   --input-text: #1a1a2e;
@@ -69,76 +69,32 @@
   
   // Shadows
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5), 0 4px 6px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6), 0 10px 10px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6);
   
-  // Navbar specific
+  // Navbar
   --navbar-bg: #14142e;
   --navbar-text: #e8e8f0;
   --navbar-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
   --navbar-hover: rgba(102, 126, 234, 0.2);
   
-  // Button specific
+  // Buttons
   --btn-primary-bg: #667eea;
   --btn-primary-text: #ffffff;
   --btn-primary-hover: #7a92f0;
   
-  // Input
+  // Inputs
   --input-bg: #1a1a3a;
   --input-border: #2a2a4a;
   --input-text: #e8e8f0;
   --input-focus: #667eea;
 }
 
-// ============================================
-// THEME TRANSITION
-// ============================================
-
+// Theme Transition
 * {
   transition: background-color 0.3s ease, 
               color 0.3s ease, 
               border-color 0.3s ease,
               box-shadow 0.3s ease;
-}
-
-// Theme toggle button styles
-.theme-toggle {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: $spacing-sm;
-  border-radius: $border-radius-full;
-  color: var(--text-primary);
-  font-size: $font-size-xl;
-  transition: all $transition-base;
-  
-  &:hover {
-    background: var(--navbar-hover);
-    transform: rotate(20deg);
-  }
-}
-
-// ============================================
-// UTILITY CLASSES (Theme-aware)
-// ============================================
-
-.gradient-text {
-  background: $primary-gradient;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.gradient-bg {
-  background: $primary-gradient;
-  color: var(--text-white);
-}
-
-.card {
-  background: var(--bg-card);
-  border-radius: $border-radius-lg;
-  box-shadow: var(--shadow-md);
-  padding: $spacing-lg;
-  border: 1px solid var(--border-color);
 }

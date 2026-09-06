@@ -1,4 +1,32 @@
 // ============================================
+// RESPONSIVE MIXINS
+// ============================================
+
+@mixin mobile {
+  @media (max-width: 768px) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: 769px) and (max-width: 1023px) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: 1024px) {
+    @content;
+  }
+}
+
+@mixin responsive($breakpoint) {
+  @media (min-width: $breakpoint) {
+    @content;
+  }
+}
+
+// ============================================
 // FLEXBOX MIXINS
 // ============================================
 
@@ -19,65 +47,6 @@
   flex-direction: column;
 }
 
-@mixin flex-wrap {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-// ============================================
-// RESPONSIVE MIXINS
-// ============================================
-
-@mixin responsive($breakpoint) {
-  @media (min-width: $breakpoint) {
-    @content;
-  }
-}
-
-@mixin mobile {
-  @media (max-width: $breakpoint-md) {
-    @content;
-  }
-}
-
-@mixin tablet {
-  @media (min-width: $breakpoint-md) and (max-width: $breakpoint-lg - 1) {
-    @content;
-  }
-}
-
-@mixin desktop {
-  @media (min-width: $breakpoint-lg) {
-    @content;
-  }
-}
-
-// ============================================
-// THEME MIXINS
-// ============================================
-
-@mixin light-theme {
-  --bg-primary: #{$background};
-  --bg-secondary: #{$background-light};
-  --bg-card: #{$background-light};
-  --text-primary: #{$text-primary};
-  --text-secondary: #{$text-secondary};
-  --text-light: #{$text-light};
-  --border-color: #{$border-color};
-  --shadow-color: rgba(0, 0, 0, 0.1);
-}
-
-@mixin dark-theme {
-  --bg-primary: #{$dark-bg};
-  --bg-secondary: #{$dark-bg-secondary};
-  --bg-card: #{$dark-bg-card};
-  --text-primary: #{$dark-text-primary};
-  --text-secondary: #{$dark-text-secondary};
-  --text-light: #{$dark-text-secondary};
-  --border-color: #{$dark-border};
-  --shadow-color: rgba(0, 0, 0, 0.4);
-}
-
 // ============================================
 // UTILITY MIXINS
 // ============================================
@@ -90,12 +59,12 @@
 
 @mixin card-shadow {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  border-radius: $border-radius-md;
+  border-radius: 8px;
   background: var(--bg-card, #ffffff);
 }
 
 @mixin gradient-text {
-  background: $primary-gradient;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -105,36 +74,30 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: $spacing-sm;
-  padding: $spacing-sm $spacing-lg;
-  border-radius: $border-radius-full;
-  font-weight: $font-weight-semibold;
-  font-size: $font-size-md;
+  gap: 0.5rem;
+  padding: 0.5rem 1.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all $transition-base;
+  transition: all 250ms ease;
   text-decoration: none;
   border: none;
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: $shadow-lg;
+    box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
   }
   
   &:active {
     transform: translateY(0);
   }
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
 }
 
 @mixin gradient-button {
   @include button-base;
-  background: $primary-gradient;
-  color: $text-white;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
   
   &:hover {
     box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
@@ -144,46 +107,12 @@
 @mixin outline-button {
   @include button-base;
   background: transparent;
-  color: var(--text-primary, $text-primary);
-  border: 2px solid var(--border-color, $border-color);
+  color: var(--text-primary, #1a1a2e);
+  border: 2px solid var(--border-color, #e9ecef);
   
   &:hover {
-    border-color: $primary;
-    color: $primary;
+    border-color: #667eea;
+    color: #667eea;
     background: rgba(102, 126, 234, 0.05);
-  }
-}
-
-// ============================================
-// ANIMATION MIXINS
-// ============================================
-
-@mixin fade-in {
-  animation: fadeIn $transition-slow;
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@mixin slide-in {
-  animation: slideIn $transition-slow;
-}
-
-@keyframes slideIn {
-  from {
-    transform: translateX(-20px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
   }
 }

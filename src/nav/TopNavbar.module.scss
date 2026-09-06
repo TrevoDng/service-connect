@@ -1,5 +1,6 @@
 /* TopNavbar.module.scss */
-// Theme-aware styles using CSS custom properties
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
 
 .topNavbar {
   display: flex;
@@ -14,9 +15,11 @@
   z-index: $z-sticky;
   backdrop-filter: blur(10px);
   transition: all $transition-base;
+  min-height: 64px;
   
   @include mobile {
     padding: $spacing-sm $spacing-md;
+    min-height: 56px;
   }
 }
 
@@ -30,6 +33,7 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   transition: all $transition-base;
+  white-space: nowrap;
   
   &:hover {
     transform: scale(1.05);
@@ -40,7 +44,7 @@
   }
 }
 
-// Navigation Links
+// Navigation Links - Desktop
 .topNavbarLinks {
   display: flex;
   gap: $spacing-lg;
@@ -84,60 +88,60 @@
     }
   }
   
+  // Hide on mobile
   @include mobile {
     display: none;
+  }
+}
+
+// Mobile Menu - Hidden by default, shown when .topNavbarMobile is added
+.topNavbarMobile .topNavbarLinks {
+  @include mobile {
+    display: flex !important;
+    flex-direction: column;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--navbar-bg, #ffffff);
+    padding: $spacing-md;
+    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+    gap: $spacing-sm;
+    border-top: 1px solid var(--border-color, #e9ecef);
+    animation: slideDown 0.3s ease;
     
-    // Mobile menu when open
-    .topNavbarMobile & {
-      display: flex;
-      flex-direction: column;
-      position: absolute;
-      top: 100%;
-      left: 0;
-      right: 0;
-      background: var(--navbar-bg, #ffffff);
-      padding: $spacing-md;
-      box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
-      gap: $spacing-sm;
-      border-top: 1px solid var(--border-color, #e9ecef);
+    a {
+      padding: $spacing-md $spacing-lg;
+      width: 100%;
+      text-align: center;
+      border-radius: $border-radius-md;
+      font-size: $font-size-lg;
       
-      a {
-        padding: $spacing-sm $spacing-md;
-        width: 100%;
-        text-align: center;
-        border-radius: $border-radius-md;
-        
-        &:hover {
-          background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
-        }
-        
-        &::after {
-          display: none;
-        }
+      &:hover {
+        background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+        color: $primary;
+      }
+      
+      &::after {
+        display: none;
+      }
+      
+      &.active {
+        background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+        color: $primary;
       }
     }
   }
 }
 
-// Mobile Menu Button
-.topNavbarMenuBtn {
-  display: none;
-  background: none;
-  border: none;
-  font-size: $font-size-2xl;
-  cursor: pointer;
-  color: var(--navbar-text, #1a1a2e);
-  padding: $spacing-xs;
-  border-radius: $border-radius-md;
-  transition: all $transition-fast;
-  
-  &:hover {
-    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
-    transform: rotate(90deg);
-  }
+// Right Section Container
+.rightSection {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
   
   @include mobile {
-    display: block;
+    gap: $spacing-xs;
   }
 }
 
@@ -154,10 +158,18 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 40px;
+  height: 40px;
   
   &:hover {
     background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
     transform: rotate(20deg) scale(1.1);
+  }
+  
+  @include mobile {
+    width: 36px;
+    height: 36px;
+    font-size: $font-size-lg;
   }
 }
 
@@ -204,9 +216,15 @@
     text-decoration: none;
     transition: all $transition-fast;
     border: 2px solid transparent;
+    white-space: nowrap;
     
     &:hover {
       color: $primary;
+    }
+    
+    @include mobile {
+      padding: $spacing-xs $spacing-md;
+      font-size: $font-size-sm;
     }
   }
   
@@ -218,10 +236,16 @@
     color: white;
     text-decoration: none;
     transition: all $transition-base;
+    white-space: nowrap;
     
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+    
+    @include mobile {
+      padding: $spacing-xs $spacing-md;
+      font-size: $font-size-sm;
     }
   }
   
@@ -234,27 +258,93 @@
     border: 2px solid var(--border-color, #e9ecef);
     cursor: pointer;
     transition: all $transition-fast;
+    white-space: nowrap;
     
     &:hover {
       border-color: $error;
       color: $error;
       background: rgba(239, 71, 111, 0.05);
     }
-  }
-  
-  @include mobile {
-    .loginBtn, .registerBtn, .logoutBtn {
+    
+    @include mobile {
       padding: $spacing-xs $spacing-md;
       font-size: $font-size-sm;
     }
   }
 }
 
-// Mobile specific adjustments
-.topNavbarMobile {
-  .topNavbarLinks {
-    @include mobile {
-      display: flex;
-    }
+// Mobile Menu Toggle Button
+.topNavbarMenuBtn {
+  display: none;
+  background: none;
+  border: none;
+  font-size: $font-size-2xl;
+  cursor: pointer;
+  color: var(--navbar-text, #1a1a2e);
+  padding: $spacing-xs;
+  border-radius: $border-radius-md;
+  transition: all $transition-fast;
+  width: 40px;
+  height: 40px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  
+  &:hover {
+    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
   }
+  
+  @include mobile {
+    display: flex;
+  }
+}
+
+// Mobile Menu Overlay
+.mobileOverlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+  
+  @include mobile {
+    display: none;
+  }
+}
+
+.topNavbarMobile .mobileOverlay {
+  @include mobile {
+    display: block;
+  }
+}
+
+// Animations
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+// Scroll effect
+.topNavbarScrolled {
+  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+  background: var(--navbar-bg, rgba(255, 255, 255, 0.95));
 }

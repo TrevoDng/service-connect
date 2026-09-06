@@ -1,0 +1,375 @@
+/* src/footer/Footer.module.scss */
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
+
+.footer {
+  background: var(--bg-secondary, #ffffff);
+  color: var(--text-secondary, #4a4a6a);
+  border-top: 1px solid var(--border-color, #e9ecef);
+  margin-top: auto;
+  transition: all $transition-base;
+  width: 100%;
+}
+
+.footerContainer {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: $spacing-2xl $spacing-xl $spacing-md;
+  
+  @include mobile {
+    padding: $spacing-xl $spacing-md $spacing-sm;
+  }
+}
+
+// ============================================
+// SCROLL TO TOP
+// ============================================
+
+.footerTop {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-xl;
+  border-bottom: 1px solid var(--border-color, #e9ecef);
+  padding-bottom: $spacing-md;
+  
+  @include mobile {
+    justify-content: center;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.scrollTop {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: none;
+  border: none;
+  color: var(--text-secondary, #4a4a6a);
+  cursor: pointer;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-full;
+  transition: all $transition-base;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  
+  svg {
+    transition: transform $transition-base;
+  }
+  
+  &:hover {
+    color: $primary;
+    
+    svg {
+      transform: translateY(-4px);
+    }
+  }
+  
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// ============================================
+// FOOTER GRID
+// ============================================
+
+.footerGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1.5fr;
+  gap: $spacing-2xl;
+  margin-bottom: $spacing-2xl;
+  
+  @include tablet {
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-xl;
+  }
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-lg;
+    text-align: center;
+  }
+}
+
+.footerColumn {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  
+  @include mobile {
+    align-items: center;
+  }
+}
+
+// ============================================
+// BRAND SECTION
+// ============================================
+
+.footerBrand {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: $spacing-xs;
+  
+  @include mobile {
+    font-size: $font-size-xl;
+  }
+}
+
+.footerDescription {
+  font-size: $font-size-md;
+  line-height: 1.6;
+  color: var(--text-secondary, #4a4a6a);
+  max-width: 300px;
+  
+  @include mobile {
+    max-width: 100%;
+    text-align: center;
+  }
+}
+
+// ============================================
+// SOCIAL LINKS
+// ============================================
+
+.socialLinks {
+  display: flex;
+  gap: $spacing-sm;
+  margin-top: $spacing-xs;
+  
+  @include mobile {
+    justify-content: center;
+  }
+}
+
+.socialIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: $border-radius-full;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-secondary, #4a4a6a);
+  transition: all $transition-base;
+  text-decoration: none;
+  font-size: $font-size-lg;
+  
+  &:hover {
+    background: $primary-gradient;
+    color: $text-white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+  }
+  
+  &:active {
+    transform: scale(0.9);
+  }
+  
+  @include mobile {
+    width: 44px;
+    height: 44px;
+  }
+}
+
+// ============================================
+// FOOTER LINKS
+// ============================================
+
+.footerHeading {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, #1a1a2e);
+  margin-bottom: $spacing-xs;
+  
+  @include mobile {
+    font-size: $font-size-md;
+  }
+}
+
+.footerLinks {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  
+  li {
+    margin: 0;
+  }
+  
+  a {
+    color: var(--text-secondary, #4a4a6a);
+    text-decoration: none;
+    transition: all $transition-fast;
+    font-size: $font-size-md;
+    display: inline-block;
+    position: relative;
+    
+    &::before {
+      content: '›';
+      margin-right: $spacing-xs;
+      opacity: 0;
+      transition: all $transition-fast;
+    }
+    
+    &:hover {
+      color: $primary;
+      transform: translateX(4px);
+      
+      &::before {
+        opacity: 1;
+        margin-right: $spacing-sm;
+      }
+    }
+  }
+  
+  @include mobile {
+    align-items: center;
+    
+    a::before {
+      display: none;
+    }
+  }
+}
+
+// ============================================
+// CONTACT INFO
+// ============================================
+
+.contactInfo {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  
+  li {
+    display: flex;
+    align-items: center;
+    gap: $spacing-md;
+    color: var(--text-secondary, #4a4a6a);
+    font-size: $font-size-md;
+    
+    svg {
+      color: $primary;
+      font-size: $font-size-lg;
+      min-width: 20px;
+    }
+    
+    span {
+      word-break: break-word;
+    }
+  }
+  
+  @include mobile {
+    align-items: center;
+    
+    li {
+      justify-content: center;
+    }
+  }
+}
+
+// ============================================
+// FOOTER BOTTOM
+// ============================================
+
+.footerBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: $spacing-md;
+  border-top: 1px solid var(--border-color, #e9ecef);
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  
+  @include mobile {
+    flex-direction: column;
+    text-align: center;
+    gap: $spacing-sm;
+  }
+}
+
+.copyright {
+  font-size: $font-size-sm;
+  color: var(--text-light, #8a8aaa);
+  margin: 0;
+}
+
+.footerBottomLinks {
+  display: flex;
+  gap: $spacing-lg;
+  
+  a {
+    color: var(--text-light, #8a8aaa);
+    text-decoration: none;
+    font-size: $font-size-sm;
+    transition: all $transition-fast;
+    
+    &:hover {
+      color: $primary;
+    }
+  }
+  
+  @include mobile {
+    gap: $spacing-md;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+}
+
+// ============================================
+// RESPONSIVE BREAKPOINTS
+// ============================================
+
+@include mobile {
+  .footerContainer {
+    padding: $spacing-lg $spacing-md $spacing-sm;
+  }
+  
+  .footerGrid {
+    gap: $spacing-lg;
+  }
+  
+  .footerColumn {
+    gap: $spacing-sm;
+  }
+  
+  .contactInfo li {
+    font-size: $font-size-sm;
+  }
+}
+
+@include tablet {
+  .footerGrid {
+    gap: $spacing-xl;
+  }
+}
+
+// ============================================
+// DARK MODE SPECIFIC
+// ============================================
+
+:global(.dark-theme) {
+  .socialIcon {
+    background: var(--bg-card, #1a1a3a);
+    color: var(--text-secondary, #b0b0c8);
+    
+    &:hover {
+      background: $primary-gradient;
+      color: $text-white;
+    }
+  }
+  
+  .footerLinks a,
+  .contactInfo li,
+  .scrollTop {
+    color: var(--text-secondary, #b0b0c8);
+  }
+}
