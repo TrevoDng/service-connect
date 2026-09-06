@@ -1,12 +1,14 @@
 // src/nav/TopNavbar.tsx
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { getUrl } from '../services/getUrl';
 import type { User } from '../account/types/user';
 import { useAuth } from '../account/context/AuthContext';
+import { useTheme } from '../styles/context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-//@ts-ignore
-import styles from  './TopNavbar.module.scss';
+import { faSun, faMoon, faBars, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
+import styles from './TopNavbar.module.scss';
 
 interface TopNavbarProps {
   user?: User | null;
@@ -17,201 +19,147 @@ interface TopNavbarProps {
   setCurrentPage?: (page: string) => void;
 }
 
-export const TopNavbar: React.FC<TopNavbarProps> = ({ 
-  user, 
-  onLogin, 
-  onLogout, 
-  onRegister,
+export const TopNavbar: React.FC<TopNavbarProps> = ({
+  user,
+  onLogout,
   currentPage,
-  setCurrentPage
+  setCurrentPage,
 }) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { logout } = useAuth();
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  // Handle scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    if (onLogout) onLogout();
+    navigate(getUrl('/login', '')[0]);
+  };
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
-    if (isDropdownOpen) {
-      setIsDropdownOpen(false);
-    }
   };
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
-  const handleLogout = () => {
-    setIsDropdownOpen(false);
+  const closeMobileMenu = () => {
     setIsMobileMenuOpen(false);
-    logout();
-    if (onLogout) onLogout();
-    navigate(getUrl('/')[0]);
   };
 
-  const handleLogin = () => {
-    setIsMobileMenuOpen(false);
-    if (onLogin) onLogin();
-    if (setCurrentPage) setCurrentPage('/login');
-    navigate(getUrl('/login')[0]);
+  const getInitials = (name?: string) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
   };
-
-  const handleRegister = () => {
-    setIsMobileMenuOpen(false);
-    if (onRegister) onRegister();
-    if (setCurrentPage) setCurrentPage('/register');
-    navigate(getUrl('/register')[0]);
-  };
-
-  const handleLogoClick = () => {
-    if (setCurrentPage) setCurrentPage('/');
-    console.log(currentPage);
-    navigate(getUrl('/')[0]);
-  };
-
-  // Navigation items
-  const navItems = [
-    { label: 'Home', path: '/' },
-    { label: 'About', path: '/about' },
-    { label: 'Services', path: '/services' },
-  ];
 
   return (
-    <nav className="top-navbar">
-      <div className="nav-container">
-        {/* Logo / Brand */}
-        <div className="nav-brand" onClick={handleLogoClick}>
-          <span className="brand-icon" 
-          style={{ marginRight: '8px', fontSize: '1.5rem', border: '1px solid #ccc', padding: '4px', borderRadius: '4px' }}>
-            <FontAwesomeIcon icon={'screwdriver-wrench'} /></span>
-          <span className="brand-text">Service Connect</span>
-        </div>
+    <nav 
+      className={`${styles.topNavbar} ${isMobileMenuOpen ? styles.topNavbarMobile : ''} ${scrolled ? styles.topNavbarScrolled : ''}`}
+      role="navigation"
+      aria-label="Main navigation"
+    >
+      {/* Logo */}
+      <Link 
+        to={getUrl('/', '')[0]} 
+        className={styles.topNavbarLogo}
+        onClick={closeMobileMenu}
+      >
+        ServiceConnect
+      </Link>
 
-        {/* Navigation Links */}
-        <div className={`nav-links ${isMobileMenuOpen ? 'active' : ''}`}>
-          {navItems.map((item) => (
-            <Link 
-              key={item.path}
-              to={getUrl(item.path)[0]} 
-              className="nav-link"
-              onClick={() => setIsMobileMenuOpen(false)}
+      {/* Navigation Links */}
+      <div className={styles.topNavbarLinks}>
+        <Link 
+          to={getUrl('/services', '')[0]} 
+          onClick={closeMobileMenu}
+          className={currentPage === '/services' ? styles.active : ''}
+        >
+          Services
+        </Link>
+        <Link 
+          to={getUrl('/about', '')[0]} 
+          onClick={closeMobileMenu}
+          className={currentPage === '/about' ? styles.active : ''}
+        >
+          About
+        </Link>
+      </div>
+
+      {/* Right Section */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm, 0.5rem)' }}>
+        {/* Theme Toggle */}
+        <button 
+          onClick={toggleTheme} 
+          className={styles.themeToggle}
+          aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+          title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+        >
+          <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} />
+        </button>
+
+        {/* User Section */}
+        {user ? (
+          <>
+            <div className={styles.userInfo}>
+              <div className={styles.avatar}>
+                {getInitials(user.name)}
+              </div>
+              <span className={styles.userName}>
+                {user.name || 'User'}
+              </span>
+            </div>
+            
+            <button 
+              onClick={handleLogout} 
+              className={styles.logoutBtn}
             >
-              {item.label}
+              Logout
+            </button>
+          </>
+        ) : (
+          <div className={styles.authButtons}>
+            <Link 
+              to={getUrl('/login', '')[0]} 
+              className={styles.loginBtn}
+              onClick={() => {
+                closeMobileMenu();
+                if (setCurrentPage) setCurrentPage(getUrl('/login', '')[0]);
+              }}
+            >
+              Login
             </Link>
-          ))}
-          
-          {user && (
-            <>
-              <Link 
-                to={getUrl('/dashboard')[0]} 
-                className="nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Dashboard
-              </Link>
-              <Link 
-                to={getUrl('/account')[0]} 
-                className="nav-link"
-                onClick={() => setIsMobileMenuOpen(false)}
-              >
-                Profile
-              </Link>
-            </>
-          )}
-          
-          {/* Mobile Auth Buttons (only visible in mobile menu) */}
-          {!user && (
-            <div className="nav-actions-mobile">
-              <div className="auth-buttons">
-                <button className="login-btn" onClick={handleLogin}>
-                  Login
-                </button>
-                <button className="register-btn" onClick={handleRegister}>
-                  Register
-                </button>
-              </div>
-            </div>
-          )}
-          
-          {/* Mobile User Menu (only visible in mobile menu) */}
-          {user && (
-            <div className="nav-actions-mobile">
-              <div className="user-menu-mobile">
-                <div className="user-info-mobile">
-                  <span className="user-avatar-mobile">
-                    {user.firstName?.charAt(0).toUpperCase() || 'U'}
-                  </span>
-                  <div className="user-details-mobile">
-                    <span className="user-name-mobile">{user.firstName} {user.lastName}</span>
-                    <span className="user-email-mobile">{user.email}</span>
-                    <span className="user-role-mobile">{user.role}</span>
-                  </div>
-                </div>
-                <button className="logout-btn-mobile" onClick={handleLogout}>
-                  Logout
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Desktop User Actions */}
-        <div className="nav-actions">
-          {user ? (
-            <div className="user-menu">
-              <button 
-                className="user-menu-btn"
-                onClick={toggleDropdown}
-              >
-                <span className="user-avatar">
-                  {user.firstName?.charAt(0).toUpperCase() || 'U'}
-                </span>
-                <span className="user-name">{user.firstName} {user.lastName}</span>
-                <span className={`dropdown-arrow ${isDropdownOpen ? 'open' : ''}`}>▼</span>
-              </button>
-              
-              {isDropdownOpen && (
-                <div className="dropdown-menu">
-                  <div className="dropdown-header">
-                    <p className="dropdown-name">{user.firstName} {user.lastName}</p>
-                    <p className="dropdown-email">{user.email}</p>
-                    <p className="dropdown-role">{user.role}</p>
-                  </div>
-                  <div className="dropdown-divider"></div>
-                  <Link to={getUrl('/account')[0]} className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                    My Profile
-                  </Link>
-                  <Link to={getUrl('/settings')[0]} className="dropdown-item" onClick={() => setIsDropdownOpen(false)}>
-                    Settings
-                  </Link>
-                  <button 
-                    className="dropdown-item logout-btn"
-                    onClick={handleLogout}
-                  >
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="auth-buttons">
-              <button className="login-btn" onClick={handleLogin}>Login</button>
-              <button className="register-btn" onClick={handleRegister}>Register</button>
-            </div>
-          )}
-        </div>
+            <Link 
+              to={getUrl('/register', '')[0]} 
+              className={styles.registerBtn}
+              onClick={() => {
+                closeMobileMenu();
+                if (setCurrentPage) setCurrentPage(getUrl('/register', '')[0]);
+              }}
+            >
+              Sign Up
+            </Link>
+          </div>
+        )}
 
         {/* Mobile Menu Toggle */}
         <button 
-          className="mobile-menu-toggle"
+          className={styles.topNavbarMenuBtn} 
           onClick={toggleMobileMenu}
-          aria-label="Toggle menu"
+          aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={isMobileMenuOpen}
         >
-          <span className="hamburger"></span>
-          <span className="hamburger"></span>
-          <span className="hamburger"></span>
+          <FontAwesomeIcon icon={isMobileMenuOpen ? faTimes : faBars} />
         </button>
       </div>
     </nav>
   );
 };
+
+export default TopNavbar;

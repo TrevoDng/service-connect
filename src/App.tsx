@@ -1,18 +1,12 @@
 // src/App.tsx
 import React, { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate /*, BrowserRouter*/ } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './account/context/AuthContext';
-//import { TopNav } from './components/TopNav'; // Use only ONE TopNav
 import { Footer } from './footer/Footer';
 import { About } from './about/About';
 import AdminDashboard from './account/components/Admin/AdminDashboard';
 import { EmployeeDashboard } from './account/components/Employee/EmployeeDashboard';
-// Remove these imports since we're using CSS Modules
-//@ts-ignore
-//import './App.css';
-//@ts-ignore
-//import './index.css';
-import styles from './App.module.scss'; // ✅ Import CSS Modules
+import styles from './App.module.scss';
 import CustomerLogin from './account/components/Auth/customer/CustomerLogin';
 import Home from './pages/Home';
 import { PageNotFound } from './pagenotfound/pagenotfound';
@@ -24,11 +18,11 @@ import { ProviderDashboard } from './components/ServiceProvider/ProviderDashboar
 import { TopNavbar } from './nav/TopNavbar';
 import EmployeeRegister from './account/components/Auth/employee/EmployeeRegister';
 import EmployeeLogin from './account/components/Auth/employee/EmployeeLogin';
-import { ThemeProvider } from './styles/context/ThemeContext';
+import { ThemeProvider, useTheme } from './styles/context/ThemeContext';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
-library.add(fas); // Adds all solid icons globally
+library.add(fas);
 
 // Protected route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -50,9 +44,7 @@ const RoleProtectedRoute: React.FC<{
   children: React.ReactNode; 
   allowedRoles: ('ADMIN' | 'EMPLOYEE' | 'CLIENT')[];
   currentPage?: string;
-}> = ({ children, allowedRoles}) => {
-
-  //}> = ({ children, allowedRoles, currentPage }) => {
+}> = ({ children, allowedRoles }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) {
@@ -62,13 +54,6 @@ const RoleProtectedRoute: React.FC<{
       </div>
     );
   }
-  //console.log('RoleProtectedRoute - isAuthenticated:', isAuthenticated, 'user:', user, 'allowedRoles:', allowedRoles);
-  console.log('children:', children);
-  /*
-  if (currentPage) {
-    console.log('Redirecting to currentPage:', currentPage);
-    return <Navigate to={currentPage} />;
-  }*/
 
   if (!isAuthenticated) {
     return <Navigate to="/login" />;
@@ -91,16 +76,17 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const { isAuthenticated, user } = useAuth();
+  const { theme } = useTheme();
 
   return (
-    <div className={styles.app}> {/* ✅ Use CSS Module class */}
-      {/* Use ONLY ONE TopNav - I recommend TopNav since it has more features */}
+    <div className={`${styles.app} ${theme}-theme`}>
       <TopNavbar 
-      user={isAuthenticated ? user:  undefined}
-      currentPage={currentPage}
-      setCurrentPage={setCurrentPage}/>
+        user={isAuthenticated ? user : undefined}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+      />
       
-      <main className={styles.mainContent}> {/* ✅ Use CSS Module class */}
+      <main className={styles.mainContent}>
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home currentPage={currentPage} setCurrentPage={setCurrentPage} />} />
@@ -113,6 +99,7 @@ const AppContent: React.FC = () => {
           <Route path="/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
           <Route path="/service-provider-register" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
           <Route path="/login/employee" element={<PublicRoute><EmployeeLogin /></PublicRoute>} />
+          
           {/* Protected Routes */}
           <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
           
@@ -133,19 +120,7 @@ const AppContent: React.FC = () => {
               </RoleProtectedRoute>
             } 
           />
-          {/*
-          <Route 
-            path="/provider/dashboard" 
-            element={
-              <RoleProtectedRoute allowedRoles={['EMPLOYEE', 'ADMIN']} currentPage={currentPage}>
-                <ProviderDashboard />
-              </RoleProtectedRoute>
-            } 
-          />
-          */}
-
-         <Route path="/provider/dashboard"
-          element={<ProviderDashboard />} />
+          <Route path="/provider/dashboard" element={<ProviderDashboard />} />
           
           {/* 404 */}
           <Route path="*" element={<PageNotFound />} />
@@ -159,31 +134,14 @@ const AppContent: React.FC = () => {
 
 function App() {
   return (
-      <Router basename={'/service-connect'}>
-        <ThemeProvider>
+    <Router basename={'/service-connect'}>
+      <ThemeProvider>
         <AuthProvider>
           <AppContent />
         </AuthProvider>
-        </ThemeProvider>
-      </Router>
-    // <Router basename={process.env.PUBLIC_URL}>
-    //   <AuthProvider>
-    //     <AppContent />
-    //   </AuthProvider>
-    // </Router>
+      </ThemeProvider>
+    </Router>
   );
 }
 
 export default App;
-
-
-/*
-
-    <BrowserRouter basename={process.env.PUBLIC_URL}>
-      <Router>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </Router>
-    </BrowserRouter>
-*/

@@ -1,71 +1,260 @@
 /* TopNavbar.module.scss */
+// Theme-aware styles using CSS custom properties
 
 .topNavbar {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1rem 2rem;
-  background: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: relative;
+  padding: $spacing-md $spacing-xl;
+  background: var(--navbar-bg, #ffffff);
+  color: var(--navbar-text, #1a1a2e);
+  box-shadow: var(--navbar-shadow, 0 2px 4px rgba(0, 0, 0, 0.08));
+  position: sticky;
+  top: 0;
+  z-index: $z-sticky;
+  backdrop-filter: blur(10px);
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+  }
 }
 
+// Logo
 .topNavbarLogo {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #646cff;
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
   text-decoration: none;
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  @include mobile {
+    font-size: $font-size-lg;
+  }
 }
 
+// Navigation Links
 .topNavbarLinks {
   display: flex;
-  gap: 1.5rem;
+  gap: $spacing-lg;
   align-items: center;
+  
+  a {
+    color: var(--navbar-text, #1a1a2e);
+    text-decoration: none;
+    font-weight: $font-weight-medium;
+    padding: $spacing-xs $spacing-sm;
+    border-radius: $border-radius-md;
+    transition: all $transition-fast;
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -2px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 2px;
+      background: $primary-gradient;
+      transition: width $transition-fast;
+    }
+    
+    &:hover {
+      color: $primary;
+      
+      &::after {
+        width: 100%;
+      }
+    }
+    
+    &.active {
+      color: $primary;
+      
+      &::after {
+        width: 100%;
+      }
+    }
+  }
+  
+  @include mobile {
+    display: none;
+    
+    // Mobile menu when open
+    .topNavbarMobile & {
+      display: flex;
+      flex-direction: column;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: var(--navbar-bg, #ffffff);
+      padding: $spacing-md;
+      box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
+      gap: $spacing-sm;
+      border-top: 1px solid var(--border-color, #e9ecef);
+      
+      a {
+        padding: $spacing-sm $spacing-md;
+        width: 100%;
+        text-align: center;
+        border-radius: $border-radius-md;
+        
+        &:hover {
+          background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+        }
+        
+        &::after {
+          display: none;
+        }
+      }
+    }
+  }
 }
 
-.topNavbarLinks a {
-  color: #333;
-  text-decoration: none;
-  transition: color 0.3s ease;
-}
-
-.topNavbarLinks a:hover {
-  color: #646cff;
-}
-
+// Mobile Menu Button
 .topNavbarMenuBtn {
   display: none;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: $font-size-2xl;
   cursor: pointer;
-  padding: 0.5rem;
-}
-
-@media (max-width: 768px) {
-  .topNavbarLinks {
-    display: none;
+  color: var(--navbar-text, #1a1a2e);
+  padding: $spacing-xs;
+  border-radius: $border-radius-md;
+  transition: all $transition-fast;
+  
+  &:hover {
+    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+    transform: rotate(90deg);
   }
   
-  .topNavbarMenuBtn {
+  @include mobile {
     display: block;
   }
+}
+
+// Theme Toggle Button
+.themeToggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: $spacing-xs;
+  border-radius: $border-radius-full;
+  color: var(--navbar-text, #1a1a2e);
+  font-size: $font-size-xl;
+  transition: all $transition-base;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   
-  .topNavbarMobile .topNavbarLinks {
+  &:hover {
+    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+    transform: rotate(20deg) scale(1.1);
+  }
+}
+
+// User info / Avatar
+.userInfo {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  color: var(--navbar-text, #1a1a2e);
+  
+  .avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: $border-radius-full;
+    background: $primary-gradient;
+    color: white;
     display: flex;
-    flex-direction: column;
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: white;
-    padding: 1rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    gap: 0.5rem;
-    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+    font-weight: $font-weight-bold;
+    font-size: $font-size-sm;
   }
   
-  .topNavbarMobile .topNavbarLinks a {
-    padding: 0.5rem 0;
+  .userName {
+    font-weight: $font-weight-medium;
+    
+    @include mobile {
+      display: none;
+    }
+  }
+}
+
+// Auth Buttons
+.authButtons {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+  
+  .loginBtn {
+    padding: $spacing-xs $spacing-lg;
+    border-radius: $border-radius-full;
+    font-weight: $font-weight-semibold;
+    color: var(--navbar-text, #1a1a2e);
+    text-decoration: none;
+    transition: all $transition-fast;
+    border: 2px solid transparent;
+    
+    &:hover {
+      color: $primary;
+    }
+  }
+  
+  .registerBtn {
+    padding: $spacing-xs $spacing-lg;
+    border-radius: $border-radius-full;
+    font-weight: $font-weight-semibold;
+    background: $primary-gradient;
+    color: white;
+    text-decoration: none;
+    transition: all $transition-base;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+    }
+  }
+  
+  .logoutBtn {
+    padding: $spacing-xs $spacing-lg;
+    border-radius: $border-radius-full;
+    font-weight: $font-weight-semibold;
+    background: transparent;
+    color: var(--navbar-text, #1a1a2e);
+    border: 2px solid var(--border-color, #e9ecef);
+    cursor: pointer;
+    transition: all $transition-fast;
+    
+    &:hover {
+      border-color: $error;
+      color: $error;
+      background: rgba(239, 71, 111, 0.05);
+    }
+  }
+  
+  @include mobile {
+    .loginBtn, .registerBtn, .logoutBtn {
+      padding: $spacing-xs $spacing-md;
+      font-size: $font-size-sm;
+    }
+  }
+}
+
+// Mobile specific adjustments
+.topNavbarMobile {
+  .topNavbarLinks {
+    @include mobile {
+      display: flex;
+    }
   }
 }

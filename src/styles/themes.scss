@@ -1,9 +1,144 @@
-/* src/styles/themes.css */
+// ============================================
+// THEMES - CSS Custom Properties
+// ============================================
 
-:root {
-  --primary-color: #667eea;
-  --secondary-color: #764ba2;
-  --background-color: #f0f4f8;
-  --text-color: #333;
-  --white: #ffffff;
+// Light Theme (Default)
+:root,
+[data-theme="light"] {
+  // Backgrounds
+  --bg-primary: #f8f9fa;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-navbar: #ffffff;
+  --bg-hero: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  
+  // Text
+  --text-primary: #1a1a2e;
+  --text-secondary: #4a4a6a;
+  --text-light: #8a8aaa;
+  --text-white: #ffffff;
+  --text-navbar: #1a1a2e;
+  
+  // Borders
+  --border-color: #e9ecef;
+  --border-light: #f1f3f5;
+  
+  // Shadows
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.05);
+  
+  // Navbar specific
+  --navbar-bg: #ffffff;
+  --navbar-text: #1a1a2e;
+  --navbar-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  --navbar-hover: rgba(102, 126, 234, 0.1);
+  
+  // Button specific
+  --btn-primary-bg: #667eea;
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: #5a6fd6;
+  
+  // Input
+  --input-bg: #ffffff;
+  --input-border: #e9ecef;
+  --input-text: #1a1a2e;
+  --input-focus: #667eea;
+}
+
+// Dark Theme
+[data-theme="dark"] {
+  // Backgrounds
+  --bg-primary: #0a0a1a;
+  --bg-secondary: #14142e;
+  --bg-card: #1a1a3a;
+  --bg-navbar: #14142e;
+  --bg-hero: linear-gradient(135deg, #1a1a3a 0%, #0a0a1a 100%);
+  
+  // Text
+  --text-primary: #e8e8f0;
+  --text-secondary: #b0b0c8;
+  --text-light: #7a7a9a;
+  --text-white: #ffffff;
+  --text-navbar: #e8e8f0;
+  
+  // Borders
+  --border-color: #2a2a4a;
+  --border-light: #1a1a3a;
+  
+  // Shadows
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5), 0 4px 6px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.6), 0 10px 10px rgba(0, 0, 0, 0.4);
+  
+  // Navbar specific
+  --navbar-bg: #14142e;
+  --navbar-text: #e8e8f0;
+  --navbar-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+  --navbar-hover: rgba(102, 126, 234, 0.2);
+  
+  // Button specific
+  --btn-primary-bg: #667eea;
+  --btn-primary-text: #ffffff;
+  --btn-primary-hover: #7a92f0;
+  
+  // Input
+  --input-bg: #1a1a3a;
+  --input-border: #2a2a4a;
+  --input-text: #e8e8f0;
+  --input-focus: #667eea;
+}
+
+// ============================================
+// THEME TRANSITION
+// ============================================
+
+* {
+  transition: background-color 0.3s ease, 
+              color 0.3s ease, 
+              border-color 0.3s ease,
+              box-shadow 0.3s ease;
+}
+
+// Theme toggle button styles
+.theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: $spacing-sm;
+  border-radius: $border-radius-full;
+  color: var(--text-primary);
+  font-size: $font-size-xl;
+  transition: all $transition-base;
+  
+  &:hover {
+    background: var(--navbar-hover);
+    transform: rotate(20deg);
+  }
+}
+
+// ============================================
+// UTILITY CLASSES (Theme-aware)
+// ============================================
+
+.gradient-text {
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.gradient-bg {
+  background: $primary-gradient;
+  color: var(--text-white);
+}
+
+.card {
+  background: var(--bg-card);
+  border-radius: $border-radius-lg;
+  box-shadow: var(--shadow-md);
+  padding: $spacing-lg;
+  border: 1px solid var(--border-color);
 }

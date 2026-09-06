@@ -1,38 +1,137 @@
-// Colors
-$primary: #646cff;
-$secondary: #535bf2;
-$success: #4caf50;
-$error: #f44336;
-$warning: #ff9800;
-$background: #f5f5f5;
-$text-primary: #213547;
-$text-secondary: #666;
+// ============================================
+// COLOR SYSTEM
+// ============================================
 
-// Spacing
-$spacing-xs: 0.25rem;
-$spacing-sm: 0.5rem;
-$spacing-md: 1rem;
-$spacing-lg: 1.5rem;
-$spacing-xl: 2rem;
+// Primary Colors (Gradient: #667eea → #764ba2)
+$primary: #667eea;
+$primary-dark: #5a6fd6;
+$primary-light: #8ba0f0;
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 
-// Typography
-$font-size-sm: 0.875rem;
-$font-size-md: 1rem;
-$font-size-lg: 1.25rem;
-$font-size-xl: 1.5rem;
+// Secondary Colors
+$secondary: #764ba2;
+$secondary-dark: #5a3a7a;
+$secondary-light: #9a6fc4;
 
-// Breakpoints
+// Accent Colors
+$accent: #00b4d8;
+$accent-dark: #0096b8;
+$accent-light: #48cae4;
+
+// Semantic Colors
+$success: #06d6a0;
+$success-dark: #05b884;
+$warning: #ffd60a;
+$warning-dark: #e6c008;
+$error: #ef476f;
+$error-dark: #d63d5e;
+$info: #4cc9f0;
+
+// Neutral Colors
+$text-primary: #1a1a2e;
+$text-secondary: #4a4a6a;
+$text-light: #8a8aaa;
+$text-white: #ffffff;
+
+$background: #f8f9fa;
+$background-light: #ffffff;
+$background-dark: #e9ecef;
+
+// Dark Mode Colors
+$dark-bg: #0a0a1a;
+$dark-bg-secondary: #14142e;
+$dark-bg-card: #1a1a3a;
+$dark-text-primary: #e8e8f0;
+$dark-text-secondary: #b0b0c8;
+$dark-border: #2a2a4a;
+
+// ============================================
+// SPACING
+// ============================================
+$spacing-xs: 0.25rem;   // 4px
+$spacing-sm: 0.5rem;    // 8px
+$spacing-md: 1rem;      // 16px
+$spacing-lg: 1.5rem;    // 24px
+$spacing-xl: 2rem;      // 32px
+$spacing-2xl: 3rem;     // 48px
+$spacing-3xl: 4rem;     // 64px
+
+// ============================================
+// TYPOGRAPHY
+// ============================================
+$font-family-base: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+$font-family-heading: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+$font-family-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+
+$font-size-xs: 0.75rem;   // 12px
+$font-size-sm: 0.875rem;  // 14px
+$font-size-md: 1rem;      // 16px
+$font-size-lg: 1.125rem;  // 18px
+$font-size-xl: 1.25rem;   // 20px
+$font-size-2xl: 1.5rem;   // 24px
+$font-size-3xl: 2rem;     // 32px
+$font-size-4xl: 2.5rem;   // 40px
+$font-size-5xl: 3.5rem;   // 56px
+
+$font-weight-regular: 400;
+$font-weight-medium: 500;
+$font-weight-semibold: 600;
+$font-weight-bold: 700;
+
+// ============================================
+// BREAKPOINTS
+// ============================================
+$breakpoint-xs: 480px;
 $breakpoint-sm: 640px;
 $breakpoint-md: 768px;
 $breakpoint-lg: 1024px;
 $breakpoint-xl: 1280px;
+$breakpoint-2xl: 1536px;
 
-// Borders
+// ============================================
+// BORDERS & RADIUS
+// ============================================
 $border-radius-sm: 4px;
 $border-radius-md: 8px;
 $border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-2xl: 24px;
+$border-radius-full: 9999px;
 
-// Transitions
+$border-color: #e9ecef;
+$border-width: 1px;
+
+// ============================================
+// SHADOWS
+// ============================================
+$shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+$shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+$shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15), 0 10px 10px rgba(0, 0, 0, 0.05);
+$shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.25);
+
+// ============================================
+// TRANSITIONS
+// ============================================
 $transition-fast: 150ms ease;
-$transition-medium: 300ms ease;
-$transition-slow: 500ms ease;
+$transition-base: 250ms ease;
+$transition-slow: 350ms ease;
+$transition-slower: 500ms ease;
+$transition-bounce: 300ms cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+// ============================================
+// Z-INDEX
+// ============================================
+$z-dropdown: 1000;
+$z-sticky: 1020;
+$z-fixed: 1030;
+$z-modal-backdrop: 1040;
+$z-modal: 1050;
+$z-popover: 1060;
+$z-tooltip: 1070;
+
+// ============================================
+// GRID & CONTAINER
+// ============================================
+$container-max-width: 1200px;
+$container-padding: $spacing-md;
