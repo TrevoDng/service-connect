@@ -18,7 +18,6 @@ export default defineConfig({
   build: {
     outDir: 'build',
     sourcemap: true,
-    // Ensure CSS is processed
     rollupOptions: {
       output: {
         assetFileNames: 'assets/[name].[hash].[ext]',
@@ -29,8 +28,8 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         additionalData: `
-          @use "./src/styles/variables" as *;
-          @use "./src/styles/mixins" as *;
+          @use "@/styles/variables" as *;
+          @use "@/styles/mixins" as *;
         `
       }
     }
