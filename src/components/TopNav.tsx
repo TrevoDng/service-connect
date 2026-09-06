@@ -1,14 +1,13 @@
 // src/components/TopNav.tsx
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
 import { 
   Briefcase, 
   User, 
   LogOut, 
   Settings, 
-  Menu, 
-  X,
+  Menu,
   ChevronDown,
   Sun,
   Moon,
@@ -20,7 +19,7 @@ import {
 export const TopNav: React.FC = () => {
   const { user, isAuthenticated, logout, isServiceProvider, isClient } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
+  //const location = useLocation();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [theme, setTheme] = useState<'light' | 'dark'>('light');

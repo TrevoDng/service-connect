@@ -5,7 +5,7 @@ import type { LoginCredentials } from '../../../types/user';
 //import { useSlider } from '../../../../slider/slidercontext/SliderContext'; 
 // @ts-ignore: CSS module declarations not defined in this project
 import './EmployeeLogin.css';
-import { useNavigate } from 'react-router-dom';
+//import { useNavigate } from 'react-router-dom';
 //import { useMainCategoryContext } from '../../../../itemsComponents/products/category-filter/context/MainCategoryFilterContext';
 
 const EmployeeLogin: React.FC = () => {

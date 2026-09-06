@@ -8,7 +8,7 @@ import type { ServiceStats } from '../../types/service.types';
 import './ProviderDashboard.css'; // Import the CSS file
 
 export const ProviderDashboard: React.FC = () => {
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<'list' | 'add'>('list');
   const [stats, setStats] = useState<ServiceStats>({
     total: 0,

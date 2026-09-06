@@ -1,5 +1,5 @@
 // EmployeeRegister.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import type { RegisterData } from '../../../types/user';
 
@@ -21,7 +21,7 @@ const EmployeeRegister: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [verifyingCode, setVerifyingCode] = useState(false);
-  const [codeValid, setCodeValid] = useState(false);
+  const [, setCodeValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);

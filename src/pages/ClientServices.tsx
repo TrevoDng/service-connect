@@ -1,6 +1,6 @@
 // src/pages/ClientServices.tsx
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '../account/context/AuthContext';
+//import { useAuth } from '../account/context/AuthContext';
 import { serviceService } from '../services/service.service';
 import type { Service, ServiceFilterOptions } from '../types/service.types';
 import { ServicesGrid } from '../components/Client/ServicesGrid';
@@ -9,7 +9,7 @@ import { ServicesFilter } from '../components/Client/ServicesFilter';
 import './ClientServices.css'; // Import the CSS
 
 export const ClientServices: React.FC = () => {
-  const { isClient } = useAuth();
+  //const { isClient } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
