@@ -7,7 +7,7 @@ import type { User } from '../account/types/user';
 import { useAuth } from '../account/context/AuthContext';
 import { useTheme } from '../styles/context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faSun, faMoon, faBars, faTimes, faPersonDigging } from '@fortawesome/free-solid-svg-icons';
 import styles from './TopNavbar.module.scss';
 
 interface TopNavbarProps {
@@ -76,13 +76,19 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       role="navigation"
       aria-label="Main navigation"
     >
-      {/* Logo */}
+      {/* Logo with icon */}
       <Link 
         to={getUrl('/', '')[0]} 
         className={styles.topNavbarLogo}
         onClick={closeMobileMenu}
       >
-        ServiceConnect
+        <FontAwesomeIcon 
+          icon={faPersonDigging} 
+          className={styles.logoIcon}
+        />
+        {/* Show "SC" on mobile, "ServiceConnect" on desktop */}
+        <span className={styles.logoMobile}>SC</span>
+        <span className={styles.logoDesktop}>ServiceConnect</span>
       </Link>
 
       {/* Navigation Links */}

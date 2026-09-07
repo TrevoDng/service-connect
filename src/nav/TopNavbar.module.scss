@@ -348,3 +348,89 @@
   box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
   background: var(--navbar-bg, rgba(255, 255, 255, 0.95));
 }
+
+// ============================================
+// RESPONSIVE LOGO
+// ============================================
+
+.logoMobile {
+  display: none;
+  
+  @include mobile {
+    display: inline;
+  }
+}
+
+.logoDesktop {
+  display: inline;
+  
+  @include mobile {
+    display: none;
+  }
+}
+
+// In TopNavbar.module.scss
+.logoMobile,
+.logoDesktop {
+  transition: opacity $transition-fast;
+}
+
+.logoMobile {
+  display: none;
+
+  @include mobile {
+    display: inline;
+    opacity: 1;
+  }
+}
+
+.logoDesktop {
+  display: inline;
+  opacity: 1;
+
+  @include mobile {
+    display: none;
+    opacity: 0;
+  }
+}
+
+// ============================================
+// LOGO ICON
+// ============================================
+
+.logoIcon {
+  font-size: $font-size-xl;
+  margin-right: $spacing-sm;
+  color: $primary;
+  transition: all $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-lg;
+    margin-right: $spacing-xs;
+  }
+  
+  // Rotate on hover
+  .topNavbarLogo:hover & {
+    transform: rotate(15deg) scale(1.1);
+  }
+}
+
+// ============================================
+// RESPONSIVE LOGO TEXT
+// ============================================
+
+.logoMobile {
+  display: none;
+  
+  @include mobile {
+    display: inline;
+  }
+}
+
+.logoDesktop {
+  display: inline;
+  
+  @include mobile {
+    display: none;
+  }
+}
