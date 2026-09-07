@@ -7,7 +7,7 @@ import type { User } from '../account/types/user';
 import { useAuth } from '../account/context/AuthContext';
 import { useTheme } from '../styles/context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSun, faMoon,faPersonDigging, faBars, faTimes, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faSun, faMoon, faBars, faTimes } from '@fortawesome/free-solid-svg-icons';
 import styles from './TopNavbar.module.scss';
 
 interface TopNavbarProps {
@@ -54,9 +54,20 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     setIsMobileMenuOpen(false);
   };
 
-  const getInitials = (name?: string) => {
-    if (!name) return 'U';
-    return name.charAt(0).toUpperCase();
+  // Get user initials from firstName and lastName
+  const getInitials = (user?: User | null) => {
+    if (!user) return 'U';
+    const first = user.firstName?.charAt(0) || '';
+    const last = user.lastName?.charAt(0) || '';
+    return (first + last).toUpperCase() || 'U';
+  };
+
+  // Get user's full name
+  const getFullName = (user?: User | null) => {
+    if (!user) return 'User';
+    const first = user.firstName || '';
+    const last = user.lastName || '';
+    return `${first} ${last}`.trim() || 'User';
   };
 
   return (
@@ -71,8 +82,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         className={styles.topNavbarLogo}
         onClick={closeMobileMenu}
       >
-      <FontAwesomeIcon icon={faPersonDigging} />
-        SC
+        ServiceConnect
       </Link>
 
       {/* Navigation Links */}
@@ -94,7 +104,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       </div>
 
       {/* Right Section */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-sm, 0.5rem)' }}>
+      <div className={styles.rightSection}>
         {/* Theme Toggle */}
         <button 
           onClick={toggleTheme} 
@@ -110,10 +120,10 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           <>
             <div className={styles.userInfo}>
               <div className={styles.avatar}>
-                {getInitials(user.name)}
+                {getInitials(user)}
               </div>
               <span className={styles.userName}>
-                {user.name || 'User'}
+                {getFullName(user)}
               </span>
             </div>
             

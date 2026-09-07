@@ -3,7 +3,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { getUrl } from '../services/getUrl';
-import { useTheme } from '../styles/context/ThemeContext';
 import styles from './Home.module.scss';
 
 interface HomeProps {
@@ -14,8 +13,6 @@ interface HomeProps {
 const Home: React.FC<HomeProps> = ({
   setCurrentPage
 }) => {
-  const { theme } = useTheme();
-
   return (
     <div className={styles.homePage}>
       {/* Hero Section */}
@@ -73,29 +70,6 @@ const Home: React.FC<HomeProps> = ({
           </div>
         </div>
       </header>
-
-      {/* Optional Features Section - Uncomment if needed */}
-      {/*
-      <section className={styles.features}>
-        <div className={styles.featuresGrid}>
-          <div className={styles.featureCard}>
-            <span className={styles.icon}>🔧</span>
-            <h3>Find Professionals</h3>
-            <p>Connect with trusted service providers in your area</p>
-          </div>
-          <div className={styles.featureCard}>
-            <span className={styles.icon}>📈</span>
-            <h3>Grow Your Business</h3>
-            <p>Reach more clients and manage your services</p>
-          </div>
-          <div className={styles.featureCard}>
-            <span className={styles.icon}>⭐</span>
-            <h3>Quality Guaranteed</h3>
-            <p>Verified professionals with customer reviews</p>
-          </div>
-        </div>
-      </section>
-      */}
     </div>
   );
 }
