@@ -401,7 +401,7 @@
 .logoIcon {
   font-size: $font-size-xl;
   margin-right: $spacing-sm;
-  color: $primary;
+ // color: $primary;
   transition: all $transition-base;
   
   @include mobile {
