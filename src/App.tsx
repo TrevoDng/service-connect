@@ -19,6 +19,7 @@ import { TopNavbar } from './nav/TopNavbar';
 import EmployeeRegister from './account/components/Auth/employee/EmployeeRegister';
 import EmployeeLogin from './account/components/Auth/employee/EmployeeLogin';
 import { ThemeProvider, useTheme } from './styles/context/ThemeContext';
+import { ClientDashboard } from './account/components/Client/ClientDashboard';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
@@ -102,6 +103,11 @@ const AppContent: React.FC = () => {
           
           {/* Protected Routes */}
           <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
+          <Route path="/client/dashboard" element={
+            <RoleProtectedRoute allowedRoles={['CLIENT']}>
+              <ClientDashboard />
+            </RoleProtectedRoute>
+          } />
           
           {/* Role-based Routes */}
           <Route 
