@@ -269,7 +269,7 @@
   align-items: center;
   justify-content: center;
   border-radius: $border-radius-lg;
-  background: var(--bg-primary, #f8f9fa);
+  //background: var(--bg-primary, #f8f9fa);
   
   @include mobile {
     font-size: $font-size-3xl;
@@ -429,4 +429,86 @@
     margin-bottom: $spacing-md;
     display: block;
   }
+}
+
+// ============================================
+// FONTAWESOME ICON STYLES
+// ============================================
+
+.serviceIconWrapper {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-lg;
+  //background: var(--bg-primary, #f8f9fa);
+  margin-bottom: $spacing-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    width: 48px;
+    height: 48px;
+  }
+}
+
+.serviceIcon {
+  font-size: $font-size-3xl;
+  transition: all $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-2xl;
+  }
+}
+
+.serviceCard:hover .serviceIcon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.noResultsIcon {
+  font-size: $font-size-4xl;
+  display: block;
+  margin-bottom: $spacing-md;
+}
+
+// ============================================
+// FONTAWESOME ICON STYLES - CONSISTENT
+// ============================================
+
+.serviceIconWrapper {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-lg;
+  background: var(--bg-primary, #f8f9fa);
+  margin-bottom: $spacing-md;
+  transition: all $transition-base;
+  flex-shrink: 0;
+  
+  @include mobile {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+.serviceIcon {
+  font-size: $font-size-xl;
+  color: $primary !important; /* Force consistent color */
+  transition: all $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-lg;
+  }
+}
+
+.serviceCard:hover .serviceIcon {
+  transform: scale(1.15) rotate(-5deg);
+  color: $primary-light !important;
+}
+
+.serviceCard:hover .serviceIconWrapper {
+  background: var(--navbar-hover, rgba(102, 126, 234, 0.08));
+  transform: translateY(-2px);
 }
