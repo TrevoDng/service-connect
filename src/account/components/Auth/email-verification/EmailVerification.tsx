@@ -1,4 +1,5 @@
-// src/account/components/Auth/EmailVerification.tsx
+// src/account/components/Auth/email-verification/EmailVerification.tsx 
+
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 // @ts-ignore

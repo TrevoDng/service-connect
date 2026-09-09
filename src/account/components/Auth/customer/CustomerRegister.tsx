@@ -1,3 +1,4 @@
+// src/account/components/Auth/customer/CustomerRegister.tsx
 // CustomerRegister.tsx - With password visibility toggle and real-time match validation
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';

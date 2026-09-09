@@ -1,3 +1,5 @@
+// src/account/components/Auth/email-verification/ResendVerification.tsx
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 // import { useSlider } from '../../../../slider/slidercontext/SliderContext';

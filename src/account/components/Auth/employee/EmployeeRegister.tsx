@@ -1,4 +1,4 @@
-// EmployeeRegister.tsx
+// src/account/components/Auth/employee/EmployeeRegister.tsx
 import React, { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import type { RegisterData } from '../../../types/user';
