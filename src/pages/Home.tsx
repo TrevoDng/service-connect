@@ -135,15 +135,22 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   key={service.id} 
                   className={styles.serviceCard}
                   onClick={() => handleServiceClick(service.id)}
+                  style={{ '--card-accent': service.color } as React.CSSProperties}
                 >
-                  <div className={styles.serviceIconWrapper}>
-                    <FontAwesomeIcon 
-                      icon={icon} 
-                      className={styles.serviceIcon}
-                    />
+                  {/* Card Header - Icon + Title */}
+                  <div className={styles.cardHeader}>
+                    <div className={styles.serviceIconWrapper}>
+                      <FontAwesomeIcon 
+                        icon={icon} 
+                        className={styles.serviceIcon}
+                      />
+                    </div>
+                    <h3 className={styles.serviceTitle}>{service.title}</h3>
                   </div>
-                  <h3 className={styles.serviceTitle}>{service.title}</h3>
+
+                  {/* Card Body */}
                   <p className={styles.serviceDescription}>{service.description}</p>
+                  
                   <div className={styles.serviceMeta}>
                     {service.rating && (
                       <span className={styles.rating}>
@@ -159,16 +166,19 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                       </span>
                     )}
                   </div>
-                  <button 
-                    className={styles.getStartedBtn}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleGetStarted(service.id);
-                    }}
-                  >
-                    Get Started →
-                  </button>
-		  <a href='client/dashboard'> press to go</a>
+
+                  {/* Card Footer - Button */}
+                  <div className={styles.cardFooter}>
+                    <button 
+                      className={styles.getStartedBtn}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleGetStarted(service.id);
+                      }}
+                    >
+                      Get Started →
+                    </button>
+                  </div>
                 </div>
               );
             })}

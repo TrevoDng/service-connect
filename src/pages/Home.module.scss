@@ -179,6 +179,7 @@
     font-size: $font-size-3xl;
     color: var(--text-primary, $text-primary);
     margin-bottom: $spacing-sm;
+    transition: color $transition-base;
     
     @include mobile {
       font-size: $font-size-xl;
@@ -188,6 +189,7 @@
   p {
     font-size: $font-size-lg;
     color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
     
     @include mobile {
       font-size: $font-size-base;
@@ -211,16 +213,23 @@
   }
 }
 
+// ============================================
+// SERVICE CARD - PROFESSIONAL LAYOUT
+// ============================================
+
 .serviceCard {
   background: var(--bg-card, #ffffff);
   border-radius: $border-radius-xl;
   padding: $spacing-xl;
-  box-shadow: $shadow-md;
+  box-shadow: var(--shadow-md, $shadow-md);
   transition: all $transition-base;
   border: 1px solid var(--border-color, $border-color);
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
   
   &::before {
     content: '';
@@ -235,20 +244,16 @@
   }
   
   &:hover {
-    transform: translateY(-8px);
-    box-shadow: $shadow-xl;
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg, $shadow-lg);
     
     &::before {
       opacity: 1;
     }
     
-    .serviceIcon {
-      transform: scale(1.1) rotate(-5deg);
-    }
-    
     .getStartedBtn {
       background: $primary-gradient;
-      color: white;
+      color: $text-white;
       transform: translateX(4px);
     }
   }
@@ -258,46 +263,81 @@
   }
 }
 
-.serviceIcon {
-  font-size: $font-size-4xl;
-  margin-bottom: $spacing-md;
-  display: inline-block;
-  transition: all $transition-base;
-  width: 64px;
-  height: 64px;
+// ============================================
+// CARD HEADER - Icon + Title Horizontal
+// ============================================
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  margin-bottom: $spacing-sm;
+}
+
+.serviceIconWrapper {
+  width: 40px;
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: $border-radius-lg;
-  //background: var(--bg-primary, #f8f9fa);
+  background: var(--bg-primary, #f8f9fa);
+  flex-shrink: 0;
+  transition: all $transition-base;
   
   @include mobile {
-    font-size: $font-size-3xl;
-    width: 48px;
-    height: 48px;
+    width: 36px;
+    height: 36px;
   }
+}
+
+.serviceIcon {
+  font-size: $font-size-lg;
+  color: $primary;
+  transition: all $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.serviceCard:hover .serviceIcon {
+  transform: scale(1.1) rotate(-5deg);
+  color: $primary-light;
+}
+
+.serviceCard:hover .serviceIconWrapper {
+  background: var(--navbar-hover, rgba(102, 126, 234, 0.08));
 }
 
 .serviceTitle {
   font-size: $font-size-lg;
   font-weight: $font-weight-semibold;
   color: var(--text-primary, $text-primary);
-  margin-bottom: $spacing-xs;
+  margin: 0;
+  transition: color $transition-base;
+  flex: 1;
   
   @include mobile {
-    font-size: $font-size-md;
+    font-size: $font-size-base;
   }
 }
+
+// ============================================
+// CARD BODY
+// ============================================
 
 .serviceDescription {
   font-size: $font-size-sm;
   color: var(--text-secondary, $text-secondary);
-  margin-bottom: $spacing-md;
-  line-height: 1.5;
+  margin: 0 0 $spacing-md 0;
+  line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  transition: color $transition-base;
+  flex: 1;
 }
 
 .serviceMeta {
@@ -308,22 +348,33 @@
   font-size: $font-size-sm;
   color: var(--text-light, $text-light);
   flex-wrap: wrap;
+  transition: color $transition-base;
   
   .rating {
     display: flex;
     align-items: center;
-    gap: $spacing-xs;
+    gap: $spacing-xxs;
     color: #f59e0b;
   }
   
   .price {
     font-weight: $font-weight-semibold;
     color: var(--text-primary, $text-primary);
+    transition: color $transition-base;
   }
   
   .providers {
     color: var(--text-light, $text-light);
+    transition: color $transition-base;
   }
+}
+
+// ============================================
+// CARD FOOTER - Button
+// ============================================
+
+.cardFooter {
+  margin-top: auto;
 }
 
 .getStartedBtn {
@@ -337,10 +388,11 @@
   cursor: pointer;
   transition: all $transition-base;
   width: 100%;
+  text-align: center;
   
   &:hover {
     background: $primary-gradient;
-    color: white;
+    color: $text-white;
     transform: translateX(4px);
   }
   
@@ -401,6 +453,7 @@
   p {
     margin-top: $spacing-md;
     color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
   }
 }
 
@@ -423,8 +476,9 @@
   text-align: center;
   padding: $spacing-3xl;
   color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
   
-  .icon {
+  .noResultsIcon {
     font-size: $font-size-4xl;
     margin-bottom: $spacing-md;
     display: block;
@@ -432,83 +486,19 @@
 }
 
 // ============================================
-// FONTAWESOME ICON STYLES
+// RESPONSIVE
 // ============================================
 
-.serviceIconWrapper {
-  width: 64px;
-  height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-lg;
-  //background: var(--bg-primary, #f8f9fa);
-  margin-bottom: $spacing-md;
-  transition: all $transition-base;
-  
-  @include mobile {
-    width: 48px;
-    height: 48px;
+@include mobile {
+  .servicesSection {
+    padding: $spacing-xl $spacing-md;
   }
-}
-
-.serviceIcon {
-  font-size: $font-size-3xl;
-  transition: all $transition-base;
   
-  @include mobile {
-    font-size: $font-size-2xl;
+  .serviceCard {
+    padding: $spacing-md;
   }
-}
-
-.serviceCard:hover .serviceIcon {
-  transform: scale(1.1) rotate(-5deg);
-}
-
-.noResultsIcon {
-  font-size: $font-size-4xl;
-  display: block;
-  margin-bottom: $spacing-md;
-}
-
-// ============================================
-// FONTAWESOME ICON STYLES - CONSISTENT
-// ============================================
-
-.serviceIconWrapper {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: $border-radius-lg;
-  background: var(--bg-primary, #f8f9fa);
-  margin-bottom: $spacing-md;
-  transition: all $transition-base;
-  flex-shrink: 0;
   
-  @include mobile {
-    width: 40px;
-    height: 40px;
+  .cardHeader {
+    gap: $spacing-sm;
   }
-}
-
-.serviceIcon {
-  font-size: $font-size-xl;
-  color: $primary !important; /* Force consistent color */
-  transition: all $transition-base;
-  
-  @include mobile {
-    font-size: $font-size-lg;
-  }
-}
-
-.serviceCard:hover .serviceIcon {
-  transform: scale(1.15) rotate(-5deg);
-  color: $primary-light !important;
-}
-
-.serviceCard:hover .serviceIconWrapper {
-  background: var(--navbar-hover, rgba(102, 126, 234, 0.08));
-  transform: translateY(-2px);
 }
