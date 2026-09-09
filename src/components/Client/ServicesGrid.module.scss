@@ -1,0 +1,23 @@
+/* src/components/Client/ServicesGrid.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-xl;
+  
+  @include desktop {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-lg;
+  }
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+}

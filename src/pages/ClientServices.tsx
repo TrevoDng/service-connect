@@ -1,15 +1,12 @@
 // src/pages/ClientServices.tsx
 import React, { useState, useEffect } from 'react';
-//import { useAuth } from '../account/context/AuthContext';
 import { serviceService } from '../services/service.service';
 import type { Service, ServiceFilterOptions } from '../types/service.types';
 import { ServicesGrid } from '../components/Client/ServicesGrid';
 import { ServicesFilter } from '../components/Client/ServicesFilter';
-//@ts-ignore
-import './ClientServices.css'; // Import the CSS
+import styles from './ClientServices.module.scss';
 
 export const ClientServices: React.FC = () => {
-  //const { isClient } = useAuth();
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -66,13 +63,13 @@ export const ClientServices: React.FC = () => {
   };
 
   return (
-    <div className="client-services">
-      <div className="client-services-header">
+    <div className={styles.clientServices}>
+      <div className={styles.clientServicesHeader}>
         <h1>Find Services</h1>
         <p>Browse available services from our trusted providers</p>
       </div>
 
-      <div className="client-services-filter-section">
+      <div className={styles.clientServicesFilterSection}>
         <ServicesFilter 
           onFilterChange={handleFilterChange}
           availableCategories={categories}
@@ -80,21 +77,21 @@ export const ClientServices: React.FC = () => {
       </div>
 
       {loading ? (
-        <div className="loading-spinner">
-          <div className="spinner"></div>
+        <div className={styles.loadingSpinner}>
+          <div className={styles.spinner}></div>
           <p>Loading services...</p>
         </div>
       ) : error ? (
-        <div className="error-message">{error}</div>
+        <div className={styles.errorMessage}>{error}</div>
       ) : services.length === 0 ? (
-        <div className="no-results">
+        <div className={styles.noResults}>
           <p>No services found</p>
-          <p className="sub-text">Try adjusting your filters or search terms</p>
+          <p className={styles.subText}>Try adjusting your filters or search terms</p>
         </div>
       ) : (
         <>
-          <div className="results-info">
-            <p className="results-count">
+          <div className={styles.resultsInfo}>
+            <p className={styles.resultsCount}>
               Showing {services.length} service{services.length !== 1 ? 's' : ''}
             </p>
           </div>
@@ -108,3 +105,5 @@ export const ClientServices: React.FC = () => {
     </div>
   );
 };
+
+export default ClientServices;

@@ -1,0 +1,151 @@
+/* src/pages/PageNotFound.module.scss */
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
+
+.pageNotFound {
+  min-height: 70vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-3xl $spacing-xl;
+  text-align: center;
+  background: var(--bg-primary, #f8f9fa);
+  transition: background $transition-base;
+  
+  @include mobile {
+    padding: $spacing-2xl $spacing-md;
+  }
+}
+
+// ============================================
+// ICON / IMAGE
+// ============================================
+
+.notFoundIcon {
+  font-size: $font-size-5xl;
+  margin-bottom: $spacing-xl;
+  display: block;
+  animation: float 3s ease-in-out infinite;
+  
+  @include mobile {
+    font-size: $font-size-4xl;
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+// ============================================
+// TITLE
+// ============================================
+
+.notFoundTitle {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-md;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-3xl;
+  }
+}
+
+// ============================================
+// MESSAGE
+// ============================================
+
+.notFoundMessage {
+  font-size: $font-size-lg;
+  color: var(--text-secondary, $text-secondary);
+  max-width: 500px;
+  margin: 0 auto $spacing-2xl;
+  line-height: 1.6;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+// ============================================
+// BUTTONS
+// ============================================
+
+.notFoundActions {
+  display: flex;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+  justify-content: center;
+  
+  @include mobile {
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 300px;
+  }
+}
+
+.primaryButton {
+  @include gradient-button;
+  padding: $spacing-md $spacing-2xl;
+  font-size: $font-size-base;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg, $shadow-lg);
+  }
+  
+  @include mobile {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+.secondaryButton {
+  @include outline-button;
+  padding: $spacing-md $spacing-2xl;
+  font-size: $font-size-base;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+  
+  @include mobile {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+// ============================================
+// ERROR CODE
+// ============================================
+
+.errorCode {
+  font-size: $font-size-5xl;
+  font-weight: $font-weight-bold;
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: $spacing-xs;
+  
+  @include mobile {
+    font-size: $font-size-4xl;
+  }
+}

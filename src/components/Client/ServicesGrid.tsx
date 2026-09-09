@@ -2,6 +2,7 @@
 import React from 'react';
 import type { Service } from '../../types/service.types';
 import { ServiceCard } from './ServiceCard';
+import styles from './ServicesGrid.module.scss';
 
 interface ServicesGridProps {
   services: Service[];
@@ -15,7 +16,7 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({
   onHire 
 }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className={styles.servicesGrid}>
       {services.map((service) => (
         <ServiceCard
           key={service.id}
@@ -27,3 +28,5 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({
     </div>
   );
 };
+
+export default ServicesGrid;

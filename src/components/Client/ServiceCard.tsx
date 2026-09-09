@@ -2,6 +2,7 @@
 import React from 'react';
 import type { Service } from '../../types/service.types';
 import { MapPin, Star, User, Clock } from 'lucide-react';
+import styles from './ServiceCard.module.scss';
 
 interface ServiceCardProps {
   service: Service;
@@ -15,51 +16,51 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
   onHire 
 }) => {
   return (
-    <div className="bg-white rounded-lg shadow-md border border-gray-200 hover:shadow-lg transition-shadow duration-300 overflow-hidden">
-      <div className="p-5">
-        {/* Category Badge */}
-        <div className="flex justify-between items-start mb-3">
-          <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded">
+    <div className={styles.serviceCard}>
+      <div className={styles.serviceCardBody}>
+        {/* Category Badge & Rating */}
+        <div className={styles.serviceCardHeader}>
+          <span className={styles.categoryBadge}>
             {service.category}
           </span>
           {service.rating && (
-            <div className="flex items-center gap-1">
-              <Star className="h-4 w-4 text-yellow-400 fill-current" />
-              <span className="text-sm font-medium">{service.rating.toFixed(1)}</span>
+            <div className={styles.ratingBadge}>
+              <Star className={styles.starIcon} />
+              <span>{service.rating.toFixed(1)}</span>
             </div>
           )}
         </div>
 
         {/* Title */}
-        <h3 className="text-lg font-semibold text-gray-900 mb-2 line-clamp-2">
+        <h3 className={styles.serviceTitle}>
           {service.title}
         </h3>
 
         {/* Description */}
-        <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+        <p className={styles.serviceDescription}>
           {service.description}
         </p>
 
         {/* Details */}
-        <div className="space-y-2 mb-4">
+        <div className={styles.serviceDetails}>
           {/* Location */}
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <MapPin className="h-4 w-4 flex-shrink-0" />
+          <div className={styles.detailItem}>
+            <MapPin />
             <span>{service.location}</span>
           </div>
 
           {/* Provider */}
           {service.provider_name && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <User className="h-4 w-4 flex-shrink-0" />
+            <div className={styles.detailItem}>
+              <User />
               <span>{service.provider_name}</span>
             </div>
           )}
 
           {/* Estimated Duration */}
           {service.estimatedDuration && (
-            <div className="flex items-center gap-2 text-sm text-gray-600">
-              <Clock className="h-4 w-4 flex-shrink-0" />
+            <div className={styles.detailItem}>
+              <Clock />
               <span>{service.estimatedDuration}</span>
             </div>
           )}
@@ -67,8 +68,8 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Price */}
         {service.price > 0 && (
-          <div className="mb-4">
-            <span className="text-2xl font-bold text-blue-600">
+          <div className={styles.servicePrice}>
+            <span className={styles.priceValue}>
               R{service.price.toLocaleString()}
             </span>
           </div>
@@ -76,17 +77,14 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
 
         {/* Skills */}
         {service.skills && service.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-4">
+          <div className={styles.serviceSkills}>
             {service.skills.slice(0, 3).map((skill) => (
-              <span
-                key={skill}
-                className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded"
-              >
+              <span key={skill} className={styles.skillTag}>
                 {skill}
               </span>
             ))}
             {service.skills.length > 3 && (
-              <span className="text-gray-400 text-xs">
+              <span className={styles.skillMore}>
                 +{service.skills.length - 3} more
               </span>
             )}
@@ -94,16 +92,16 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className={styles.serviceActions}>
           <button
             onClick={() => onViewDetails(service)}
-            className="flex-1 px-3 py-1.5 text-sm border border-gray-300 text-gray-700 rounded hover:bg-gray-50 transition-colors"
+            className={styles.viewDetailsBtn}
           >
             View Details
           </button>
           <button
             onClick={() => onHire(service)}
-            className="flex-1 px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+            className={styles.hireBtn}
           >
             Contact Expert
           </button>
@@ -112,3 +110,5 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
     </div>
   );
 };
+
+export default ServiceCard;
