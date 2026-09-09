@@ -168,6 +168,7 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   >
                     Get Started →
                   </button>
+		  <a href='client/dashboard'> press to go</a>
                 </div>
               );
             })}

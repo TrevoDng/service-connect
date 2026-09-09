@@ -1,0 +1,208 @@
+/* src/components/ServiceProvider/ProviderServicesList.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.servicesList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+// ============================================
+// SERVICE ITEM
+// ============================================
+
+.serviceItem {
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-lg;
+  border-radius: $border-radius-lg;
+  box-shadow: var(--shadow-sm, $shadow-sm);
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+  
+  &:hover {
+    border-color: $primary;
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  @include mobile {
+    padding: $spacing-md;
+  }
+}
+
+.serviceItemHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $spacing-md;
+  
+  @include mobile {
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+}
+
+.serviceInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.serviceTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-xxs 0;
+  transition: color $transition-base;
+}
+
+.serviceDescription {
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  margin: 0 0 $spacing-sm 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  transition: color $transition-base;
+}
+
+.serviceMeta {
+  display: flex;
+  gap: $spacing-md;
+  font-size: $font-size-sm;
+  flex-wrap: wrap;
+  
+  span {
+    color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
+  }
+}
+
+// ============================================
+// STATUS BADGE
+// ============================================
+
+.statusBadge {
+  padding: $spacing-xxs $spacing-md;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+}
+
+.statusActive {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.statusPending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.statusCompleted {
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-secondary, $text-secondary);
+}
+
+// Dark mode status
+:global(.dark-theme) {
+  .statusActive {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+  }
+  
+  .statusPending {
+    background: rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+  }
+  
+  .statusCompleted {
+    background: rgba(255, 255, 255, 0.05);
+    color: #9ca3af;
+  }
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+
+.serviceActions {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+  flex-shrink: 0;
+  
+  @include mobile {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
+.deleteButton {
+  color: $error;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  padding: $spacing-xxs $spacing-sm;
+  border-radius: $border-radius-sm;
+  transition: all $transition-base;
+  
+  &:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #dc2626;
+  }
+}
+
+// ============================================
+// EMPTY STATE
+// ============================================
+
+.emptyState {
+  text-align: center;
+  padding: $spacing-3xl $spacing-xl;
+  background: var(--bg-primary, #f8f9fa);
+  border-radius: $border-radius-lg;
+  border: 2px dashed var(--border-color, $border-color);
+  transition: all $transition-base;
+  
+  p {
+    color: var(--text-secondary, $text-secondary);
+    margin: 0;
+    transition: color $transition-base;
+    
+    &:last-child {
+      font-size: $font-size-sm;
+      color: var(--text-light, $text-light);
+      margin-top: $spacing-xxs;
+    }
+  }
+}
+
+// ============================================
+// LOADING
+// ============================================
+
+.loadingSpinner {
+  display: flex;
+  justify-content: center;
+  padding: $spacing-2xl;
+}
+
+.spinnerSmall {
+  width: $spacing-2xl;
+  height: $spacing-2xl;
+  border: 4px solid var(--border-color, $border-color);
+  border-top-color: $primary;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

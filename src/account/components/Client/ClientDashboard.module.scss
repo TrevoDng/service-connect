@@ -32,7 +32,7 @@
   min-width: 280px;
   background: var(--bg-card, #ffffff);
   border-radius: $border-radius-xl;
-  box-shadow: $shadow-md;
+  box-shadow: var(--shadow-md, $shadow-md);
   padding: $spacing-xl;
   display: flex;
   flex-direction: column;
@@ -40,6 +40,7 @@
   position: sticky;
   top: 80px;
   border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
   
   @include tablet {
     width: 240px;
@@ -67,7 +68,7 @@
   height: 72px;
   border-radius: $border-radius-full;
   background: $primary-gradient;
-  color: white;
+  color: $text-white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -88,12 +89,14 @@
     font-weight: $font-weight-semibold;
     color: var(--text-primary, $text-primary);
     margin-bottom: $spacing-xxs;
+    transition: color $transition-base;
   }
   
   .userEmail {
     font-size: $font-size-sm;
     color: var(--text-light, $text-light);
     word-break: break-all;
+    transition: color $transition-base;
   }
 }
 
@@ -126,11 +129,22 @@
     width: 20px;
     font-size: $font-size-lg;
     flex-shrink: 0;
+    color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
+  }
+  
+  span {
+    transition: color $transition-base;
   }
   
   &:hover {
     background: var(--navbar-hover, rgba(102, 126, 234, 0.08));
     color: $primary;
+    
+    svg {
+      color: $primary;
+    }
+    
     transform: translateX(4px);
   }
   
@@ -138,6 +152,10 @@
     background: var(--navbar-hover, rgba(102, 126, 234, 0.12));
     color: $primary;
     font-weight: $font-weight-semibold;
+    
+    svg {
+      color: $primary;
+    }
     
     &::before {
       content: '';
@@ -165,7 +183,7 @@
 .badge {
   margin-left: auto;
   background: $primary;
-  color: white;
+  color: $text-white;
   font-size: $font-size-xs;
   padding: 2px 8px;
   border-radius: $border-radius-full;
@@ -197,6 +215,8 @@
     width: 20px;
     font-size: $font-size-lg;
     flex-shrink: 0;
+    color: $error;
+    transition: color $transition-base;
   }
   
   &:hover {
@@ -222,9 +242,10 @@
   flex: 1;
   background: var(--bg-card, #ffffff);
   border-radius: $border-radius-xl;
-  box-shadow: $shadow-md;
+  box-shadow: var(--shadow-md, $shadow-md);
   padding: $spacing-xl;
   border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
   
   @include mobile {
     padding: $spacing-md;
@@ -244,6 +265,7 @@
     font-weight: $font-weight-bold;
     color: var(--text-primary, $text-primary);
     margin: 0;
+    transition: color $transition-base;
     
     @include mobile {
       font-size: $font-size-lg;
@@ -270,6 +292,7 @@
   svg {
     color: var(--text-light, $text-light);
     font-size: $font-size-sm;
+    transition: color $transition-base;
   }
   
   &:focus-within {
@@ -315,7 +338,7 @@
   
   &:hover {
     border-color: $primary;
-    box-shadow: $shadow-sm;
+    box-shadow: var(--shadow-sm, $shadow-sm);
   }
   
   @include mobile {
@@ -346,6 +369,7 @@
     font-weight: $font-weight-semibold;
     color: var(--text-primary, $text-primary);
     margin: 0;
+    transition: color $transition-base;
   }
 }
 
@@ -357,10 +381,12 @@
   border-radius: $border-radius-full;
   font-size: $font-size-xs;
   font-weight: $font-weight-medium;
+  transition: all $transition-base;
 }
 
+// Status colors - theme aware
 .statusPending {
-  background: #fef3c7;
+  background: rgba(251, 191, 36, 0.15);
   color: #d97706;
   
   svg {
@@ -369,7 +395,7 @@
 }
 
 .statusConfirmed {
-  background: #dbeafe;
+  background: rgba(59, 130, 246, 0.15);
   color: #2563eb;
   
   svg {
@@ -378,7 +404,7 @@
 }
 
 .statusCompleted {
-  background: #d1fae5;
+  background: rgba(16, 185, 129, 0.15);
   color: #059669;
   
   svg {
@@ -387,11 +413,50 @@
 }
 
 .statusCancelled {
-  background: #fee2e2;
+  background: rgba(239, 68, 68, 0.15);
   color: #dc2626;
   
   svg {
     color: #dc2626;
+  }
+}
+
+// Dark mode status colors
+:global(.dark-theme) {
+  .statusPending {
+    background: rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+    
+    svg {
+      color: #fbbf24;
+    }
+  }
+  
+  .statusConfirmed {
+    background: rgba(96, 165, 250, 0.25);
+    color: #60a5fa;
+    
+    svg {
+      color: #60a5fa;
+    }
+  }
+  
+  .statusCompleted {
+    background: rgba(52, 211, 153, 0.25);
+    color: #34d399;
+    
+    svg {
+      color: #34d399;
+    }
+  }
+  
+  .statusCancelled {
+    background: rgba(248, 113, 113, 0.25);
+    color: #f87171;
+    
+    svg {
+      color: #f87171;
+    }
   }
 }
 
@@ -416,10 +481,12 @@
   .infoLabel {
     color: var(--text-light, $text-light);
     font-weight: $font-weight-medium;
+    transition: color $transition-base;
   }
   
   .infoValue {
     color: var(--text-primary, $text-primary);
+    transition: color $transition-base;
   }
 }
 
@@ -447,7 +514,7 @@
   
   &:hover {
     background: $error;
-    color: white;
+    color: $text-white;
   }
 }
 
@@ -456,7 +523,7 @@
   border-radius: $border-radius-full;
   border: none;
   background: $primary-gradient;
-  color: white;
+  color: $text-white;
   cursor: pointer;
   font-size: $font-size-sm;
   font-weight: $font-weight-medium;
@@ -464,7 +531,7 @@
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: $shadow-md;
+    box-shadow: var(--shadow-md, $shadow-md);
   }
 }
 
@@ -493,10 +560,20 @@
   border: 2px dashed var(--border-color, $border-color);
   transition: all $transition-base;
   
+  h3 {
+    color: var(--text-primary, $text-primary);
+    transition: color $transition-base;
+  }
+  
+  p {
+    color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
+  }
+  
   &:hover {
     border-color: $primary;
     transform: translateY(-4px);
-    box-shadow: $shadow-md;
+    box-shadow: var(--shadow-md, $shadow-md);
   }
 }
 
@@ -511,7 +588,7 @@
   border-radius: $border-radius-full;
   border: none;
   background: $primary-gradient;
-  color: white;
+  color: $text-white;
   cursor: pointer;
   font-size: $font-size-base;
   font-weight: $font-weight-semibold;
@@ -520,7 +597,7 @@
   
   &:hover {
     transform: translateY(-2px);
-    box-shadow: $shadow-md;
+    box-shadow: var(--shadow-md, $shadow-md);
   }
 }
 
@@ -542,6 +619,7 @@
     font-size: $font-size-xl;
     color: var(--text-primary, $text-primary);
     margin-bottom: $spacing-sm;
+    transition: color $transition-base;
   }
   
   p {
@@ -550,6 +628,7 @@
     max-width: 400px;
     margin-left: auto;
     margin-right: auto;
+    transition: color $transition-base;
   }
 }
 
@@ -574,6 +653,7 @@
   p {
     margin-top: $spacing-md;
     color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
   }
 }
 

@@ -103,11 +103,15 @@ const AppContent: React.FC = () => {
           
           {/* Protected Routes */}
           <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
+	  {/*
           <Route path="/client/dashboard" element={
             <RoleProtectedRoute allowedRoles={['CLIENT']}>
               <ClientDashboard />
             </RoleProtectedRoute>
           } />
+	  */}
+
+	  <Route path="/client/dashboard" element={               <ClientDashboard />                               } />
           
           {/* Role-based Routes */}
           <Route 
