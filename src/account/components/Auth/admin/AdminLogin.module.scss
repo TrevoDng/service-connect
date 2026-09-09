@@ -1,0 +1,270 @@
+/* src/account/components/Auth/admin/AdminLogin.module.scss */
+@use "../../../../styles/variables" as *;
+@use "../../../../styles/mixins" as *;
+
+.adminLoginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $primary-gradient;
+  padding: $spacing-md;
+  font-family: $font-family-base;
+}
+
+.adminLoginBox {
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-2xl;
+  box-shadow: $shadow-xl;
+  width: 100%;
+  max-width: 440px;
+  padding: $spacing-3xl $spacing-2xl;
+  animation: slideUp 0.5s ease-out;
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-2xl $spacing-xl;
+    margin: $spacing-md;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.adminLoginHeader {
+  text-align: center;
+  margin-bottom: $spacing-2xl;
+}
+
+.adminLoginIcon {
+  font-size: $font-size-4xl;
+  margin-bottom: $spacing-md;
+  display: inline-block;
+  animation: bounce 1s ease infinite;
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.adminLoginTitle {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-xs 0;
+  letter-spacing: -0.5px;
+  transition: color $transition-base;
+}
+
+.adminLoginSubtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  transition: color $transition-base;
+}
+
+// ============================================
+// FORM
+// ============================================
+
+.adminLoginForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.adminLoginField {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.adminLoginLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  letter-spacing: 0.3px;
+  transition: color $transition-base;
+}
+
+.adminLoginInput {
+  padding: $spacing-md $spacing-lg;
+  font-size: $font-size-base;
+  border: 2px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  transition: all $transition-base;
+  outline: none;
+  font-family: inherit;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+  }
+}
+
+// ============================================
+// ERROR
+// ============================================
+
+.adminLoginError {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: $error;
+  padding: $spacing-md $spacing-lg;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-sm;
+  border-left: 4px solid $error;
+  margin-bottom: $spacing-xs;
+}
+
+// ============================================
+// OPTIONS
+// ============================================
+
+.adminLoginOptions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: $spacing-xxs;
+}
+
+.adminLoginCheckbox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+  
+  input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: $primary;
+  }
+  
+  span {
+    user-select: none;
+  }
+}
+
+// ============================================
+// BUTTON
+// ============================================
+
+.adminLoginButton {
+  @include gradient-button;
+  padding: $spacing-md $spacing-xl;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  border-radius: $border-radius-lg;
+  margin-top: $spacing-xs;
+  width: 100%;
+  
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    animation: pulse 1.5s ease infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+// ============================================
+// FOOTER
+// ============================================
+
+.adminLoginFooter {
+  margin-top: $spacing-2xl;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+  font-size: $font-size-sm;
+  flex-wrap: wrap;
+  
+  a {
+    color: $primary;
+    text-decoration: none;
+    transition: color $transition-base;
+    font-weight: $font-weight-medium;
+    
+    &:hover {
+      color: $secondary;
+      text-decoration: underline;
+    }
+  }
+}
+
+.separator {
+  color: var(--border-color, $border-color);
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+
+@include mobile {
+  .adminLoginBox {
+    padding: $spacing-2xl $spacing-lg;
+  }
+  
+  .adminLoginTitle {
+    font-size: $font-size-xl;
+  }
+  
+  .adminLoginIcon {
+    font-size: $font-size-3xl;
+  }
+  
+  .adminLoginButton {
+    padding: $spacing-md;
+    font-size: $font-size-sm;
+  }
+  
+  .adminLoginInput {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+  }
+  
+  .adminLoginFooter {
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+  
+  .separator {
+    display: none;
+  }
+}

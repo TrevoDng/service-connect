@@ -1,0 +1,465 @@
+/* src/account/components/Auth/customer/CustomerRegister.module.scss */
+@use "../../../../styles/variables" as *;
+@use "../../../../styles/mixins" as *;
+
+.registerContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-3xl $spacing-md;
+  transition: background $transition-base;
+  
+  @include mobile {
+    padding: $spacing-2xl $spacing-md;
+  }
+}
+
+.registerCard {
+  max-width: 28rem;
+  width: 100%;
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-xl;
+  box-shadow: var(--shadow-lg, $shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+}
+
+.registerCardInner {
+  padding: $spacing-2xl;
+  
+  @include mobile {
+    padding: $spacing-xl;
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.registerHeader {
+  text-align: center;
+}
+
+.registerTitle {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-xs;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-2xl;
+  }
+}
+
+.registerSubtitle {
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+}
+
+// ============================================
+// FORM
+// ============================================
+
+.registerForm {
+  margin-top: $spacing-2xl;
+  
+  > * + * {
+    margin-top: $spacing-xl;
+  }
+}
+
+.registerInputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.registerField {
+  display: flex;
+  flex-direction: column;
+}
+
+.registerLabel {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-xxs;
+  transition: color $transition-base;
+}
+
+.registerInput {
+  display: block;
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-sm;
+  appearance: none;
+  transition: all $transition-base;
+  
+  &:focus {
+    outline: none;
+    ring: 2px solid $primary;
+    border-color: transparent;
+  }
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+    opacity: 1;
+  }
+  
+  &.error {
+    border-color: $error;
+    
+    &:focus {
+      ring: 2px solid $error;
+    }
+  }
+  
+  &.valid {
+    border-color: $success;
+  }
+}
+
+.registerFieldError {
+  margin-top: $spacing-xxs;
+  font-size: $font-size-sm;
+  color: $error;
+}
+
+.registerFieldSuccess {
+  color: $success;
+  font-size: $font-size-xs;
+  margin-top: $spacing-xxs;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xxs;
+}
+
+// ============================================
+// ERROR
+// ============================================
+
+.registerError {
+  border-radius: $border-radius-lg;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  padding: $spacing-md;
+  display: flex;
+  gap: $spacing-sm;
+}
+
+.registerErrorIcon {
+  flex-shrink: 0;
+  height: 1.25rem;
+  width: 1.25rem;
+  color: $error;
+}
+
+.registerErrorText {
+  font-size: $font-size-sm;
+  color: $error;
+}
+
+// ============================================
+// PASSWORD
+// ============================================
+
+.passwordInputWrapper {
+  position: relative;
+  width: 100%;
+  
+  .registerInput {
+    padding-right: $spacing-2xl;
+  }
+}
+
+.passwordToggleBtn {
+  position: absolute;
+  right: $spacing-md;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+  
+  &:hover {
+    color: var(--text-primary, $text-primary);
+  }
+}
+
+.passwordToggleIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.passwordStrength {
+  margin-top: $spacing-xs;
+}
+
+.passwordStrengthBar {
+  height: 0.25rem;
+  background-color: var(--border-color, $border-color);
+  border-radius: $border-radius-sm;
+  overflow: hidden;
+  margin-bottom: $spacing-xxs;
+}
+
+.passwordStrengthFill {
+  height: 100%;
+  transition: all $transition-base;
+}
+
+.passwordStrengthText {
+  font-size: $font-size-xs;
+  margin: 0;
+}
+
+.registerHint {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  margin-top: $spacing-xxs;
+}
+
+// ============================================
+// TERMS
+// ============================================
+
+.registerTerms {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+  
+  a {
+    font-weight: $font-weight-medium;
+    color: $primary;
+    text-decoration: none;
+    transition: color $transition-base;
+    
+    &:hover {
+      color: $primary-dark;
+    }
+  }
+}
+
+// ============================================
+// BUTTON
+// ============================================
+
+.registerButton {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: $spacing-md;
+  border: 1px solid transparent;
+  border-radius: $border-radius-lg;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  box-shadow: var(--shadow-md, $shadow-md);
+  transition: all $transition-base;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg, $shadow-lg);
+  }
+  
+  &:focus {
+    outline: none;
+    ring: 2px solid $primary;
+    ring-offset: 2px;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.registerButtonLoading {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.registerSpinner {
+  animation: spin 1s linear infinite;
+  height: 1.25rem;
+  width: 1.25rem;
+  color: $text-white;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================
+// FOOTER
+// ============================================
+
+.registerFooter {
+  text-align: center;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+  
+  a {
+    font-weight: $font-weight-medium;
+    color: $primary;
+    text-decoration: none;
+    transition: color $transition-base;
+    
+    &:hover {
+      color: $primary-dark;
+      text-decoration: underline;
+    }
+  }
+}
+
+.registerCheckboxWrapper {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.registerCheckbox {
+  height: 1rem;
+  width: 1rem;
+  color: $primary;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-sm;
+  accent-color: $primary;
+  
+  &:focus {
+    ring: 2px solid $primary;
+  }
+}
+
+.registerCheckboxLabel {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+}
+
+// ============================================
+// SUCCESS STATE
+// ============================================
+
+.registerSuccessIcon {
+  font-size: $font-size-4xl;
+  text-align: center;
+  margin-bottom: $spacing-md;
+}
+
+.registerSuccessMessage {
+  text-align: center;
+  margin: $spacing-xl 0;
+}
+
+.registerInfoBox {
+  background-color: rgba(59, 130, 246, 0.05);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: $border-radius-md;
+  padding: $spacing-md;
+  margin-top: $spacing-lg;
+  text-align: left;
+  
+  p {
+    margin: $spacing-xs 0;
+    color: var(--text-secondary, $text-secondary);
+    
+    &:first-child {
+      margin-top: 0;
+    }
+    
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+.registerActions {
+  text-align: center;
+  margin-top: $spacing-xl;
+}
+
+.registerButtonLink {
+  display: inline-block;
+  padding: $spacing-md $spacing-xl;
+  background: $primary-gradient;
+  color: $text-white;
+  text-decoration: none;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+    text-decoration: none;
+  }
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+
+@include mobile {
+  .registerCardInner {
+    padding: $spacing-xl;
+  }
+  
+  .registerTitle {
+    font-size: $font-size-2xl;
+  }
+  
+  .registerButton {
+    padding: $spacing-sm $spacing-md;
+  }
+  
+  .registerInput {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+  }
+  
+  .registerFooter {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+}
+
+// ============================================
+// DARK MODE
+// ============================================
+
+:global(.dark-theme) {
+  .registerInput {
+    background: var(--bg-card, #1a1a3a);
+  }
+  
+  .registerInfoBox {
+    background-color: rgba(59, 130, 246, 0.1);
+  }
+}

@@ -1,0 +1,215 @@
+/* src/account/components/Auth/RoleSelector.module.scss */
+@use "../../../styles/variables" as *;
+@use "../../../styles/mixins" as *;
+
+.roleSelector {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-2xl $spacing-md;
+  transition: background $transition-base;
+}
+
+.roleSelectorContainer {
+  max-width: 900px;
+  width: 100%;
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.roleSelectorHeader {
+  text-align: center;
+  margin-bottom: $spacing-3xl;
+}
+
+.roleSelectorTitle {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-xs;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-2xl;
+  }
+}
+
+.roleSelectorSubtitle {
+  font-size: $font-size-lg;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+// ============================================
+// GRID
+// ============================================
+
+.roleSelectorGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: $spacing-xl;
+  margin-bottom: $spacing-2xl;
+  
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-lg;
+  }
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-md;
+  }
+}
+
+// ============================================
+// ROLE CARD
+// ============================================
+
+.roleCard {
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-xl;
+  padding: $spacing-2xl $spacing-xl;
+  text-align: center;
+  border: 2px solid var(--border-color, $border-color);
+  border-top-width: 4px;
+  cursor: pointer;
+  transition: all $transition-base;
+  box-shadow: var(--shadow-sm, $shadow-sm);
+  text-decoration: none;
+  display: block;
+  
+  &:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-xl, $shadow-xl);
+    border-color: var(--card-accent, $primary);
+  }
+  
+  &:active {
+    transform: translateY(-4px);
+  }
+  
+  @include mobile {
+    padding: $spacing-xl $spacing-lg;
+  }
+}
+
+.roleCardIcon {
+  font-size: $font-size-4xl;
+  margin-bottom: $spacing-md;
+  display: block;
+  width: 72px;
+  height: 72px;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-full;
+  background: var(--bg-primary, #f8f9fa);
+  transition: all $transition-base;
+  
+  span {
+    font-size: $font-size-3xl;
+  }
+  
+  @include mobile {
+    width: 60px;
+    height: 60px;
+    
+    span {
+      font-size: $font-size-2xl;
+    }
+  }
+}
+
+.roleCard:hover .roleCardIcon {
+  transform: scale(1.1) rotate(-5deg);
+}
+
+.roleCardTitle {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-xs;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-lg;
+  }
+}
+
+.roleCardDescription {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  line-height: 1.5;
+  transition: color $transition-base;
+}
+
+.roleCardArrow {
+  margin-top: $spacing-md;
+  font-size: $font-size-xl;
+  color: var(--text-light, $text-light);
+  transition: all $transition-base;
+  display: inline-block;
+}
+
+.roleCard:hover .roleCardArrow {
+  transform: translateX(6px);
+  color: $primary;
+}
+
+// ============================================
+// FOOTER
+// ============================================
+
+.roleSelectorFooter {
+  text-align: center;
+  padding-top: $spacing-xl;
+  border-top: 1px solid var(--border-color, $border-color);
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
+    
+    &.textSm {
+      font-size: $font-size-xs;
+      color: var(--text-light, $text-light);
+      margin-top: $spacing-xs;
+    }
+  }
+  
+  a {
+    color: $primary;
+    text-decoration: none;
+    font-weight: $font-weight-medium;
+    transition: color $transition-base;
+    
+    &:hover {
+      color: $primary-dark;
+      text-decoration: underline;
+    }
+  }
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+
+@include mobile {
+  .roleSelector {
+    padding: $spacing-xl $spacing-sm;
+  }
+  
+  .roleSelectorHeader {
+    margin-bottom: $spacing-2xl;
+  }
+}

@@ -1,0 +1,392 @@
+/* src/account/components/Auth/employee/EmployeeLogin.module.scss */
+@use "../../../../styles/variables" as *;
+@use "../../../../styles/mixins" as *;
+
+.employeeLoginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-md;
+  transition: background $transition-base;
+}
+
+.employeeLoginBox {
+  max-width: 440px;
+  width: 100%;
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-xl;
+  padding: $spacing-2xl;
+  box-shadow: var(--shadow-xl, $shadow-xl);
+  border: 1px solid var(--border-color, $border-color);
+  animation: slideUp 0.5s ease-out;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-xl;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.employeeLoginHeader {
+  text-align: center;
+  margin-bottom: $spacing-2xl;
+}
+
+.employeeLoginIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: 50%;
+  margin-bottom: $spacing-md;
+  color: $text-white;
+  box-shadow: var(--shadow-md, $shadow-md);
+  
+  svg {
+    width: 40px;
+    height: 40px;
+  }
+  
+  @include mobile {
+    width: 60px;
+    height: 60px;
+    
+    svg {
+      width: 30px;
+      height: 30px;
+    }
+  }
+}
+
+.employeeLoginTitle {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-xs;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-xl;
+  }
+}
+
+.employeeLoginSubtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+}
+
+// ============================================
+// MESSAGES
+// ============================================
+
+.employeeLoginMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  border-radius: $border-radius-md;
+  margin-bottom: $spacing-xl;
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+.employeeLoginError {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid $error;
+}
+
+.employeeLoginPending {
+  background-color: rgba(251, 191, 36, 0.1);
+  border-left: 4px solid #f59e0b;
+}
+
+.messageIcon {
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+}
+
+.messageText {
+  font-size: $font-size-sm;
+  color: var(--text-primary, $text-primary);
+  flex: 1;
+  transition: color $transition-base;
+}
+
+// ============================================
+// FORM
+// ============================================
+
+.employeeLoginForm {
+  margin-top: $spacing-xl;
+}
+
+.employeeLoginField {
+  margin-bottom: $spacing-xl;
+}
+
+.employeeLoginLabel {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-xs;
+  transition: color $transition-base;
+}
+
+.employeeLoginInputWrapper {
+  position: relative;
+}
+
+.inputIcon {
+  position: absolute;
+  left: $spacing-md;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light, $text-light);
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+}
+
+.employeeLoginInput {
+  width: 100%;
+  padding: $spacing-md $spacing-md $spacing-md $spacing-2xl;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  transition: all $transition-base;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  
+  &:focus {
+    outline: none;
+    border-color: #10b981;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+    background: var(--bg-card, #ffffff);
+  }
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+  }
+}
+
+// ============================================
+// OPTIONS
+// ============================================
+
+.employeeLoginOptions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-xl;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.employeeLoginCheckbox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  cursor: pointer;
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+  
+  input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    cursor: pointer;
+    accent-color: #10b981;
+  }
+}
+
+.employeeLoginForgot {
+  font-size: $font-size-sm;
+  color: #10b981;
+  text-decoration: none;
+  transition: color $transition-base;
+  
+  &:hover {
+    color: #059669;
+    text-decoration: underline;
+  }
+}
+
+// ============================================
+// BUTTON
+// ============================================
+
+.employeeLoginButton {
+  width: 100%;
+  padding: $spacing-md;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: $text-white;
+  border: none;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  position: relative;
+  overflow: hidden;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+.employeeLoginButtonLoading {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.spinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  animation: spin 1s linear infinite;
+}
+
+.spinnerCircle {
+  stroke: currentColor;
+  stroke-dasharray: 30;
+}
+
+// ============================================
+// INFO BOX
+// ============================================
+
+.employeeLoginInfo {
+  margin-top: $spacing-xl;
+  padding: $spacing-md;
+  background-color: rgba(16, 185, 129, 0.05);
+  border-radius: $border-radius-md;
+  display: flex;
+  gap: $spacing-sm;
+  align-items: flex-start;
+}
+
+.infoIcon {
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+}
+
+.infoContent {
+  flex: 1;
+}
+
+.infoTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: #065f46;
+  margin-bottom: $spacing-xxs;
+}
+
+.infoText {
+  font-size: $font-size-xs;
+  color: #047857;
+  line-height: 1.4;
+}
+
+// ============================================
+// FOOTER
+// ============================================
+
+.employeeLoginFooter {
+  margin-top: $spacing-2xl;
+  text-align: center;
+}
+
+.footerLinks {
+  display: flex;
+  justify-content: center;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.footerLink {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  text-decoration: none;
+  transition: color $transition-base;
+  
+  &:hover {
+    color: #10b981;
+    text-decoration: underline;
+  }
+}
+
+.separator {
+  font-size: $font-size-xs;
+  color: var(--border-color, $border-color);
+}
+
+.footerHelp {
+  margin-top: $spacing-xs;
+}
+
+.helpLink {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-decoration: none;
+  transition: color $transition-base;
+  
+  &:hover {
+    color: #10b981;
+    text-decoration: underline;
+  }
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+
+@include mobile {
+  .employeeLoginBox {
+    padding: $spacing-xl;
+  }
+  
+  .footerLinks {
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+  
+  .separator {
+    display: none;
+  }
+}

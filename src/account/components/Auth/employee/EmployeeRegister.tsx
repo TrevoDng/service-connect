@@ -2,11 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import type { RegisterData } from '../../../types/user';
-
-// @ts-ignore: Allow importing CSS without declaration file
-import './EmployeeRegister.css';
-//import { useSlider } from '../../../../slider/slidercontext/SliderContext';
-//import { useMainCategoryContext } from '../../../../itemsComponents/products/category-filter/context/MainCategoryFilterContext';
+import styles from './EmployeeRegister.module.scss';
 
 const EmployeeRegister: React.FC = () => {
   const { register, isLoading } = useAuth();
@@ -21,7 +17,7 @@ const EmployeeRegister: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [verifyingCode, setVerifyingCode] = useState(false);
-  const [, setCodeValid] = useState(false);
+  const [codeValid, setCodeValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);
@@ -29,13 +25,6 @@ const EmployeeRegister: React.FC = () => {
     success: boolean;
     message: string;
   } | null>(null);
-  //  const { hideSlider } = useSlider();
-  //  const {hideMainCategory} = useMainCategoryContext();
-  //               hideMainCategory();
-  //   // Hide slider on this page
-  //   useEffect(() => {
-  //     hideSlider();
-  //   }, [hideSlider]);
 
   const API_BASE = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -109,7 +98,6 @@ const EmployeeRegister: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Real-time password match checker
   const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -156,7 +144,7 @@ const EmployeeRegister: React.FC = () => {
         email: formData.email,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        secretCode: code, // Include the secret code for employee registration
+        secretCode: code,
         rememberMe: false,
       };
 
@@ -193,7 +181,6 @@ const EmployeeRegister: React.FC = () => {
     setShowConfirmPassword(!showConfirmPassword);
   };
 
-  // Get password strength indicator
   const getPasswordStrength = () => {
     const password = formData.password;
     if (!password) return null;
@@ -213,21 +200,20 @@ const EmployeeRegister: React.FC = () => {
 
   const passwordStrength = getPasswordStrength();
 
-  // If registration was successful, show success message
   if (registrationResult?.success) {
     return (
-      <div className="register-container">
-        <div className="register-card">
-          <div className="register-card-inner">
-            <div className="register-header">
-              <div className="register-success-icon">✅</div>
-              <h2 className="register-title">Registration Submitted!</h2>
+      <div className={styles.registerContainer}>
+        <div className={styles.registerCard}>
+          <div className={styles.registerCardInner}>
+            <div className={styles.registerHeader}>
+              <div className={styles.registerSuccessIcon}>✅</div>
+              <h2 className={styles.registerTitle}>Registration Submitted!</h2>
             </div>
             
-            <div className="register-success-message">
+            <div className={styles.registerSuccessMessage}>
               <p>{registrationResult.message}</p>
               
-              <div className="register-info-box">
+              <div className={styles.registerInfoBox}>
                 <p>📧 <strong>Check your email</strong></p>
                 <p>We've sent a verification link to your email address. Please verify your email to continue.</p>
                 <p style={{ marginTop: '12px' }}>⏳ <strong>Pending Admin Approval</strong></p>
@@ -235,8 +221,8 @@ const EmployeeRegister: React.FC = () => {
               </div>
             </div>
             
-            <div className="register-actions">
-              <a href="/login/employee" className="register-button-link">
+            <div className={styles.registerActions}>
+              <a href="/login/employee" className={styles.registerButtonLink}>
                 Go to Employee Login
               </a>
             </div>
@@ -247,12 +233,12 @@ const EmployeeRegister: React.FC = () => {
   }
 
   return (
-    <div className="register-container">
-      <div className="register-card">
-        <div className="register-card-inner">
-          <div className="register-header">
-            <h2 className="register-title">Employee Registration</h2>
-            <p className="register-subtitle">
+    <div className={styles.registerContainer}>
+      <div className={styles.registerCard}>
+        <div className={styles.registerCardInner}>
+          <div className={styles.registerHeader}>
+            <h2 className={styles.registerTitle}>Employee Registration</h2>
+            <p className={styles.registerSubtitle}>
               {step === 'code' 
                 ? 'Enter your security code to begin registration'
                 : 'Create your employee account'}
@@ -260,9 +246,9 @@ const EmployeeRegister: React.FC = () => {
           </div>
 
           {step === 'code' ? (
-            <div className="code-form">
-              <div className="register-field">
-                <label htmlFor="code" className="register-label">
+            <div className={styles.codeForm}>
+              <div className={styles.registerField}>
+                <label htmlFor="code" className={styles.registerLabel}>
                   Security Code
                 </label>
                 <input
@@ -272,11 +258,11 @@ const EmployeeRegister: React.FC = () => {
                   required
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
-                  className={`register-input ${errors.code ? 'error' : ''}`}
+                  className={`${styles.registerInput} ${errors.code ? styles.error : ''}`}
                   placeholder="Enter your security code"
                 />
-                {errors.code && <p className="register-field-error">{errors.code}</p>}
-                <p className="register-hint">
+                {errors.code && <p className={styles.registerFieldError}>{errors.code}</p>}
+                <p className={styles.registerHint}>
                   Please enter the security code provided by your administrator
                 </p>
               </div>
@@ -284,21 +270,21 @@ const EmployeeRegister: React.FC = () => {
               <button
                 onClick={validateCode}
                 disabled={verifyingCode}
-                className="register-button"
+                className={styles.registerButton}
               >
                 {verifyingCode ? 'Validating...' : 'Verify Code'}
               </button>
             </div>
           ) : (
-            <form className="register-form" onSubmit={handleRegister}>
+            <form className={styles.registerForm} onSubmit={handleRegister}>
               {errors.submit && (
-                <div className="register-error">
-                  <div className="register-error-text">{errors.submit}</div>
+                <div className={styles.registerError}>
+                  <div className={styles.registerErrorText}>{errors.submit}</div>
                 </div>
               )}
 
-              <div className="register-field">
-                <label htmlFor="firstName" className="register-label">
+              <div className={styles.registerField}>
+                <label htmlFor="firstName" className={styles.registerLabel}>
                   First Name
                 </label>
                 <input
@@ -308,14 +294,14 @@ const EmployeeRegister: React.FC = () => {
                   required
                   value={formData.firstName}
                   onChange={handleChange}
-                  className={`register-input ${errors.firstName ? 'error' : ''}`}
+                  className={`${styles.registerInput} ${errors.firstName ? styles.error : ''}`}
                   placeholder="Enter your first name"
                 />
-                {errors.firstName && <p className="register-field-error">{errors.firstName}</p>}
+                {errors.firstName && <p className={styles.registerFieldError}>{errors.firstName}</p>}
               </div>
 
-              <div className="register-field">
-                <label htmlFor="lastName" className="register-label">
+              <div className={styles.registerField}>
+                <label htmlFor="lastName" className={styles.registerLabel}>
                   Last Name
                 </label>
                 <input
@@ -325,14 +311,14 @@ const EmployeeRegister: React.FC = () => {
                   required
                   value={formData.lastName}
                   onChange={handleChange}
-                  className={`register-input ${errors.lastName ? 'error' : ''}`}
+                  className={`${styles.registerInput} ${errors.lastName ? styles.error : ''}`}
                   placeholder="Enter your last name"
                 />
-                {errors.lastName && <p className="register-field-error">{errors.lastName}</p>}
+                {errors.lastName && <p className={styles.registerFieldError}>{errors.lastName}</p>}
               </div>
 
-              <div className="register-field">
-                <label htmlFor="email" className="register-label">
+              <div className={styles.registerField}>
+                <label htmlFor="email" className={styles.registerLabel}>
                   Email Address
                 </label>
                 <input
@@ -342,17 +328,17 @@ const EmployeeRegister: React.FC = () => {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className={`register-input ${errors.email ? 'error' : ''}`}
+                  className={`${styles.registerInput} ${errors.email ? styles.error : ''}`}
                   placeholder="Enter your email"
                 />
-                {errors.email && <p className="register-field-error">{errors.email}</p>}
+                {errors.email && <p className={styles.registerFieldError}>{errors.email}</p>}
               </div>
 
-              <div className="register-field">
-                <label htmlFor="password" className="register-label">
+              <div className={styles.registerField}>
+                <label htmlFor="password" className={styles.registerLabel}>
                   Password
                 </label>
-                <div className="password-input-wrapper">
+                <div className={styles.passwordInputWrapper}>
                   <input
                     id="password"
                     name="password"
@@ -361,56 +347,54 @@ const EmployeeRegister: React.FC = () => {
                     required
                     value={formData.password}
                     onChange={handleChange}
-                    className={`register-input ${errors.password ? 'error' : ''}`}
+                    className={`${styles.registerInput} ${errors.password ? styles.error : ''}`}
                     placeholder="Create a password"
                   />
                   <button
                     type="button"
-                    className="password-toggle-btn"
+                    className={styles.passwordToggleBtn}
                     onClick={togglePasswordVisibility}
                     tabIndex={-1}
                   >
                     {showPassword ? (
-                      <svg className="password-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={styles.passwordToggleIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     ) : (
-                      <svg className="password-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={styles.passwordToggleIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                       </svg>
                     )}
                   </button>
                 </div>
-                {errors.password && <p className="register-field-error">{errors.password}</p>}
+                {errors.password && <p className={styles.registerFieldError}>{errors.password}</p>}
                 
-                {/* Password strength indicator */}
                 {formData.password && (
-                  <div className="password-strength">
-                    <div className="password-strength-bar">
+                  <div className={styles.passwordStrength}>
+                    <div className={styles.passwordStrengthBar}>
                       <div 
-                        className="password-strength-fill" 
+                        className={styles.passwordStrengthFill} 
                         style={{ 
                           width: passwordStrength?.width,
                           backgroundColor: passwordStrength?.color,
-                          transition: 'all 0.3s ease'
                         }}
                       />
                     </div>
-                    <p className="password-strength-text" style={{ color: passwordStrength?.color }}>
+                    <p className={styles.passwordStrengthText} style={{ color: passwordStrength?.color }}>
                       Password strength: {passwordStrength?.text}
                     </p>
                   </div>
                 )}
                 
-                <p className="register-hint">Must be at least 6 characters with letters and numbers</p>
+                <p className={styles.registerHint}>Must be at least 6 characters with letters and numbers</p>
               </div>
 
-              <div className="register-field">
-                <label htmlFor="confirmPassword" className="register-label">
+              <div className={styles.registerField}>
+                <label htmlFor="confirmPassword" className={styles.registerLabel}>
                   Confirm Password
                 </label>
-                <div className="password-input-wrapper">
+                <div className={styles.passwordInputWrapper}>
                   <input
                     id="confirmPassword"
                     name="confirmPassword"
@@ -419,36 +403,36 @@ const EmployeeRegister: React.FC = () => {
                     required
                     value={formData.confirmPassword}
                     onChange={handleChange}
-                    className={`register-input ${errors.confirmPassword ? 'error' : ''} ${passwordMatch === true && formData.confirmPassword ? 'valid' : ''}`}
+                    className={`${styles.registerInput} ${errors.confirmPassword ? styles.error : ''} ${passwordMatch === true && formData.confirmPassword ? styles.valid : ''}`}
                     placeholder="Confirm your password"
                   />
                   <button
                     type="button"
-                    className="password-toggle-btn"
+                    className={styles.passwordToggleBtn}
                     onClick={toggleConfirmPasswordVisibility}
                     tabIndex={-1}
                   >
                     {showConfirmPassword ? (
-                      <svg className="password-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={styles.passwordToggleIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                       </svg>
                     ) : (
-                      <svg className="password-toggle-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className={styles.passwordToggleIcon} fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
                       </svg>
                     )}
                   </button>
                 </div>
                 {errors.confirmPassword && (
-                  <p className="register-field-error">{errors.confirmPassword}</p>
+                  <p className={styles.registerFieldError}>{errors.confirmPassword}</p>
                 )}
                 {passwordMatch === true && formData.confirmPassword && !errors.confirmPassword && (
-                  <p className="register-field-success">✓ Passwords match</p>
+                  <p className={styles.registerFieldSuccess}>✓ Passwords match</p>
                 )}
               </div>
 
-              <div className="register-terms">
+              <div className={styles.registerTerms}>
                 By creating an account, you agree to our{' '}
                 <a href="/terms">Terms of Service</a> and{' '}
                 <a href="/privacy">Privacy Policy</a>.
@@ -457,19 +441,19 @@ const EmployeeRegister: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="register-button"
+                className={styles.registerButton}
               >
                 {isLoading ? 'Creating Account...' : 'Register as Employee'}
               </button>
             </form>
           )}
 
-          <div className="register-footer">
+          <div className={styles.registerFooter}>
             Already have an account?{' '}
             <a href="/login/employee">Sign in as Employee</a>
           </div>
           
-          <div className="register-footer">
+          <div className={styles.registerFooter}>
             <a href="/login">Sign in as Customer</a>
           </div>
         </div>

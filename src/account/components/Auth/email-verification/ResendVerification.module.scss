@@ -1,0 +1,313 @@
+/* src/account/components/Auth/email-verification/ResendVerification.module.scss */
+@use "../../../../styles/variables" as *;
+@use "../../../../styles/mixins" as *;
+
+.resendContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-md;
+  transition: background $transition-base;
+}
+
+.resendCard {
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-2xl;
+  box-shadow: var(--shadow-xl, $shadow-xl);
+  width: 100%;
+  max-width: 440px;
+  padding: $spacing-3xl $spacing-2xl;
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+  animation: slideUp 0.5s ease-out;
+  
+  @include mobile {
+    padding: $spacing-2xl $spacing-xl;
+    margin: $spacing-md;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.resendHeader {
+  text-align: center;
+  margin-bottom: $spacing-2xl;
+}
+
+.resendIcon {
+  font-size: $font-size-4xl;
+  margin-bottom: $spacing-md;
+  display: inline-block;
+}
+
+.resendTitle {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-xs 0;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-xl;
+  }
+}
+
+.resendSubtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  transition: color $transition-base;
+}
+
+// ============================================
+// FORM
+// ============================================
+
+.resendForm {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+.resendField {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.resendLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+}
+
+.resendInput {
+  padding: $spacing-md $spacing-lg;
+  font-size: $font-size-base;
+  border: 2px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  transition: all $transition-base;
+  outline: none;
+  font-family: inherit;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  &.error {
+    border-color: $error;
+    background-color: rgba(239, 68, 68, 0.05);
+    
+    &:focus {
+      border-color: $error;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+  }
+}
+
+.resendHint {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  margin: $spacing-xxs 0 0 0;
+}
+
+// ============================================
+// ERROR
+// ============================================
+
+.resendError {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: $border-radius-lg;
+  padding: $spacing-md $spacing-lg;
+}
+
+.errorIcon {
+  font-size: $font-size-lg;
+}
+
+.errorText {
+  font-size: $font-size-sm;
+  color: $error;
+  flex: 1;
+}
+
+// ============================================
+// BUTTON
+// ============================================
+
+.resendButton {
+  @include gradient-button;
+  padding: $spacing-md $spacing-xl;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  border-radius: $border-radius-lg;
+  margin-top: $spacing-xs;
+  width: 100%;
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.buttonLoading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-md;
+}
+
+.buttonSpinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: $text-white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+// ============================================
+// SUCCESS
+// ============================================
+
+.resendSuccess {
+  text-align: center;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.successIcon {
+  font-size: $font-size-4xl;
+  margin-bottom: $spacing-md;
+}
+
+.resendSuccess h3 {
+  font-size: $font-size-xl;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-md;
+  transition: color $transition-base;
+}
+
+.resendSuccess p {
+  color: var(--text-secondary, $text-secondary);
+  line-height: 1.6;
+  transition: color $transition-base;
+}
+
+.resendActions {
+  margin-top: $spacing-xl;
+}
+
+// ============================================
+// FOOTER
+// ============================================
+
+.resendFooter {
+  text-align: center;
+  margin-top: $spacing-sm;
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
+  }
+}
+
+.footerLink {
+  background: none;
+  border: none;
+  color: $primary;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color $transition-base;
+  
+  &:hover {
+    color: $primary-dark;
+  }
+}
+
+.resendHelp {
+  margin-top: $spacing-xs;
+  
+  a {
+    color: var(--text-light, $text-light);
+    text-decoration: none;
+    transition: color $transition-base;
+    
+    &:hover {
+      color: $primary;
+      text-decoration: underline;
+    }
+  }
+}
+
+// ============================================
+// ANIMATIONS
+// ============================================
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+
+@include mobile {
+  .resendCard {
+    padding: $spacing-2xl $spacing-lg;
+  }
+  
+  .resendTitle {
+    font-size: $font-size-xl;
+  }
+  
+  .resendButton {
+    padding: $spacing-md;
+    font-size: $font-size-sm;
+  }
+  
+  .resendInput {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+  }
+}

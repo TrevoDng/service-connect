@@ -1,13 +1,7 @@
 // src/account/components/Auth/email-verification/ResendVerification.tsx
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-// import { useSlider } from '../../../../slider/slidercontext/SliderContext';
-// import { useMainCategoryContext } from '../../../../itemsComponents/products/category-filter/context/MainCategoryFilterContext';
-// TypeScript may complain about side-effect CSS imports if no declaration is present.
-// Ignore the next line to avoid "Cannot find module" compile errors in this file.
-// @ts-ignore
-import './ResendVerification.css';
+import styles from './ResendVerification.module.scss';
 
 const API_BASE = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -18,13 +12,6 @@ const ResendVerification: React.FC = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [resendCount, setResendCount] = useState(0);
-  
-  // const { hideSlider } = useSlider();
-  // const { hideMainCategory } = useMainCategoryContext();
-  
-  // // Hide UI elements
-  // hideSlider();
-  // hideMainCategory();
 
   const handleResend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,7 +43,6 @@ const ResendVerification: React.FC = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        // Handle specific error messages
         if (data.error?.code === 'ALREADY_VERIFIED') {
           setError('This email is already verified. Please login.');
           setTimeout(() => navigate('/login'), 2000);
@@ -68,7 +54,6 @@ const ResendVerification: React.FC = () => {
       setSuccess(true);
       setResendCount(prev => prev + 1);
       
-      // Auto-redirect after 5 seconds
       setTimeout(() => {
         navigate('/login', { 
           state: { message: 'Verification email sent! Please check your inbox.' }
@@ -83,49 +68,49 @@ const ResendVerification: React.FC = () => {
   };
 
   return (
-    <div className="resend-verification-container">
-      <div className="resend-verification-card">
-        <div className="resend-header">
-          <div className="resend-icon">📧</div>
-          <h2 className="resend-title">Resend Verification Email</h2>
-          <p className="resend-subtitle">
+    <div className={styles.resendContainer}>
+      <div className={styles.resendCard}>
+        <div className={styles.resendHeader}>
+          <div className={styles.resendIcon}>📧</div>
+          <h2 className={styles.resendTitle}>Resend Verification Email</h2>
+          <p className={styles.resendSubtitle}>
             Enter your email address to receive a new verification link
           </p>
         </div>
 
         {success ? (
-          <div className="resend-success">
-            <div className="success-icon">✅</div>
+          <div className={styles.resendSuccess}>
+            <div className={styles.successIcon}>✅</div>
             <h3>Verification Email Sent!</h3>
             <p>
               We've sent a new verification link to <strong>{email}</strong>.
               Please check your inbox (and spam folder) and click the link to verify your account.
             </p>
             {resendCount > 1 && (
-              <p className="resend-hint">
+              <p className={styles.resendHint}>
                 ⏳ Please wait a few minutes before requesting another email.
               </p>
             )}
-            <div className="resend-actions">
+            <div className={styles.resendActions}>
               <button 
                 onClick={() => navigate('/login')}
-                className="btn-primary"
+                className={styles.resendButton}
               >
                 Go to Login
               </button>
             </div>
           </div>
         ) : (
-          <form className="resend-form" onSubmit={handleResend}>
+          <form className={styles.resendForm} onSubmit={handleResend}>
             {error && (
-              <div className="resend-error">
-                <span className="error-icon">⚠️</span>
-                <span className="error-text">{error}</span>
+              <div className={styles.resendError}>
+                <span className={styles.errorIcon}>⚠️</span>
+                <span className={styles.errorText}>{error}</span>
               </div>
             )}
 
-            <div className="resend-field">
-              <label htmlFor="email" className="resend-label">
+            <div className={styles.resendField}>
+              <label htmlFor="email" className={styles.resendLabel}>
                 Email Address
               </label>
               <input
@@ -136,12 +121,11 @@ const ResendVerification: React.FC = () => {
                   setEmail(e.target.value);
                   setError('');
                 }}
-                className={`resend-input ${error ? 'error' : ''}`}
+                className={`${styles.resendInput} ${error ? styles.error : ''}`}
                 placeholder="Enter your registered email"
-                required
                 disabled={isLoading}
               />
-              <p className="resend-hint">
+              <p className={styles.resendHint}>
                 Enter the email you used to register your account
               </p>
             </div>
@@ -149,11 +133,11 @@ const ResendVerification: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="resend-button"
+              className={styles.resendButton}
             >
               {isLoading ? (
-                <span className="button-loading">
-                  <span className="button-spinner"></span>
+                <span className={styles.buttonLoading}>
+                  <span className={styles.buttonSpinner}></span>
                   Sending...
                 </span>
               ) : (
@@ -161,18 +145,18 @@ const ResendVerification: React.FC = () => {
               )}
             </button>
 
-            <div className="resend-footer">
+            <div className={styles.resendFooter}>
               <p>
                 Already verified?{' '}
                 <button 
                   type="button"
                   onClick={() => navigate('/login')}
-                  className="footer-link"
+                  className={styles.footerLink}
                 >
                   Go to Login
                 </button>
               </p>
-              <p className="resend-help">
+              <p className={styles.resendHelp}>
                 <a href="/register">Don't have an account? Register</a>
               </p>
             </div>

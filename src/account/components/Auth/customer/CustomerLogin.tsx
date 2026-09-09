@@ -3,9 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext'; 
 import type { LoginCredentials } from '../../../types/user';
-//@ts-ignore
-import './CustomerLogin.css';
 import { getUrl } from '../../../../services/getUrl';
+import styles from './CustomerLogin.module.scss';
 
 const CustomerLogin: React.FC = () => {
   const { login, isLoading, user, isAuthenticated } = useAuth();
@@ -18,7 +17,6 @@ const CustomerLogin: React.FC = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Check for URL params (e.g., after registration or email verification)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const registered = urlParams.get('registered');
@@ -34,22 +32,19 @@ const CustomerLogin: React.FC = () => {
       setSuccessMessage('Admin account created successfully! Please log in.');
     }
     
-    // Clean up URL without refreshing the page
     if (registered || verified || adminCreated) {
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }, []);
 
-  // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      // Redirect based on user role using navigate
       if (user.role === 'ADMIN') {
         navigate(getUrl('/admin-dashboard', 'ADMIN')[0]);
       } else if (user.role === 'EMPLOYEE') {
         navigate(getUrl('/employee-dashboard', 'EMPLOYEE')[0]);
       } else {
-        navigate(getUrl('/services')[0]); // Default for CLIENT or other roles
+        navigate(getUrl('/services')[0]);
       }
     }
   }, [isAuthenticated, user, navigate]);
@@ -61,15 +56,12 @@ const CustomerLogin: React.FC = () => {
 
     try {
       await login(credentials);
-      // The useEffect above will handle redirect after authentication
     } catch (error: any) {
       const errorMessage = error.message || "Invalid email or password";
       
-      // Check for email verification error
       if (errorMessage.includes('EMAIL_NOT_VERIFIED') || 
           errorMessage.includes('Please verify your email')) {
         setError('Please verify your email before logging in.');
-        // Redirect to resend page with email pre-filled
         setTimeout(() => {
           navigate(`/resend-verification?email=${encodeURIComponent(credentials.email)}`);
         }, 1500);
@@ -89,37 +81,36 @@ const CustomerLogin: React.FC = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    // Clear error when user starts typing
     if (error) setError('');
   };
 
   return (
-    <div className="login-container">
-      <div className="login-box">
+    <div className={styles.loginContainer}>
+      <div className={styles.loginBox}>
         <div>
-          <h2 className="login-title">Sign in to your account</h2>
-          <p className="login-subtitle">
+          <h2 className={styles.loginTitle}>Sign in to your account</h2>
+          <p className={styles.loginSubtitle}>
             Or{' '}
-            <Link to={getUrl('/register', 'CLIENT')[0]} className="login-link">
+            <Link to={getUrl('/register', 'CLIENT')[0]} className={styles.loginLink}>
               create a new account
             </Link>
           </p>
         </div>
 
-        <form className="login-form" onSubmit={handleSubmit}>
+        <form className={styles.loginForm} onSubmit={handleSubmit}>
           {error && (
-            <div className="login-error">
-              <div className="login-error-text">{error}</div>
+            <div className={styles.loginError}>
+              <div className={styles.loginErrorText}>{error}</div>
             </div>
           )}
           
           {successMessage && (
-            <div className="login-success">
-              <div className="login-success-text">{successMessage}</div>
+            <div className={styles.loginSuccess}>
+              <div className={styles.loginSuccessText}>{successMessage}</div>
             </div>
           )}
 
-          <div className="login-input-group">
+          <div className={styles.loginInputGroup}>
             <div>
               <label htmlFor="email" className="sr-only">
                 Email address
@@ -132,7 +123,7 @@ const CustomerLogin: React.FC = () => {
                 required
                 value={credentials.email}
                 onChange={handleChange}
-                className="login-input"
+                className={styles.loginInput}
                 placeholder="Email address"
               />
             </div>
@@ -148,29 +139,29 @@ const CustomerLogin: React.FC = () => {
                 required
                 value={credentials.password}
                 onChange={handleChange}
-                className="login-input"
+                className={styles.loginInput}
                 placeholder="Password"
               />
             </div>
           </div>
 
-          <div className="login-options">
-            <div className="login-checkbox-wrapper">
+          <div className={styles.loginOptions}>
+            <div className={styles.loginCheckboxWrapper}>
               <input
                 id="remember-me"
                 name="rememberMe"
                 type="checkbox"
                 checked={credentials.rememberMe}
                 onChange={handleChange}
-                className="login-checkbox"
+                className={styles.loginCheckbox}
               />
-              <label htmlFor="remember-me" className="login-checkbox-label">
+              <label htmlFor="remember-me" className={styles.loginCheckboxLabel}>
                 Remember me
               </label>
             </div>
 
-            <div className="login-forgot">
-              <Link to={getUrl('/forgot-password', 'CLIENT')[0]} className="login-forgot-link">
+            <div className={styles.loginForgot}>
+              <Link to={getUrl('/forgot-password', 'CLIENT')[0]} className={styles.loginForgotLink}>
                 Forgot your password?
               </Link>
             </div>
@@ -180,12 +171,12 @@ const CustomerLogin: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="login-button"
+              className={styles.loginButton}
             >
               {isLoading ? (
-                <span className="login-button-loading">
+                <span className={styles.loginButtonLoading}>
                   <svg
-                    className="login-spinner"
+                    className={styles.loginSpinner}
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -212,12 +203,11 @@ const CustomerLogin: React.FC = () => {
             </button>
           </div>
 
-          <div className="login-register-link">
+          <div className={styles.loginRegisterLink}>
             <Link to={getUrl('/register', 'CLIENT')[0]}>Don't have an account? Register</Link>
-            <div 
-            style={{marginTop: "10px"}}>
-            <Link to={getUrl('/service-provider-register', 'EMPLOYEE')[0]}>Register here as a Service provider</Link>
-              </div>
+            <div className={styles.loginRegisterDivider}>
+              <Link to={getUrl('/service-provider-register', 'EMPLOYEE')[0]}>Register here as a Service provider</Link>
+            </div>
           </div>
         </form>
       </div>

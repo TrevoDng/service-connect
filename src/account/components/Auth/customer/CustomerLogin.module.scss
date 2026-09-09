@@ -1,0 +1,321 @@
+/* src/account/components/Auth/customer/CustomerLogin.module.scss */
+@use "../../../../styles/variables" as *;
+@use "../../../../styles/mixins" as *;
+
+.loginContainer {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-3xl $spacing-md;
+  transition: background $transition-base;
+  
+  @include mobile {
+    padding: $spacing-2xl $spacing-md;
+  }
+}
+
+.loginBox {
+  max-width: 28rem;
+  width: 100%;
+  
+  > * + * {
+    margin-top: $spacing-2xl;
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.loginTitle {
+  margin-top: $spacing-xl;
+  text-align: center;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-extrabold;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-2xl;
+  }
+}
+
+.loginSubtitle {
+  margin-top: $spacing-xs;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+}
+
+.loginLink {
+  font-weight: $font-weight-medium;
+  color: $primary;
+  text-decoration: none;
+  transition: color $transition-base;
+  
+  &:hover {
+    color: $primary-dark;
+  }
+}
+
+// ============================================
+// ERROR & SUCCESS
+// ============================================
+
+.loginError {
+  border-radius: $border-radius-md;
+  background-color: rgba(239, 68, 68, 0.1);
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  border-left: 4px solid $error;
+}
+
+.loginErrorText {
+  font-size: $font-size-sm;
+  color: $error;
+}
+
+.loginSuccess {
+  border-radius: $border-radius-md;
+  background-color: rgba(16, 185, 129, 0.1);
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  border-left: 4px solid $success;
+}
+
+.loginSuccessText {
+  font-size: $font-size-sm;
+  color: $success;
+}
+
+// ============================================
+// FORM
+// ============================================
+
+.loginForm {
+  margin-top: $spacing-2xl;
+  
+  > * + * {
+    margin-top: $spacing-xl;
+  }
+}
+
+.loginInputGroup {
+  border-radius: $border-radius-md;
+  box-shadow: var(--shadow-sm, $shadow-sm);
+  
+  > * + * {
+    margin-top: -1px;
+  }
+}
+
+.loginInput {
+  display: block;
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color, $border-color);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-sm;
+  line-height: 1.5;
+  appearance: none;
+  border-radius: 0;
+  position: relative;
+  transition: all $transition-base;
+  
+  &:focus {
+    outline: none;
+    ring: 2px solid $primary;
+    border-color: $primary;
+    z-index: 10;
+  }
+  
+  &:first-child {
+    border-top-left-radius: $border-radius-md;
+    border-top-right-radius: $border-radius-md;
+  }
+  
+  &:last-child {
+    border-bottom-left-radius: $border-radius-md;
+    border-bottom-right-radius: $border-radius-md;
+  }
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+    opacity: 1;
+  }
+}
+
+// ============================================
+// OPTIONS
+// ============================================
+
+.loginOptions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.loginCheckboxWrapper {
+  display: flex;
+  align-items: center;
+}
+
+.loginCheckbox {
+  height: 1rem;
+  width: 1rem;
+  color: $primary;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-sm;
+  accent-color: $primary;
+  
+  &:focus {
+    ring: 2px solid $primary;
+  }
+}
+
+.loginCheckboxLabel {
+  margin-left: $spacing-xs;
+  display: block;
+  font-size: $font-size-sm;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+}
+
+.loginForgot {
+  font-size: $font-size-sm;
+}
+
+.loginForgotLink {
+  font-weight: $font-weight-medium;
+  color: $primary;
+  text-decoration: none;
+  transition: color $transition-base;
+  
+  &:hover {
+    color: $primary-dark;
+  }
+}
+
+// ============================================
+// BUTTON
+// ============================================
+
+.loginButton {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid transparent;
+  border-radius: $border-radius-md;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  &:focus {
+    outline: none;
+    ring: 2px solid $primary;
+    ring-offset: 2px;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+}
+
+.loginButtonLoading {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.loginSpinner {
+  animation: spin 1s linear infinite;
+  height: 1.25rem;
+  width: 1.25rem;
+  color: $text-white;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// ============================================
+// REGISTER LINK
+// ============================================
+
+.loginRegisterLink {
+  margin-top: $spacing-md;
+  text-align: center;
+  
+  a {
+    color: $primary;
+    text-decoration: none;
+    font-weight: $font-weight-medium;
+    transition: color $transition-base;
+    
+    &:hover {
+      color: $primary-dark;
+      text-decoration: underline;
+    }
+  }
+}
+
+.loginRegisterDivider {
+  margin-top: $spacing-sm;
+}
+
+// ============================================
+// RESPONSIVE
+// ============================================
+
+@include mobile {
+  .loginContainer {
+    padding: $spacing-2xl $spacing-md;
+  }
+  
+  .loginBox {
+    padding: 0;
+  }
+  
+  .loginTitle {
+    font-size: $font-size-2xl;
+  }
+  
+  .loginOptions {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+}
+
+// ============================================
+// DARK MODE
+// ============================================
+
+:global(.dark-theme) {
+  .loginInput {
+    background: var(--bg-card, #1a1a3a);
+  }
+}

@@ -1,8 +1,7 @@
 // src/account/components/Auth/RoleSelector.tsx
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-//import './RoleSelector.css';
+import styles from './RoleSelector.module.scss';
 
 const RoleSelector: React.FC = () => {
   const navigate = useNavigate();
@@ -35,34 +34,40 @@ const RoleSelector: React.FC = () => {
   ];
 
   return (
-    <div className="role-selector">
-      <div className="role-selector__container">
-        <div className="role-selector__header">
-          <h1 className="role-selector__title">Welcome Back</h1>
-          <p className="role-selector__subtitle">Select your account type to continue</p>
+    <div className={styles.roleSelector}>
+      <div className={styles.roleSelectorContainer}>
+        <div className={styles.roleSelectorHeader}>
+          <h1 className={styles.roleSelectorTitle}>Welcome Back</h1>
+          <p className={styles.roleSelectorSubtitle}>Select your account type to continue</p>
         </div>
 
-        <div className="role-selector__grid">
+        <div className={styles.roleSelectorGrid}>
           {roles.map(role => (
             <button
               key={role.id}
               onClick={() => navigate(role.path)}
-              className="role-card"
-              style={{ borderTopColor: role.color }}
+              className={styles.roleCard}
+              style={{ 
+                borderTopColor: role.color,
+                '--card-accent': role.color 
+              } as React.CSSProperties}
             >
-              <div className="role-card__icon" style={{ backgroundColor: `${role.color}10` }}>
-                <span style={{ fontSize: '2rem' }}>{role.icon}</span>
+              <div 
+                className={styles.roleCardIcon}
+                style={{ backgroundColor: `${role.color}10` }}
+              >
+                <span>{role.icon}</span>
               </div>
-              <h3 className="role-card__title">{role.title}</h3>
-              <p className="role-card__description">{role.description}</p>
-              <div className="role-card__arrow">→</div>
+              <h3 className={styles.roleCardTitle}>{role.title}</h3>
+              <p className={styles.roleCardDescription}>{role.description}</p>
+              <div className={styles.roleCardArrow}>→</div>
             </button>
           ))}
         </div>
 
-        <div className="role-selector__footer">
+        <div className={styles.roleSelectorFooter}>
           <p>Don't have an account? <a href="/register">Register as Customer</a></p>
-          <p className="text-sm mt-2 text-gray-500">
+          <p className={styles.textSm}>
             Employees: Contact your administrator for registration code
           </p>
         </div>
