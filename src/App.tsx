@@ -121,7 +121,8 @@ const AppContent: React.FC = () => {
                 <AdminDashboard />
               </RoleProtectedRoute>
             } 
-          />
+          /> 
+	  {/*
           <Route 
             path="/employee-dashboard" 
             element={
@@ -129,7 +130,15 @@ const AppContent: React.FC = () => {
                 <EmployeeDashboard />
               </RoleProtectedRoute>
             } 
+          /> */}
+
+	<Route 
+            path="/employee-dashboard" 
+            element={
+                <EmployeeDashboard />
+            } 
           />
+
           <Route path="/provider/dashboard" element={<ProviderDashboard />} />
           
           {/* 404 */}
