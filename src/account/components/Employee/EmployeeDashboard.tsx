@@ -1,3 +1,5 @@
+// src/account/components/Employee/EmployeeDashboard.tsx
+
 import React from 'react';
 //@ts-ignore
 import './EmployeeDashboard.css';
