@@ -113,7 +113,8 @@ const AppContent: React.FC = () => {
 
 	  <Route path="/client/dashboard" element={               <ClientDashboard />                               } />
           
-          {/* Role-based Routes */}
+          {/* Role-based Routes 
+
           <Route 
             path="/admin-dashboard" 
             element={
@@ -121,7 +122,17 @@ const AppContent: React.FC = () => {
                 <AdminDashboard />
               </RoleProtectedRoute>
             } 
-          /> 
+          />
+	  */}
+
+         <Route 
+            path="/admin-dashboard" 
+            element={
+                <AdminDashboard />
+            } 
+          />
+
+
 	  {/*
           <Route 
             path="/employee-dashboard" 
