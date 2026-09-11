@@ -1,3 +1,4 @@
+// src/utils/priceFormat.ts
 // Clean price - remove currency symbols and convert to number
 export const cleanPrice = (price: string | number): number => {
   if (typeof price === 'number') return price;

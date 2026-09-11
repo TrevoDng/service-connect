@@ -1,3 +1,5 @@
+//src/utils/imageUpload.ts
+
 export const uploadImage = async (file: File): Promise<string> => {
   // Placeholder for image upload logic
   console.log('Uploading image:', file.name);

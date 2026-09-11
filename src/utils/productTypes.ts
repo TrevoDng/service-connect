@@ -1,3 +1,5 @@
+// src/utils/productTypes.ts
+
 export interface ProductType {
   id: string;
   name: string;
