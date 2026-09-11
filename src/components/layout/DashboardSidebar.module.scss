@@ -1,0 +1,279 @@
+/* src/components/layout/DashboardSidebar.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// SIDEBAR SHELL
+// ============================================
+
+.sidebar {
+  width: 280px;
+  min-width: 280px;
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-xl;
+  box-shadow: var(--shadow-md, $shadow-md);
+  padding: $spacing-xl;
+  display: flex;
+  flex-direction: column;
+  height: fit-content;
+  position: sticky;
+  top: 80px;
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+
+  @include tablet {
+    width: 240px;
+    min-width: 240px;
+    padding: $spacing-lg;
+  }
+
+  // Below 768px, the sidebar lives inside a drawer instead.
+  // The drawer wrapper handles width/positioning, so we relax sticky here.
+  @include mobile {
+    width: 100%;
+    min-width: unset;
+    position: static;
+    top: auto;
+    border-radius: 0;
+    border: none;
+    box-shadow: none;
+    padding: $spacing-md;
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.sidebarHeader {
+  position: relative;
+  text-align: center;
+  padding-bottom: $spacing-lg;
+  border-bottom: 1px solid var(--border-color, $border-color);
+  margin-bottom: $spacing-lg;
+}
+
+// Close button only shows in drawer (mobile) mode
+.drawerClose {
+  position: absolute;
+  top: -$spacing-xs;
+  right: -$spacing-xs;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-lg;
+  cursor: pointer;
+  border-radius: $border-radius-full;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: var(--navbar-hover, rgba(0, 0, 0, 0.05));
+    color: var(--text-primary, $text-primary);
+  }
+
+  // Only meaningful in drawer mode; hide on desktop
+  @media (min-width: 769px) {
+    display: none;
+  }
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: $border-radius-full;
+  background: var(--sidebar-avatar-gradient, $primary-gradient);
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  margin: 0 auto $spacing-md;
+
+  @include mobile {
+    width: 56px;
+    height: 56px;
+    font-size: $font-size-xl;
+  }
+}
+
+.userInfo {
+  .userName {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: $spacing-xxs;
+    transition: color $transition-base;
+  }
+
+  .userRole {
+    display: inline-block;
+    background: var(--sidebar-role-bg, rgba(102, 126, 234, 0.1));
+    color: var(--sidebar-role-color, $primary);
+    font-size: $font-size-xs;
+    font-weight: $font-weight-medium;
+    padding: $spacing-xxs $spacing-sm;
+    border-radius: $border-radius-full;
+    margin-bottom: $spacing-xxs;
+  }
+
+  .userEmail {
+    font-size: $font-size-sm;
+    color: var(--text-light, $text-light);
+    word-break: break-all;
+    transition: color $transition-base;
+  }
+}
+
+// ============================================
+// NAV
+// ============================================
+
+.sidebarNav {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-lg;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  border: none;
+  background: none;
+  border-radius: $border-radius-md;
+  color: var(--text-secondary, $text-secondary);
+  cursor: pointer;
+  transition: all $transition-base;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  width: 100%;
+  text-align: left;
+  position: relative;
+
+  svg {
+    width: 20px;
+    font-size: $font-size-lg;
+    flex-shrink: 0;
+    color: var(--text-secondary, $text-secondary);
+    transition: color $transition-base;
+  }
+
+  span {
+    transition: color $transition-base;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &:hover:not(:disabled) {
+    background: var(--sidebar-hover-bg, var(--navbar-hover, rgba(102, 126, 234, 0.08)));
+    color: var(--sidebar-accent, $primary);
+
+    svg {
+      color: var(--sidebar-accent, $primary);
+    }
+
+    transform: translateX(4px);
+  }
+
+  &.active {
+    background: var(--sidebar-active-bg, var(--navbar-hover, rgba(102, 126, 234, 0.12)));
+    color: var(--sidebar-accent, $primary);
+    font-weight: $font-weight-semibold;
+
+    svg {
+      color: var(--sidebar-accent, $primary);
+    }
+
+    &::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 70%;
+      background: var(--sidebar-avatar-gradient, $primary-gradient);
+      border-radius: 0 $border-radius-sm $border-radius-sm 0;
+    }
+  }
+
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+
+    svg {
+      font-size: $font-size-base;
+    }
+  }
+}
+
+.badge {
+  margin-left: auto;
+  background: var(--sidebar-accent, $primary);
+  color: $text-white;
+  font-size: $font-size-xs;
+  padding: 2px 8px;
+  border-radius: $border-radius-full;
+  font-weight: $font-weight-bold;
+}
+
+// ============================================
+// FOOTER
+// ============================================
+
+.sidebarFooter {
+  padding-top: $spacing-lg;
+  border-top: 1px solid var(--border-color, $border-color);
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  border: none;
+  background: none;
+  border-radius: $border-radius-md;
+  color: $error;
+  cursor: pointer;
+  transition: all $transition-base;
+  font-size: $font-size-base;
+  font-weight: $font-weight-medium;
+  width: 100%;
+  text-align: left;
+
+  svg {
+    width: 20px;
+    font-size: $font-size-lg;
+    flex-shrink: 0;
+    color: $error;
+    transition: color $transition-base;
+  }
+
+  &:hover {
+    background: rgba(239, 71, 111, 0.08);
+    transform: translateX(4px);
+  }
+
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-sm;
+
+    svg {
+      font-size: $font-size-base;
+    }
+  }
+}

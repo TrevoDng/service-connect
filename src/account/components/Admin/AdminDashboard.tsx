@@ -4,21 +4,24 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faUsers, 
-  faUserTie, 
-  faUserCog, 
+import {
+  faUsers,
+  faUserTie,
+  faUserCog,
   faClock,
   faSearch,
-  faSignOutAlt,
   faCheckCircle,
   faTimesCircle,
   faEye,
-  faPlusCircle
 } from '@fortawesome/free-solid-svg-icons';
+import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
+import type { SidebarNavItem } from '../../../components/layout';
 import styles from './AdminDashboard.module.scss';
 
-// Demo data interfaces
+// ============================================
+// TYPES
+// ============================================
+
 interface Client {
   id: string;
   name: string;
@@ -48,134 +51,65 @@ interface Employee {
   lastLogin: string;
 }
 
+type AdminTab = 'employees' | 'providers' | 'clients';
+
+// ============================================
+// DEMO DATA
+// ============================================
+
+const demoClients: Client[] = [
+  { id: '1', name: 'John Doe', email: 'john@example.com', status: 'active', joinDate: '2026-01-15T10:00:00', bookings: 5 },
+  { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'active', joinDate: '2026-02-20T14:00:00', bookings: 3 },
+  { id: '3', name: 'Mike Johnson', email: 'mike@example.com', status: 'pending', joinDate: '2026-03-10T09:00:00', bookings: 0 },
+  { id: '4', name: 'Sarah Wilson', email: 'sarah@example.com', status: 'inactive', joinDate: '2026-01-05T08:00:00', bookings: 8 },
+];
+
+const demoProviders: ServiceProvider[] = [
+  { id: '1', name: 'Tom Brown', email: 'tom@provider.com', category: 'Plumbing', status: 'active', rating: 4.8, services: 12 },
+  { id: '2', name: 'Emily Davis', email: 'emily@provider.com', category: 'Electrical', status: 'active', rating: 4.9, services: 8 },
+  { id: '3', name: 'Chris Miller', email: 'chris@provider.com', category: 'Gardening', status: 'pending', rating: 4.5, services: 0 },
+  { id: '4', name: 'Lisa Anderson', email: 'lisa@provider.com', category: 'Cleaning', status: 'active', rating: 4.7, services: 15 },
+];
+
+const demoEmployees: Employee[] = [
+  { id: '1', name: 'David Clark', email: 'david@company.com', role: 'Support Agent', status: 'active', joinDate: '2026-01-10T08:00:00', lastLogin: '2026-09-09T14:30:00' },
+  { id: '2', name: 'Emma White', email: 'emma@company.com', role: 'Operations Manager', status: 'active', joinDate: '2026-02-15T09:00:00', lastLogin: '2026-09-09T10:15:00' },
+  { id: '3', name: 'James Taylor', email: 'james@company.com', role: 'Support Agent', status: 'pending', joinDate: '2026-09-01T11:00:00', lastLogin: '-' },
+  { id: '4', name: 'Olivia Martin', email: 'olivia@company.com', role: 'Finance', status: 'active', joinDate: '2026-03-20T13:00:00', lastLogin: '2026-09-08T16:45:00' },
+];
+
+// ============================================
+// ADMIN THEME CONSTANTS
+// ============================================
+
+const ADMIN_ACCENT = '#ef4444';
+const ADMIN_GRADIENT = 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)';
+const ADMIN_HOVER_BG = 'rgba(239, 68, 68, 0.08)';
+const ADMIN_ACTIVE_BG = 'rgba(239, 68, 68, 0.12)';
+const ADMIN_ROLE_BG = 'rgba(239, 68, 68, 0.1)';
+
+// ============================================
+// COMPONENT
+// ============================================
+
 interface AdminDashboardProps {
   // Props can be added later
 }
 
 export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { logout } = useAuth();
   const { theme } = useTheme();
-  const [activeTab, setActiveTab] = useState<'employees' | 'providers' | 'clients'>('employees');
+
+  const [activeTab, setActiveTab] = useState<AdminTab>('employees');
   const [loading, setLoading] = useState(true);
   const [clients, setClients] = useState<Client[]>([]);
   const [providers, setProviders] = useState<ServiceProvider[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
 
-  // Demo data
-  const demoClients: Client[] = [
-    {
-      id: '1',
-      name: 'John Doe',
-      email: 'john@example.com',
-      status: 'active',
-      joinDate: '2026-01-15T10:00:00',
-      bookings: 5
-    },
-    {
-      id: '2',
-      name: 'Jane Smith',
-      email: 'jane@example.com',
-      status: 'active',
-      joinDate: '2026-02-20T14:00:00',
-      bookings: 3
-    },
-    {
-      id: '3',
-      name: 'Mike Johnson',
-      email: 'mike@example.com',
-      status: 'pending',
-      joinDate: '2026-03-10T09:00:00',
-      bookings: 0
-    },
-    {
-      id: '4',
-      name: 'Sarah Wilson',
-      email: 'sarah@example.com',
-      status: 'inactive',
-      joinDate: '2026-01-05T08:00:00',
-      bookings: 8
-    }
-  ];
-
-  const demoProviders: ServiceProvider[] = [
-    {
-      id: '1',
-      name: 'Tom Brown',
-      email: 'tom@provider.com',
-      category: 'Plumbing',
-      status: 'active',
-      rating: 4.8,
-      services: 12
-    },
-    {
-      id: '2',
-      name: 'Emily Davis',
-      email: 'emily@provider.com',
-      category: 'Electrical',
-      status: 'active',
-      rating: 4.9,
-      services: 8
-    },
-    {
-      id: '3',
-      name: 'Chris Miller',
-      email: 'chris@provider.com',
-      category: 'Gardening',
-      status: 'pending',
-      rating: 4.5,
-      services: 0
-    },
-    {
-      id: '4',
-      name: 'Lisa Anderson',
-      email: 'lisa@provider.com',
-      category: 'Cleaning',
-      status: 'active',
-      rating: 4.7,
-      services: 15
-    }
-  ];
-
-  const demoEmployees: Employee[] = [
-    {
-      id: '1',
-      name: 'David Clark',
-      email: 'david@company.com',
-      role: 'Support Agent',
-      status: 'active',
-      joinDate: '2026-01-10T08:00:00',
-      lastLogin: '2026-09-09T14:30:00'
-    },
-    {
-      id: '2',
-      name: 'Emma White',
-      email: 'emma@company.com',
-      role: 'Operations Manager',
-      status: 'active',
-      joinDate: '2026-02-15T09:00:00',
-      lastLogin: '2026-09-09T10:15:00'
-    },
-    {
-      id: '3',
-      name: 'James Taylor',
-      email: 'james@company.com',
-      role: 'Support Agent',
-      status: 'pending',
-      joinDate: '2026-09-01T11:00:00',
-      lastLogin: '-'
-    },
-    {
-      id: '4',
-      name: 'Olivia Martin',
-      email: 'olivia@company.com',
-      role: 'Finance',
-      status: 'active',
-      joinDate: '2026-03-20T13:00:00',
-      lastLogin: '2026-09-08T16:45:00'
-    }
-  ];
-
+  // ------------------------------------------
+  // Load demo data
+  // ------------------------------------------
   useEffect(() => {
     const timer = setTimeout(() => {
       setClients(demoClients);
@@ -183,42 +117,29 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       setEmployees(demoEmployees);
       setLoading(false);
     }, 500);
-    
     return () => clearTimeout(timer);
   }, []);
 
+  // ------------------------------------------
+  // Actions
+  // ------------------------------------------
   const handleLogout = async () => {
     await logout();
     navigate('/login');
   };
 
-  // Get user initials
-  const getInitials = () => {
-    if (!user) return 'A';
-    const first = user.firstName?.charAt(0) || '';
-    const last = user.lastName?.charAt(0) || '';
-    return (first + last).toUpperCase() || 'A';
-  };
-
-  // Get user full name
-  const getFullName = () => {
-    if (!user) return 'Admin';
-    const first = user.firstName || '';
-    const last = user.lastName || '';
-    return `${first} ${last}`.trim() || 'Admin';
-  };
-
-  // Format date
+  // ------------------------------------------
+  // Formatters
+  // ------------------------------------------
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-ZA', {
       day: '2-digit',
       month: 'short',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
-  // Format date with time
   const formatDateTime = (dateString: string) => {
     if (dateString === '-') return '-';
     const date = new Date(dateString);
@@ -227,43 +148,27 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     });
   };
 
-  // Get stats
+  // ------------------------------------------
+  // Stats
+  // ------------------------------------------
+  const pendingCount = [...employees, ...providers, ...clients].filter(
+    (item) => item.status === 'pending'
+  ).length;
+
   const stats = [
-    {
-      key: 'employees',
-      label: 'Total Employees',
-      value: employees.length,
-      icon: faUserCog,
-      className: styles.statEmployees
-    },
-    {
-      key: 'providers',
-      label: 'Service Providers',
-      value: providers.length,
-      icon: faUserTie,
-      className: styles.statProviders
-    },
-    {
-      key: 'clients',
-      label: 'Total Clients',
-      value: clients.length,
-      icon: faUsers,
-      className: styles.statClients
-    },
-    {
-      key: 'pending',
-      label: 'Pending Approvals',
-      value: [...employees, ...providers, ...clients].filter(item => item.status === 'pending').length,
-      icon: faClock,
-      className: styles.statPending
-    }
+    { key: 'employees', label: 'Total Employees', value: employees.length, icon: faUserCog, className: styles.statEmployees },
+    { key: 'providers', label: 'Service Providers', value: providers.length, icon: faUserTie, className: styles.statProviders },
+    { key: 'clients', label: 'Total Clients', value: clients.length, icon: faUsers, className: styles.statClients },
+    { key: 'pending', label: 'Pending Approvals', value: pendingCount, icon: faClock, className: styles.statPending },
   ];
 
-  // Get status class
+  // ------------------------------------------
+  // Helpers
+  // ------------------------------------------
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'active':
@@ -279,7 +184,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     }
   };
 
-  // Get status icon
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'active':
@@ -294,7 +198,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     }
   };
 
-  // Get content title
   const getContentTitle = () => {
     switch (activeTab) {
       case 'employees':
@@ -308,68 +211,47 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     }
   };
 
+  // ------------------------------------------
+  // Sidebar nav items
+  // ------------------------------------------
+  const navItems: SidebarNavItem[] = [
+    { key: 'employees', label: 'Employees', icon: faUserCog, badge: employees.length },
+    { key: 'providers', label: 'Service Providers', icon: faUserTie, badge: providers.length },
+    { key: 'clients', label: 'Clients', icon: faUsers, badge: clients.length },
+  ];
+
+  // ------------------------------------------
+  // Render
+  // ------------------------------------------
   return (
-    <div className={`${styles.dashboard} ${theme}-theme`}>
-      <div className={styles.dashboardContainer}>
-        {/* Sidebar */}
-        <aside className={styles.sidebar}>
-          <div className={styles.sidebarHeader}>
-            <div className={styles.avatar}>
-              {getInitials()}
-            </div>
-            <div className={styles.userInfo}>
-              <h3 className={styles.userName}>{getFullName()}</h3>
-              <span className={styles.userRole}>Administrator</span>
-              <p className={styles.userEmail}>{user?.email || 'admin@email.com'}</p>
-            </div>
-          </div>
-
-          <nav className={styles.sidebarNav}>
-            <button
-              className={`${styles.navItem} ${activeTab === 'employees' ? styles.active : ''}`}
-              onClick={() => setActiveTab('employees')}
-            >
-              <FontAwesomeIcon icon={faUserCog} />
-              <span>Employees</span>
-              <span className={styles.badge}>{employees.length}</span>
-            </button>
-
-            <button
-              className={`${styles.navItem} ${activeTab === 'providers' ? styles.active : ''}`}
-              onClick={() => setActiveTab('providers')}
-            >
-              <FontAwesomeIcon icon={faUserTie} />
-              <span>Service Providers</span>
-              <span className={styles.badge}>{providers.length}</span>
-            </button>
-
-            <button
-              className={`${styles.navItem} ${activeTab === 'clients' ? styles.active : ''}`}
-              onClick={() => setActiveTab('clients')}
-            >
-              <FontAwesomeIcon icon={faUsers} />
-              <span>Clients</span>
-              <span className={styles.badge}>{clients.length}</span>
-            </button>
-          </nav>
-
-          <div className={styles.sidebarFooter}>
-            <button className={styles.logoutBtn} onClick={handleLogout}>
-              <FontAwesomeIcon icon={faSignOutAlt} />
-              <span>Logout</span>
-            </button>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className={styles.mainContent}>
+    <div className={theme === 'dark' ? 'dark-theme' : ''}>
+      <DashboardLayout
+        mobileTitle="Admin Dashboard"
+        sidebar={
+          <DashboardSidebar
+            avatarGradient={ADMIN_GRADIENT}
+            accentColor={ADMIN_ACCENT}
+            hoverBg={ADMIN_HOVER_BG}
+            activeBg={ADMIN_ACTIVE_BG}
+            roleBg={ADMIN_ROLE_BG}
+            roleColor={ADMIN_ACCENT}
+            roleLabel="Administrator"
+            navItems={navItems}
+            activeKey={activeTab}
+            onNavigate={(key) => setActiveTab(key as AdminTab)}
+            onLogout={handleLogout}
+          />
+        }
+      >
+        <div className={styles.mainContent}>
+          {/* Header */}
           <div className={styles.contentHeader}>
             <h2>{getContentTitle()}</h2>
             <div className={styles.headerActions}>
               <div className={styles.searchBox}>
                 <FontAwesomeIcon icon={faSearch} />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Search..."
                   className={styles.searchInput}
                 />
@@ -392,7 +274,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
             ))}
           </div>
 
-          {/* Content based on active tab */}
+          {/* Content */}
           {loading ? (
             <div className={styles.loading}>
               <div className={styles.spinner}></div>
@@ -554,7 +436,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                     </div>
                     <div className={styles.activityActions}>
                       <button className={styles.viewBtn}>
-                        <FontAwesomeIcon faEye />
+                        <FontAwesomeIcon icon={faEye} />
                         View Details
                       </button>
                       {client.status === 'pending' && (
@@ -575,8 +457,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               </div>
             )
           )}
-        </main>
-      </div>
+        </div>
+      </DashboardLayout>
     </div>
   );
 };

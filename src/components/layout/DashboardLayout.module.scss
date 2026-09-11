@@ -1,0 +1,168 @@
+/* src/components/layout/DashboardLayout.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// OUTER SHELL
+// ============================================
+
+.dashboard {
+  min-height: 100vh;
+  background: var(--bg-primary, #f8f9fa);
+  transition: background $transition-base;
+}
+
+.dashboardContainer {
+  display: flex;
+  min-height: 80vh;
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: $spacing-md;
+  gap: $spacing-md;
+
+  @include mobile {
+    flex-direction: column;
+    padding: $spacing-sm;
+    gap: $spacing-sm;
+  }
+}
+
+// ============================================
+// DESKTOP SIDEBAR SLOT
+// ============================================
+
+// The sidebar itself handles width/padding via its own module.
+// This slot only exists to hide the sidebar entirely on mobile
+// (where the drawer takes over).
+.sidebarDesktopSlot {
+  @include mobile {
+    display: none;
+  }
+}
+
+// ============================================
+// MAIN CONTENT SLOT
+// ============================================
+
+.mainContentSlot {
+  flex: 1;
+  min-width: 0; // prevents flex children from overflowing
+}
+
+// ============================================
+// MOBILE TOP BAR (hamburger + title)
+// ============================================
+
+.mobileTopBar {
+  display: none;
+
+  @include mobile {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: $spacing-sm $spacing-md;
+    background: var(--bg-card, #ffffff);
+    border-bottom: 1px solid var(--border-color, $border-color);
+    position: sticky;
+    top: 56px; // just under the TopNavbar on mobile
+    z-index: $z-sticky - 1;
+    transition: background $transition-base, border-color $transition-base;
+  }
+}
+
+.hamburger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-lg;
+  cursor: pointer;
+  border-radius: $border-radius-md;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+
+  &:hover {
+    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.mobileTitle {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// ============================================
+// MOBILE DRAWER
+// ============================================
+
+.drawerOverlay {
+  display: none;
+
+  @include mobile {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0);
+    z-index: $z-fixed + 100; // above the sticky TopNavbar
+    pointer-events: none;
+    transition: background $transition-base;
+  }
+
+  &.drawerOverlayOpen {
+    @include mobile {
+      background: rgba(0, 0, 0, 0.55);
+      pointer-events: auto;
+      backdrop-filter: blur(2px);
+    }
+  }
+}
+
+.drawerPanel {
+  display: none;
+
+  @include mobile {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: min(320px, 85vw);
+    background: var(--bg-card, #ffffff);
+    box-shadow: $shadow-2xl;
+    transform: translateX(-100%);
+    transition: transform $transition-slow;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  &.drawerPanelOpen {
+    @include mobile {
+      transform: translateX(0);
+    }
+  }
+}
+
+// ============================================
+// ACCESSIBILITY / REDUCED MOTION
+// ============================================
+
+@media (prefers-reduced-motion: reduce) {
+  .drawerPanel,
+  .drawerOverlay,
+  .hamburger {
+    transition: none;
+  }
+}
