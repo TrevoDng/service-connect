@@ -1,0 +1,57 @@
+/* src/components/WorkSession/PhotoUploadButton.module.scss */
+@use "../../styles/variables" as *;
+
+.wrapper {
+  display: inline-block;
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+}
+
+.dragging {
+  outline: 2px dashed #f59e0b;
+  outline-offset: 4px;
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  border: 1px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover:not(:disabled) {
+    border-color: #f59e0b;
+    border-style: solid;
+    color: #d97706;
+    background: rgba(245, 158, 11, 0.05);
+  }
+  
+  &:disabled {
+    cursor: not-allowed;
+  }
+  
+  svg {
+    font-size: $font-size-sm;
+  }
+}
+
+.hiddenInput {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}

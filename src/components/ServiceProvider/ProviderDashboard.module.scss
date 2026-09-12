@@ -2,78 +2,21 @@
 @use "../../styles/variables" as *;
 @use "../../styles/mixins" as *;
 
-.providerDashboard {
-  max-width: $container-max-width;
-  margin: 0 auto;
-  padding: $spacing-2xl $spacing-xl;
-  min-height: 80vh;
-  background: var(--bg-primary, #f8f9fa);
-  transition: background $transition-base;
-  
-  @include mobile {
-    padding: $spacing-lg $spacing-md;
-  }
-}
-
 // ============================================
-// HEADER
+// MAIN CONTENT
 // ============================================
 
-.dashboardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-2xl;
-  flex-wrap: wrap;
-  gap: $spacing-md;
-  
-  @include mobile {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: $spacing-sm;
-  }
-}
-
-.headerLeft {
-  h1 {
-    font-size: $font-size-2xl;
-    font-weight: $font-weight-bold;
-    color: var(--text-primary, $text-primary);
-    margin: 0 0 $spacing-xxs 0;
-    transition: color $transition-base;
-    
-    @include mobile {
-      font-size: $font-size-xl;
-    }
-  }
-  
-  .subtitle {
-    font-size: $font-size-sm;
-    color: var(--text-secondary, $text-secondary);
-    margin: 0;
-    transition: color $transition-base;
-  }
-}
-
-.welcomeBadge {
+.mainContent {
+  flex: 1;
   background: var(--bg-card, #ffffff);
-  padding: $spacing-sm $spacing-xl;
-  border-radius: $border-radius-full;
-  box-shadow: var(--shadow-sm, $shadow-sm);
+  border-radius: $border-radius-xl;
+  box-shadow: var(--shadow-md, $shadow-md);
+  padding: $spacing-xl;
   border: 1px solid var(--border-color, $border-color);
   transition: all $transition-base;
   
-  p {
-    font-size: $font-size-sm;
-    color: var(--text-secondary, $text-secondary);
-    margin: 0;
-    transition: color $transition-base;
-  }
-  
-  .providerName {
-    font-weight: $font-weight-semibold;
-    color: var(--text-primary, $text-primary);
-    transition: color $transition-base;
+  @include mobile {
+    padding: $spacing-md;
   }
 }
 
@@ -275,17 +218,16 @@
 // ============================================
 
 .dashboardContent {
-  background: var(--bg-card, #ffffff);
-  border-radius: $border-radius-xl;
-  box-shadow: var(--shadow-md, $shadow-md);
+  background: var(--bg-primary, #f8f9fa);
+  border-radius: $border-radius-lg;
   border: 1px solid var(--border-color, $border-color);
   padding: $spacing-xl;
   transition: all $transition-base;
-  min-height: 400px;
+  min-height: 300px;
   
   @include mobile {
     padding: $spacing-md;
-    border-radius: $border-radius-lg;
+    border-radius: $border-radius-md;
   }
 }
 
@@ -313,4 +255,144 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+// ============================================
+// WORK LOG (Step 4d)
+// ============================================
+
+.workLogHeader {
+  margin-bottom: $spacing-xl;
+  
+  h2 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary, $text-primary);
+    margin: 0 0 $spacing-xxs;
+    transition: color $transition-base;
+  }
+}
+
+.workLogSubtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  transition: color $transition-base;
+}
+
+.sessionList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.sessionCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  width: 100%;
+  padding: $spacing-lg;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  text-align: left;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    border-color: #f59e0b;
+    box-shadow: var(--shadow-sm, $shadow-sm);
+    transform: translateY(-2px);
+  }
+  
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: $spacing-md;
+  }
+}
+
+.sessionLeft {
+  flex: 1;
+  min-width: 0;
+}
+
+.sessionRef {
+  display: inline-block;
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  background: var(--bg-card, #ffffff);
+  padding: 2px 8px;
+  border-radius: $border-radius-sm;
+  margin-bottom: $spacing-xs;
+}
+
+.sessionTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-xxs;
+  transition: color $transition-base;
+}
+
+.sessionClient {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  transition: color $transition-base;
+}
+
+.sessionRight {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: $spacing-xxs;
+  flex-shrink: 0;
+  
+  @include mobile {
+    align-items: flex-start;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: $spacing-xs;
+    width: 100%;
+  }
+}
+
+.sessionStatus {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xxs $spacing-md;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  text-transform: capitalize;
+}
+
+.sessionStatusActive {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.sessionStatusDone {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+:global(.dark-theme) {
+  .sessionStatusActive {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+  }
+  .sessionStatusDone {
+    background: rgba(16, 185, 129, 0.25);
+    color: #34d399;
+  }
+}
+
+.sessionMeta {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
 }

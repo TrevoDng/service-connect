@@ -2,238 +2,6 @@
 @use "../../../styles/variables" as *;
 @use "../../../styles/mixins" as *;
 
-.dashboard {
-  min-height: 100vh;
-  background: var(--bg-primary, #f8f9fa);
-  transition: background $transition-base;
-}
-
-.dashboardContainer {
-  display: flex;
-  min-height: 80vh;
-  max-width: $container-max-width;
-  margin: 0 auto;
-  padding: $spacing-md;
-  gap: $spacing-md;
-  
-  @include mobile {
-    flex-direction: column;
-    padding: $spacing-sm;
-    gap: $spacing-sm;
-  }
-}
-
-// ============================================
-// SIDEBAR
-// ============================================
-
-.sidebar {
-  width: 280px;
-  min-width: 280px;
-  background: var(--bg-card, #ffffff);
-  border-radius: $border-radius-xl;
-  box-shadow: var(--shadow-md, $shadow-md);
-  padding: $spacing-xl;
-  display: flex;
-  flex-direction: column;
-  height: fit-content;
-  position: sticky;
-  top: 80px;
-  border: 1px solid var(--border-color, $border-color);
-  transition: all $transition-base;
-  
-  @include tablet {
-    width: 240px;
-    min-width: 240px;
-    padding: $spacing-lg;
-  }
-  
-  @include mobile {
-    width: 100%;
-    min-width: unset;
-    position: static;
-    padding: $spacing-md;
-  }
-}
-
-.sidebarHeader {
-  text-align: center;
-  padding-bottom: $spacing-lg;
-  border-bottom: 1px solid var(--border-color, $border-color);
-  margin-bottom: $spacing-lg;
-}
-
-.avatar {
-  width: 72px;
-  height: 72px;
-  border-radius: $border-radius-full;
-  background: $primary-gradient;
-  color: $text-white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: $font-size-2xl;
-  font-weight: $font-weight-bold;
-  margin: 0 auto $spacing-md;
-  
-  @include mobile {
-    width: 56px;
-    height: 56px;
-    font-size: $font-size-xl;
-  }
-}
-
-.userInfo {
-  .userName {
-    font-size: $font-size-md;
-    font-weight: $font-weight-semibold;
-    color: var(--text-primary, $text-primary);
-    margin-bottom: $spacing-xxs;
-    transition: color $transition-base;
-  }
-  
-  .userEmail {
-    font-size: $font-size-sm;
-    color: var(--text-light, $text-light);
-    word-break: break-all;
-    transition: color $transition-base;
-  }
-}
-
-.sidebarNav {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-xs;
-  margin-bottom: $spacing-lg;
-}
-
-.navItem {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md $spacing-lg;
-  border: none;
-  background: none;
-  border-radius: $border-radius-md;
-  color: var(--text-secondary, $text-secondary);
-  cursor: pointer;
-  transition: all $transition-base;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  width: 100%;
-  text-align: left;
-  position: relative;
-  
-  svg {
-    width: 20px;
-    font-size: $font-size-lg;
-    flex-shrink: 0;
-    color: var(--text-secondary, $text-secondary);
-    transition: color $transition-base;
-  }
-  
-  span {
-    transition: color $transition-base;
-  }
-  
-  &:hover {
-    background: var(--navbar-hover, rgba(102, 126, 234, 0.08));
-    color: $primary;
-    
-    svg {
-      color: $primary;
-    }
-    
-    transform: translateX(4px);
-  }
-  
-  &.active {
-    background: var(--navbar-hover, rgba(102, 126, 234, 0.12));
-    color: $primary;
-    font-weight: $font-weight-semibold;
-    
-    svg {
-      color: $primary;
-    }
-    
-    &::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 70%;
-      background: $primary-gradient;
-      border-radius: 0 $border-radius-sm $border-radius-sm 0;
-    }
-  }
-  
-  @include mobile {
-    padding: $spacing-sm $spacing-md;
-    font-size: $font-size-sm;
-    
-    svg {
-      font-size: $font-size-base;
-    }
-  }
-}
-
-.badge {
-  margin-left: auto;
-  background: $primary;
-  color: $text-white;
-  font-size: $font-size-xs;
-  padding: 2px 8px;
-  border-radius: $border-radius-full;
-  font-weight: $font-weight-bold;
-}
-
-.sidebarFooter {
-  padding-top: $spacing-lg;
-  border-top: 1px solid var(--border-color, $border-color);
-}
-
-.logoutBtn {
-  display: flex;
-  align-items: center;
-  gap: $spacing-md;
-  padding: $spacing-md $spacing-lg;
-  border: none;
-  background: none;
-  border-radius: $border-radius-md;
-  color: $error;
-  cursor: pointer;
-  transition: all $transition-base;
-  font-size: $font-size-base;
-  font-weight: $font-weight-medium;
-  width: 100%;
-  text-align: left;
-  
-  svg {
-    width: 20px;
-    font-size: $font-size-lg;
-    flex-shrink: 0;
-    color: $error;
-    transition: color $transition-base;
-  }
-  
-  &:hover {
-    background: rgba(239, 71, 111, 0.08);
-    transform: translateX(4px);
-  }
-  
-  @include mobile {
-    padding: $spacing-sm $spacing-md;
-    font-size: $font-size-sm;
-    
-    svg {
-      font-size: $font-size-base;
-    }
-  }
-}
-
 // ============================================
 // MAIN CONTENT
 // ============================================
@@ -536,72 +304,6 @@
 }
 
 // ============================================
-// NEW SERVICE SECTION
-// ============================================
-
-.newServiceContent {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: $spacing-xl;
-  padding: $spacing-xl 0;
-  
-  @include mobile {
-    grid-template-columns: 1fr;
-    gap: $spacing-md;
-    padding: $spacing-md 0;
-  }
-}
-
-.newServiceCard {
-  text-align: center;
-  padding: $spacing-2xl;
-  background: var(--bg-primary, #f8f9fa);
-  border-radius: $border-radius-xl;
-  border: 2px dashed var(--border-color, $border-color);
-  transition: all $transition-base;
-  
-  h3 {
-    color: var(--text-primary, $text-primary);
-    transition: color $transition-base;
-  }
-  
-  p {
-    color: var(--text-secondary, $text-secondary);
-    transition: color $transition-base;
-  }
-  
-  &:hover {
-    border-color: $primary;
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-md, $shadow-md);
-  }
-}
-
-.newServiceIcon {
-  font-size: $font-size-4xl;
-  margin-bottom: $spacing-md;
-  display: block;
-}
-
-.browseBtn {
-  padding: $spacing-sm $spacing-2xl;
-  border-radius: $border-radius-full;
-  border: none;
-  background: $primary-gradient;
-  color: $text-white;
-  cursor: pointer;
-  font-size: $font-size-base;
-  font-weight: $font-weight-semibold;
-  transition: all $transition-base;
-  margin-top: $spacing-md;
-  
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md, $shadow-md);
-  }
-}
-
-// ============================================
 // EMPTY STATE
 // ============================================
 
@@ -629,6 +331,24 @@
     margin-left: auto;
     margin-right: auto;
     transition: color $transition-base;
+  }
+}
+
+.browseBtn {
+  padding: $spacing-sm $spacing-2xl;
+  border-radius: $border-radius-full;
+  border: none;
+  background: $primary-gradient;
+  color: $text-white;
+  cursor: pointer;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-base;
+  margin-top: $spacing-md;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
   }
 }
 
@@ -664,21 +384,8 @@
 }
 
 // ============================================
-// RESPONSIVE
+// RESPONSIVE (main content only)
 // ============================================
-
-@include tablet {
-  .sidebar {
-    width: 200px;
-    min-width: 200px;
-    padding: $spacing-md;
-  }
-  
-  .navItem {
-    padding: $spacing-sm $spacing-md;
-    font-size: $font-size-sm;
-  }
-}
 
 @include mobile {
   .mainContent {
@@ -707,4 +414,126 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+// ============================================
+// ARRIVAL BANNERS (Step 4d)
+// ============================================
+
+.arrivalBanners {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-lg;
+}
+
+.arrivalBanner {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.08), rgba(118, 75, 162, 0.05));
+  border: 1px solid rgba(102, 126, 234, 0.35);
+  border-radius: $border-radius-lg;
+  overflow: hidden;
+  transition: all $transition-base;
+  
+  &:hover {
+    border-color: $primary;
+    box-shadow: var(--shadow-sm, $shadow-sm);
+  }
+}
+
+:global(.dark-theme) {
+  .arrivalBanner {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.08));
+    border-color: rgba(102, 126, 234, 0.4);
+  }
+}
+
+.arrivalToggle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+  }
+}
+
+.arrivalBell {
+  font-size: $font-size-lg;
+  color: $primary;
+  flex-shrink: 0;
+  animation: ring 2s ease-in-out infinite;
+}
+
+@keyframes ring {
+  0%, 100% { transform: rotate(0); }
+  10%, 30%, 50% { transform: rotate(-8deg); }
+  20%, 40%, 60% { transform: rotate(8deg); }
+  70% { transform: rotate(0); }
+}
+
+.arrivalText {
+  flex: 1;
+  font-size: $font-size-sm;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+  
+  strong {
+    color: $primary;
+    font-weight: $font-weight-semibold;
+  }
+  
+  @include mobile {
+    font-size: $font-size-xs;
+  }
+}
+
+.arrivalChevron {
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  flex-shrink: 0;
+}
+
+.arrivalCardWrapper {
+  padding: 0 $spacing-lg $spacing-lg;
+  
+  @include mobile {
+    padding: 0 $spacing-md $spacing-md;
+  }
+}
+
+// ============================================
+// ACTIVE WORK SESSIONS (Step 5b)
+// ============================================
+
+.activeWorkHeader {
+  margin-bottom: $spacing-md;
+  
+  h3 {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin: 0 0 $spacing-xxs;
+    transition: color $transition-base;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    margin: 0;
+    transition: color $transition-base;
+  }
+}
+
+.activeWorkList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-lg;
 }

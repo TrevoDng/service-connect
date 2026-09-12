@@ -1,0 +1,280 @@
+/* src/components/WorkSession/ClockConfirmCard.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// CARD SHELL
+// ============================================
+
+.card {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+  border: 1px solid rgba(102, 126, 234, 0.3);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+:global(.dark-theme) {
+  .card {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.12), rgba(118, 75, 162, 0.08));
+    border-color: rgba(102, 126, 234, 0.4);
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  gap: $spacing-md;
+  align-items: flex-start;
+}
+
+.shieldIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+  
+  @include mobile {
+    width: 38px;
+    height: 38px;
+    font-size: $font-size-base;
+  }
+}
+
+.headerText {
+  flex: 1;
+  min-width: 0;
+}
+
+.title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-xxs;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  line-height: $line-height-normal;
+  transition: color $transition-base;
+  
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-semibold;
+    transition: color $transition-base;
+  }
+  
+  @include mobile {
+    font-size: $font-size-xs;
+  }
+}
+
+.rating {
+  color: #f59e0b;
+  font-weight: $font-weight-medium;
+}
+
+// ============================================
+// REFERENCE CODE BOX
+// ============================================
+
+.codeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 2px dashed $primary;
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+  }
+}
+
+.codeLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: $font-weight-medium;
+  transition: color $transition-base;
+}
+
+.codeValue {
+  font-family: $font-family-mono;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.1em;
+  color: $primary;
+  line-height: 1.1;
+  
+  @include mobile {
+    font-size: $font-size-2xl;
+  }
+}
+
+.expiryRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-top: $spacing-xs;
+}
+
+.expiryLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+// ============================================
+// WARNING
+// ============================================
+
+.warning {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  color: #92400e;
+  transition: all $transition-base;
+  
+  svg {
+    flex-shrink: 0;
+    color: #d97706;
+  }
+  
+  @include mobile {
+    font-size: $font-size-xs;
+    padding: $spacing-xs $spacing-sm;
+  }
+}
+
+:global(.dark-theme) {
+  .warning {
+    background: rgba(251, 191, 36, 0.15);
+    border-color: rgba(251, 191, 36, 0.35);
+    color: #fbbf24;
+  }
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+
+.actions {
+  display: flex;
+  gap: $spacing-sm;
+  
+  @include mobile {
+    flex-direction: column;
+  }
+}
+
+.confirmBtn,
+.denyBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  flex: 1;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  border: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  @include mobile {
+    width: 100%;
+    flex: none;
+  }
+}
+
+.confirmBtn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: $text-white;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
+
+.denyBtn {
+  background: transparent;
+  color: $error;
+  border: 1px solid $error;
+  
+  &:hover {
+    background: $error;
+    color: $text-white;
+  }
+}
+
+// ============================================
+// CONFIRMED BANNER
+// ============================================
+
+.confirmedBanner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: #059669;
+  transition: all $transition-base;
+  
+  svg {
+    font-size: $font-size-base;
+    flex-shrink: 0;
+  }
+  
+  @include mobile {
+    font-size: $font-size-xs;
+    padding: $spacing-sm $spacing-md;
+  }
+}
+
+:global(.dark-theme) {
+  .confirmedBanner {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34d399;
+  }
+}

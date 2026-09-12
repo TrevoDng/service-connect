@@ -1,0 +1,221 @@
+/* src/components/Chat/ChatPanel.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// PANEL SHELL
+// ============================================
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0; // allows children to shrink properly
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-lg;
+  border: 1px solid var(--border-color, $border-color);
+  overflow: hidden;
+  transition: all $transition-base;
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid var(--border-color, $border-color);
+  background: var(--bg-card, #ffffff);
+  flex-shrink: 0;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: $border-radius-md;
+  background: transparent;
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-base;
+  cursor: pointer;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+  
+  &:hover {
+    background: var(--navbar-hover, rgba(102, 126, 234, 0.08));
+  }
+}
+
+.headerAvatar {
+  width: 44px;
+  height: 44px;
+  border-radius: $border-radius-full;
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  
+  @include mobile {
+    width: 38px;
+    height: 38px;
+    font-size: $font-size-sm;
+  }
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.headerName {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+  
+  span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.verified {
+  font-size: $font-size-xs;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+.headerMeta {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  display: flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  transition: color $transition-base;
+  
+  @include mobile {
+    display: none; // keep header compact on mobile
+  }
+}
+
+.rating {
+  color: #f59e0b;
+  font-weight: $font-weight-medium;
+}
+
+.bookBtn {
+  padding: $spacing-xs $spacing-md;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all $transition-base;
+  flex-shrink: 0;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  @include mobile {
+    padding: $spacing-xxs $spacing-sm;
+    font-size: 0.7rem;
+  }
+}
+
+// ============================================
+// MESSAGES AREA
+// ============================================
+
+.messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: $spacing-lg;
+  background: var(--bg-primary, #f8f9fa);
+  transition: background $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+  }
+}
+
+.noMessages {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-light, $text-light);
+    transition: color $transition-base;
+  }
+}
+
+// ============================================
+// EMPTY PANEL (no thread selected)
+// ============================================
+
+.emptyPanel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: $spacing-3xl $spacing-xl;
+  text-align: center;
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-lg;
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+  
+  h3 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin: $spacing-md 0 $spacing-xs;
+    transition: color $transition-base;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-light, $text-light);
+    max-width: 320px;
+    transition: color $transition-base;
+  }
+}
+
+.emptyIcon {
+  font-size: $font-size-4xl;
+  color: var(--text-light, $text-light);
+  opacity: 0.5;
+  transition: color $transition-base;
+}

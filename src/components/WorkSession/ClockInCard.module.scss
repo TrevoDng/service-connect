@@ -1,0 +1,394 @@
+/* src/components/WorkSession/ClockInCard.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// CARD SHELL
+// ============================================
+
+.card {
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xxs $spacing-md;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+}
+
+.statusArrived {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.statusConfirmed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.statusInProgress {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.statusCompleted {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+:global(.dark-theme) {
+  .statusArrived {
+    background: rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+  }
+  .statusConfirmed {
+    background: rgba(96, 165, 250, 0.25);
+    color: #60a5fa;
+  }
+  .statusInProgress {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+  }
+  .statusCompleted {
+    background: rgba(52, 211, 153, 0.25);
+    color: #34d399;
+  }
+}
+
+.headerStats {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+  
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-semibold;
+    transition: color $transition-base;
+  }
+}
+
+.stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.statDivider {
+  color: var(--text-light, $text-light);
+}
+
+// ============================================
+// REFERENCE CODE BLOCK
+// ============================================
+
+.codeBlock {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: $border-radius-md;
+  flex-wrap: wrap;
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+  }
+}
+
+:global(.dark-theme) {
+  .codeBlock {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08));
+    border-color: rgba(245, 158, 11, 0.4);
+  }
+}
+
+.codeLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+}
+
+.codeIcon {
+  font-size: $font-size-xl;
+  color: #d97706;
+  
+  @include mobile {
+    font-size: $font-size-lg;
+  }
+}
+
+.codeInfo {
+  display: flex;
+  flex-direction: column;
+}
+
+.codeLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: $font-weight-medium;
+  transition: color $transition-base;
+}
+
+.codeValue {
+  font-family: $font-family-mono;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.08em;
+  color: #d97706;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.codeRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+}
+
+.codeExpiryLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+// ============================================
+// HINT
+// ============================================
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-md;
+  background: var(--bg-card, #ffffff);
+  border: 1px dashed var(--border-color, $border-color);
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: all $transition-base;
+  
+  svg {
+    color: var(--text-light, $text-light);
+  }
+}
+
+// ============================================
+// TIMELINE
+// ============================================
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.timelineLabel {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color $transition-base;
+}
+
+.timelineList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xxs;
+}
+
+.timelineItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-xxs $spacing-xs;
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-xs;
+    gap: $spacing-xs;
+  }
+}
+
+.timelineIcon {
+  font-size: 0.7rem;
+  flex-shrink: 0;
+}
+
+.iconIn {
+  color: #10b981;
+}
+
+.iconOut {
+  color: #dc2626;
+}
+
+.timelineType {
+  min-width: 68px;
+  color: var(--text-primary, $text-primary);
+  font-weight: $font-weight-medium;
+  transition: color $transition-base;
+}
+
+.timelineTime {
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+.timelineCode {
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: #d97706;
+  padding: 1px 6px;
+  background: rgba(245, 158, 11, 0.1);
+  border-radius: $border-radius-sm;
+  margin-left: auto;
+}
+
+.timelineConfirmed {
+  font-size: $font-size-xs;
+  color: #10b981;
+  flex-shrink: 0;
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+
+.actions {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  padding-top: $spacing-sm;
+  border-top: 1px solid var(--border-color, $border-color);
+  transition: border-color $transition-base;
+  
+  @include mobile {
+    flex-direction: column;
+  }
+}
+
+.clockInBtn,
+.clockOutBtn,
+.completeBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  border: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+    box-shadow: none !important;
+  }
+  
+  @include mobile {
+    width: 100%;
+  }
+}
+
+.clockInBtn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: $text-white;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
+
+.clockOutBtn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: $text-white;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
+
+.completeBtn {
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  border: 1px solid var(--border-color, $border-color);
+  
+  &:hover:not(:disabled) {
+    border-color: #10b981;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.05);
+  }
+}
+
+.completedNote {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  
+  svg {
+    font-size: $font-size-base;
+  }
+}

@@ -1,0 +1,92 @@
+/* src/components/WorkSession/PhotoGrid.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: $spacing-sm;
+  
+  @include mobile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.tile {
+  position: relative;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  border: 1px solid var(--border-color, $border-color);
+  background: var(--bg-primary, #f8f9fa);
+  transition: all $transition-base;
+  
+  &:hover {
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+  }
+  
+  img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-primary, #f8f9fa);
+  }
+  
+  figcaption {
+    padding: $spacing-xxs $spacing-xs;
+    font-size: $font-size-xs;
+    color: var(--text-secondary, $text-secondary);
+    background: var(--bg-card, #ffffff);
+    border-top: 1px solid var(--border-color, $border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.deleteBtn {
+  position: absolute;
+  top: $spacing-xs;
+  right: $spacing-xs;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: $border-radius-full;
+  background: rgba(0, 0, 0, 0.6);
+  color: #ffffff;
+  font-size: $font-size-xs;
+  cursor: pointer;
+  opacity: 0;
+  transition: all $transition-fast;
+  
+  &:hover {
+    background: $error;
+  }
+  
+  .tile:hover & {
+    opacity: 1;
+  }
+}
+
+.empty {
+  padding: $spacing-lg;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: var(--text-light, $text-light);
+  border: 2px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary, #f8f9fa);
+  
+  @include mobile {
+    padding: $spacing-md;
+    font-size: $font-size-xs;
+  }
+}

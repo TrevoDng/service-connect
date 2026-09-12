@@ -1,0 +1,322 @@
+/* src/components/WorkSession/WorkSessionPanel.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// PANEL SHELL
+// ============================================
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  padding: $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-md;
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1px solid var(--border-color, $border-color);
+  transition: border-color $transition-base;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: $border-radius-md;
+  background: transparent;
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-base;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all $transition-fast;
+  
+  &:hover {
+    background: var(--navbar-hover, rgba(102, 126, 234, 0.08));
+  }
+  
+  @media (min-width: 769px) {
+    display: none; // hidden on desktop
+  }
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.ref {
+  display: inline-block;
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  background: var(--bg-primary, #f8f9fa);
+  padding: 2px 8px;
+  border-radius: $border-radius-sm;
+  margin-bottom: $spacing-xxs;
+  transition: all $transition-base;
+}
+
+.title {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-xxs;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  transition: color $transition-base;
+  
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-semibold;
+    transition: color $transition-base;
+  }
+  
+  @include mobile {
+    font-size: $font-size-xs;
+  }
+}
+
+.visited {
+  color: #10b981;
+  font-weight: $font-weight-medium;
+}
+
+.headerMeta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  
+  @include mobile {
+    display: none;
+  }
+}
+
+.metaItem {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.metaLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+.metaValue {
+  font-size: $font-size-sm;
+  color: var(--text-primary, $text-primary);
+  font-weight: $font-weight-medium;
+  transition: color $transition-base;
+}
+
+// ============================================
+// PHOTO SECTIONS
+// ============================================
+
+.photoSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.photoHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding-bottom: $spacing-xs;
+  border-bottom: 1px dashed var(--border-color, $border-color);
+  transition: border-color $transition-base;
+}
+
+.photoIcon {
+  font-size: $font-size-base;
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+.photoTitle {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-sm;
+  }
+}
+
+.photoCount {
+  margin-left: auto;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+// ============================================
+// PHOTO GRID
+// ============================================
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: $spacing-sm;
+  
+  @include mobile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.photoTile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  border: 1px solid var(--border-color, $border-color);
+  background: var(--bg-primary, #f8f9fa);
+  transition: all $transition-base;
+  
+  &:hover {
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+  }
+  
+  img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-primary, #f8f9fa);
+  }
+  
+  figcaption {
+    padding: $spacing-xxs $spacing-xs;
+    font-size: $font-size-xs;
+    color: var(--text-secondary, $text-secondary);
+    background: var(--bg-card, #ffffff);
+    border-top: 1px solid var(--border-color, $border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all $transition-base;
+  }
+}
+
+// ============================================
+// PROGRESS STAGES
+// ============================================
+
+.progressList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.progressStage {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-md;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-sm;
+  }
+}
+
+.stageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: $spacing-sm;
+}
+
+.stageLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  transition: color $transition-base;
+}
+
+.stageDate {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  white-space: nowrap;
+  transition: color $transition-base;
+}
+
+// ============================================
+// EMPTY STATE
+// ============================================
+
+.emptyPhotos {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-lg;
+  border: 2px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  text-align: center;
+  transition: all $transition-base;
+  
+  svg {
+    font-size: $font-size-xl;
+    opacity: 0.5;
+    margin-bottom: $spacing-xxs;
+  }
+  
+  @include mobile {
+    padding: $spacing-md;
+    font-size: $font-size-xs;
+  }
+}
+
+.emptyHint {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  opacity: 0.8;
+  max-width: 320px;
+}

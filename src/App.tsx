@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './account/context/AuthContext';
+import { NotificationProvider } from './account/context/NotificationContext';
 import { Footer } from './footer/Footer';
 import { About } from './about/About';
 import AdminDashboard from './account/components/Admin/AdminDashboard';
@@ -41,8 +42,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 // Role-based protected route
-const RoleProtectedRoute: React.FC<{ 
-  children: React.ReactNode; 
+const RoleProtectedRoute: React.FC<{
+  children: React.ReactNode;
   allowedRoles: ('ADMIN' | 'EMPLOYEE' | 'CLIENT')[];
   currentPage?: string;
 }> = ({ children, allowedRoles }) => {
@@ -81,12 +82,12 @@ const AppContent: React.FC = () => {
 
   return (
     <div className={`${styles.app} ${theme}-theme`}>
-      <TopNavbar 
+      <TopNavbar
         user={isAuthenticated ? user : undefined}
         currentPage={currentPage}
         setCurrentPage={setCurrentPage}
       />
-      
+
       <main className={styles.mainContent}>
         <Routes>
           {/* Public Routes */}
@@ -94,69 +95,26 @@ const AppContent: React.FC = () => {
           <Route path="/services" element={<ClientServices />} />
           <Route path="/services/:id" element={<ServiceDetails />} />
           <Route path="/about" element={<About />} />
-          
+
           {/* Auth Routes */}
           <Route path="/login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
           <Route path="/service-provider-register" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
           <Route path="/login/employee" element={<PublicRoute><EmployeeLogin /></PublicRoute>} />
-          
+
           {/* Protected Routes */}
           <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
-	  {/*
-          <Route path="/client/dashboard" element={
-            <RoleProtectedRoute allowedRoles={['CLIENT']}>
-              <ClientDashboard />
-            </RoleProtectedRoute>
-          } />
-	  */}
 
-	  <Route path="/client/dashboard" element={               <ClientDashboard />                               } />
-          
-          {/* Role-based Routes 
-
-          <Route 
-            path="/admin-dashboard" 
-            element={
-              <RoleProtectedRoute allowedRoles={['ADMIN']} currentPage={currentPage}>
-                <AdminDashboard />
-              </RoleProtectedRoute>
-            } 
-          />
-	  */}
-
-         <Route 
-            path="/admin-dashboard" 
-            element={
-                <AdminDashboard />
-            } 
-          />
-
-
-	  {/*
-          <Route 
-            path="/employee-dashboard" 
-            element={
-              <RoleProtectedRoute allowedRoles={['EMPLOYEE', 'ADMIN']} currentPage={currentPage}>
-                <EmployeeDashboard />
-              </RoleProtectedRoute>
-            } 
-          /> */}
-
-	<Route 
-            path="/employee-dashboard" 
-            element={
-                <EmployeeDashboard />
-            } 
-          />
-
+          <Route path="/client/dashboard" element={<ClientDashboard />} />
+          <Route path="/admin-dashboard" element={<AdminDashboard />} />
+          <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
           <Route path="/provider/dashboard" element={<ProviderDashboard />} />
-          
+
           {/* 404 */}
           <Route path="*" element={<PageNotFound />} />
         </Routes>
       </main>
-      
+
       <Footer />
     </div>
   );
@@ -167,7 +125,9 @@ function App() {
     <Router basename={'/service-connect'}>
       <ThemeProvider>
         <AuthProvider>
-          <AppContent />
+          <NotificationProvider>
+            <AppContent />
+          </NotificationProvider>
         </AuthProvider>
       </ThemeProvider>
     </Router>

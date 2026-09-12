@@ -1,0 +1,332 @@
+/* src/components/WorkSession/ClientWorkSessionCard.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding-bottom: $spacing-md;
+  border-bottom: 1px solid var(--border-color, $border-color);
+  transition: border-color $transition-base;
+  position: relative;
+  
+  @include mobile {
+    padding-bottom: $spacing-sm;
+    gap: $spacing-sm;
+  }
+}
+
+.headerIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: $border-radius-md;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+  
+  @include mobile {
+    width: 38px;
+    height: 38px;
+    font-size: $font-size-base;
+  }
+}
+
+.headerInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xxs;
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  padding: $spacing-xxs $spacing-sm;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  transition: all $transition-base;
+}
+
+.statusArrived {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.statusConfirmed {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.statusInProgress {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
+}
+
+.statusCompleted {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+:global(.dark-theme) {
+  .statusArrived {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+  }
+  .statusConfirmed {
+    background: rgba(96, 165, 250, 0.25);
+    color: #60a5fa;
+  }
+  .statusInProgress {
+    background: rgba(245, 158, 11, 0.25);
+    color: #fbbf24;
+  }
+  .statusCompleted {
+    background: rgba(52, 211, 153, 0.25);
+    color: #34d399;
+  }
+}
+
+.title {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.provider {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  transition: color $transition-base;
+  
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-semibold;
+    transition: color $transition-base;
+  }
+  
+  @include mobile {
+    font-size: $font-size-xs;
+  }
+}
+
+.headerStats {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  flex-shrink: 0;
+  transition: color $transition-base;
+  
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-semibold;
+    transition: color $transition-base;
+  }
+  
+  @include mobile {
+    display: none;
+  }
+}
+
+.stat {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.statDivider {
+  color: var(--text-light, $text-light);
+}
+
+// ============================================
+// MOBILE EXPAND TOGGLE
+// ============================================
+
+.expandToggle {
+  display: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: #f59e0b;
+    color: #d97706;
+  }
+  
+  @include mobile {
+    display: flex;
+  }
+}
+
+// ============================================
+// SECTIONS
+// ============================================
+
+.sections {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+  
+  // On mobile, collapsed by default
+  @include mobile {
+    display: none;
+  }
+}
+
+.sectionsExpanded {
+  @include mobile {
+    display: flex;
+  }
+}
+
+// ============================================
+// INLINE EMPTY (progress with no stages)
+// ============================================
+
+.emptyInline {
+  padding: $spacing-md;
+  text-align: center;
+  font-size: $font-size-sm;
+  color: var(--text-light, $text-light);
+  border: 2px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary, #f8f9fa);
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-sm;
+    font-size: $font-size-xs;
+  }
+}
+
+// ============================================
+// PROGRESS STAGES
+// ============================================
+
+.progressList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.progressStage {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-md;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-sm;
+  }
+}
+
+.stageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: $spacing-sm;
+}
+
+.stageLabel {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  transition: color $transition-base;
+}
+
+.stageDate {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  white-space: nowrap;
+  transition: color $transition-base;
+}
+
+.stagePhotoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: $spacing-sm;
+  
+  @include mobile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.stagePhotoTile {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  border: 1px solid var(--border-color, $border-color);
+  background: var(--bg-card, #ffffff);
+  transition: all $transition-base;
+  
+  img {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    display: block;
+    background: var(--bg-primary, #f8f9fa);
+  }
+  
+  figcaption {
+    padding: $spacing-xxs $spacing-xs;
+    font-size: $font-size-xs;
+    color: var(--text-secondary, $text-secondary);
+    background: var(--bg-card, #ffffff);
+    border-top: 1px solid var(--border-color, $border-color);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: all $transition-base;
+  }
+}

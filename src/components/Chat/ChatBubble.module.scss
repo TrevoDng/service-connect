@@ -1,0 +1,149 @@
+/* src/components/Chat/ChatBubble.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// ROW LAYOUT
+// ============================================
+
+.row {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  align-items: flex-end;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.rowOwn {
+  flex-direction: row-reverse;
+}
+
+.rowOther {
+  flex-direction: row;
+}
+
+// ============================================
+// AVATAR (only for the other party)
+// ============================================
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: $border-radius-full;
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+  
+  @include mobile {
+    width: 32px;
+    height: 32px;
+    font-size: $font-size-xs;
+  }
+}
+
+// ============================================
+// BUBBLE COLUMN
+// ============================================
+
+.bubbleColumn {
+  display: flex;
+  flex-direction: column;
+  max-width: 70%;
+  
+  @include mobile {
+    max-width: 80%;
+  }
+}
+
+.senderName {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  font-weight: $font-weight-medium;
+  margin-bottom: $spacing-xxs;
+  padding-left: $spacing-xs;
+  transition: color $transition-base;
+}
+
+// ============================================
+// BUBBLE
+// ============================================
+
+.bubble {
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-lg;
+  word-wrap: break-word;
+  word-break: break-word;
+  transition: all $transition-base;
+}
+
+.bubbleOwn {
+  background: $primary-gradient;
+  color: $text-white;
+  border-bottom-right-radius: $border-radius-sm;
+}
+
+.bubbleOther {
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  border: 1px solid var(--border-color, $border-color);
+  border-bottom-left-radius: $border-radius-sm;
+}
+
+.text {
+  margin: 0;
+  font-size: $font-size-sm;
+  line-height: $line-height-relaxed;
+  white-space: pre-wrap;
+}
+
+// ============================================
+// META (timestamp + read status)
+// ============================================
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  margin-top: $spacing-xxs;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+.metaOwn {
+  justify-content: flex-end;
+  padding-right: $spacing-xs;
+}
+
+.metaOther {
+  justify-content: flex-start;
+  padding-left: $spacing-xs;
+}
+
+.timestamp {
+  white-space: nowrap;
+}
+
+.statusIcon {
+  font-size: 0.7rem;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+.statusRead {
+  color: #10b981;
+}
+
+// Dark theme
+:global(.dark-theme) {
+  .statusRead {
+    color: #34d399;
+  }
+}

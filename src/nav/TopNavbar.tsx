@@ -8,6 +8,7 @@ import { useAuth } from '../account/context/AuthContext';
 import { useTheme } from '../styles/context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSun, faMoon, faBars, faTimes, faPersonDigging } from '@fortawesome/free-solid-svg-icons';
+import { NotificationBell } from '../components/Notifications';
 import styles from './TopNavbar.module.scss';
 
 interface TopNavbarProps {
@@ -71,37 +72,36 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   };
 
   return (
-    <nav 
+    <nav
       className={`${styles.topNavbar} ${isMobileMenuOpen ? styles.topNavbarMobile : ''} ${scrolled ? styles.topNavbarScrolled : ''}`}
       role="navigation"
       aria-label="Main navigation"
     >
       {/* Logo with icon */}
-      <Link 
-        to={getUrl('/', '')[0]} 
+      <Link
+        to={getUrl('/', '')[0]}
         className={styles.topNavbarLogo}
         onClick={closeMobileMenu}
       >
-        <FontAwesomeIcon 
-          icon={faPersonDigging} 
+        <FontAwesomeIcon
+          icon={faPersonDigging}
           className={styles.logoIcon}
         />
-        {/* Show "SC" on mobile, "ServiceConnect" on desktop */}
         <span className={styles.logoMobile}>SC</span>
         <span className={styles.logoDesktop}>ServiceConnect</span>
       </Link>
 
       {/* Navigation Links */}
       <div className={styles.topNavbarLinks}>
-        <Link 
-          to={getUrl('/services', '')[0]} 
+        <Link
+          to={getUrl('/services', '')[0]}
           onClick={closeMobileMenu}
           className={currentPage === '/services' ? styles.active : ''}
         >
           Services
         </Link>
-        <Link 
-          to={getUrl('/about', '')[0]} 
+        <Link
+          to={getUrl('/about', '')[0]}
           onClick={closeMobileMenu}
           className={currentPage === '/about' ? styles.active : ''}
         >
@@ -112,14 +112,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       {/* Right Section */}
       <div className={styles.rightSection}>
         {/* Theme Toggle */}
-        <button 
-          onClick={toggleTheme} 
+        <button
+          onClick={toggleTheme}
           className={styles.themeToggle}
           aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
           title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
         >
           <FontAwesomeIcon icon={theme === 'light' ? faMoon : faSun} />
         </button>
+
+        {/* Notifications — only when logged in */}
+        {user && <NotificationBell />}
 
         {/* User Section */}
         {user ? (
@@ -132,9 +135,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                 {getFullName(user)}
               </span>
             </div>
-            
-            <button 
-              onClick={handleLogout} 
+
+            <button
+              onClick={handleLogout}
               className={styles.logoutBtn}
             >
               Logout
@@ -142,8 +145,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </>
         ) : (
           <div className={styles.authButtons}>
-            <Link 
-              to={getUrl('/login', '')[0]} 
+            <Link
+              to={getUrl('/login', '')[0]}
               className={styles.loginBtn}
               onClick={() => {
                 closeMobileMenu();
@@ -152,8 +155,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             >
               Login
             </Link>
-            <Link 
-              to={getUrl('/register', '')[0]} 
+            <Link
+              to={getUrl('/register', '')[0]}
               className={styles.registerBtn}
               onClick={() => {
                 closeMobileMenu();
@@ -166,8 +169,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         )}
 
         {/* Mobile Menu Toggle */}
-        <button 
-          className={styles.topNavbarMenuBtn} 
+        <button
+          className={styles.topNavbarMenuBtn}
           onClick={toggleMobileMenu}
           aria-label={isMobileMenuOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={isMobileMenuOpen}

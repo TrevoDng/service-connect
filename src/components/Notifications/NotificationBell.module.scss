@@ -1,0 +1,83 @@
+/* src/components/Notifications/NotificationBell.module.scss */
+@use "../../styles/variables" as *;
+
+.wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: $border-radius-full;
+  background: transparent;
+  color: var(--navbar-text, $text-primary);
+  font-size: $font-size-lg;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+    transform: scale(1.05);
+  }
+  
+  @media (max-width: 768px) {
+    width: 36px;
+    height: 36px;
+    font-size: $font-size-base;
+  }
+}
+
+.bellOpen {
+  background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+  color: $primary;
+}
+
+.badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: $border-radius-full;
+  background: $error;
+  color: $text-white;
+  font-size: 0.65rem;
+  font-weight: $font-weight-bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--navbar-bg, #ffffff);
+  animation: badgePulse 2s ease-in-out infinite;
+  
+  @media (max-width: 768px) {
+    top: 2px;
+    right: 2px;
+    min-width: 16px;
+    height: 16px;
+    font-size: 0.6rem;
+  }
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    animation: none;
+  }
+}

@@ -1,0 +1,90 @@
+/* src/components/Chat/ChatComposer.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// COMPOSER
+// ============================================
+
+.composer {
+  display: flex;
+  align-items: flex-end;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border-top: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+}
+
+.textarea {
+  flex: 1;
+  resize: none;
+  min-height: 42px;
+  max-height: 140px;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  font-family: $font-family-base;
+  font-size: $font-size-sm;
+  line-height: $line-height-normal;
+  outline: none;
+  transition: all $transition-base;
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+  }
+  
+  &:focus {
+    border-color: $primary;
+    background: var(--bg-card, #ffffff);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+}
+
+// ============================================
+// SEND BUTTON
+// ============================================
+
+.sendBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-base;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all $transition-base;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px) rotate(5deg);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0) rotate(0);
+  }
+  
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  @include mobile {
+    width: 38px;
+    height: 38px;
+  }
+}

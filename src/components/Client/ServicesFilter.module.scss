@@ -1,0 +1,290 @@
+/* src/components/Client/ServicesFilter.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// WRAPPER
+// ============================================
+
+.servicesFilter {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+// ============================================
+// SEARCH ROW
+// ============================================
+
+.searchRow {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: stretch;
+  
+  @include mobile {
+    flex-direction: column;
+  }
+}
+
+.searchInputWrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.searchIcon {
+  position: absolute;
+  left: $spacing-md;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  pointer-events: none;
+  transition: color $transition-base;
+}
+
+.searchInput {
+  width: 100%;
+  padding: $spacing-sm $spacing-md $spacing-sm calc(#{$spacing-md} * 2 + #{$font-size-sm});
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-sm;
+  transition: all $transition-base;
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+}
+
+.searchBtn {
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $border-radius-md;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  white-space: nowrap;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  @include mobile {
+    width: 100%;
+  }
+}
+
+.filterToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  white-space: nowrap;
+  
+  svg {
+    font-size: $font-size-sm;
+  }
+  
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+    background: rgba(102, 126, 234, 0.05);
+  }
+  
+  @include mobile {
+    width: 100%;
+  }
+}
+
+// ============================================
+// FILTER PANEL
+// ============================================
+
+.filterPanel {
+  padding: $spacing-md $spacing-lg;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  background: var(--bg-primary, #f8f9fa);
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  transition: all $transition-base;
+}
+
+.filterPanelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+  h3 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin: 0;
+    transition: color $transition-base;
+  }
+}
+
+.clearAllBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  background: none;
+  border: none;
+  color: $error;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  padding: $spacing-xxs $spacing-xs;
+  border-radius: $border-radius-sm;
+  transition: all $transition-fast;
+  
+  svg {
+    font-size: $font-size-xs;
+  }
+  
+  &:hover {
+    background: rgba(239, 71, 111, 0.08);
+    color: $error-dark;
+  }
+}
+
+// ============================================
+// FILTER GROUP (categories, sort)
+// ============================================
+
+.filterGroup {
+  h4 {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--text-primary, $text-primary);
+    margin: 0 0 $spacing-xs 0;
+    transition: color $transition-base;
+  }
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.pill {
+  padding: $spacing-xxs $spacing-md;
+  border-radius: $border-radius-full;
+  border: 1px solid var(--border-color, $border-color);
+  background: var(--bg-card, #ffffff);
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+  }
+  
+  &.pillActive {
+    background: $primary;
+    border-color: $primary;
+    color: $text-white;
+    
+    &:hover {
+      background: $primary-dark;
+      border-color: $primary-dark;
+      color: $text-white;
+    }
+  }
+}
+
+// ============================================
+// APPLY BUTTON
+// ============================================
+
+.applyBtn {
+  width: 100%;
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $border-radius-md;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
+
+// ============================================
+// ACTIVE FILTER CHIPS
+// ============================================
+
+.activeFilters {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  flex-wrap: wrap;
+}
+
+.activeLabel {
+  font-size: $font-size-sm;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  padding: $spacing-xxs $spacing-sm;
+  background: rgba(102, 126, 234, 0.1);
+  color: $primary;
+  border-radius: $border-radius-full;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+}
+
+.chipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: $primary;
+  cursor: pointer;
+  padding: 0;
+  margin-left: $spacing-xxs;
+  font-size: $font-size-xs;
+  line-height: 1;
+  transition: color $transition-fast;
+  
+  &:hover {
+    color: $primary-dark;
+  }
+}

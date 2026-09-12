@@ -1,0 +1,52 @@
+/* src/components/WorkSession/CountdownTimer.module.scss */
+@use "../../styles/variables" as *;
+
+.countdown {
+  display: inline-block;
+  font-family: $font-family-mono;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  letter-spacing: 0.05em;
+  color: #10b981;
+  padding: 2px 8px;
+  border-radius: $border-radius-sm;
+  background: rgba(16, 185, 129, 0.1);
+  transition: all $transition-base;
+}
+
+.warning {
+  color: #d97706;
+  background: rgba(251, 191, 36, 0.15);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+.expired {
+  color: var(--text-light, $text-light);
+  background: var(--bg-primary, #f8f9fa);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+// Dark theme adjustments
+:global(.dark-theme) {
+  .countdown {
+    background: rgba(16, 185, 129, 0.2);
+  }
+  
+  .warning {
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.2);
+  }
+  
+  .expired {
+    color: #7a7a9a;
+    background: rgba(255, 255, 255, 0.05);
+  }
+}

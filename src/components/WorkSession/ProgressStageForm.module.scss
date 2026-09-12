@@ -1,0 +1,136 @@
+/* src/components/WorkSession/ProgressStageForm.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  border: 1px solid #f59e0b;
+  border-radius: $border-radius-md;
+  background: rgba(245, 158, 11, 0.04);
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+:global(.dark-theme) {
+  .form {
+    background: rgba(245, 158, 11, 0.08);
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xxs;
+}
+
+.label {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+}
+
+.input {
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-sm;
+  outline: none;
+  transition: all $transition-base;
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+  }
+  
+  &:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  }
+}
+
+.photoHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.photoCount {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  transition: color $transition-base;
+}
+
+.uploadRow {
+  margin-top: $spacing-sm;
+}
+
+.error {
+  padding: $spacing-sm $spacing-md;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: $border-radius-md;
+  color: $error;
+  font-size: $font-size-sm;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+  padding-top: $spacing-sm;
+  border-top: 1px solid var(--border-color, $border-color);
+  
+  @include mobile {
+    flex-direction: column-reverse;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.cancelBtn,
+.saveBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+}
+
+.cancelBtn {
+  background: transparent;
+  border: 1px solid var(--border-color, $border-color);
+  color: var(--text-secondary, $text-secondary);
+  
+  &:hover {
+    border-color: var(--text-primary, $text-primary);
+    color: var(--text-primary, $text-primary);
+  }
+}
+
+.saveBtn {
+  border: none;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: $text-white;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
