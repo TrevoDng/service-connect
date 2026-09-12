@@ -21,15 +21,14 @@ import EmployeeRegister from './account/components/Auth/employee/EmployeeRegiste
 import EmployeeLogin from './account/components/Auth/employee/EmployeeLogin';
 import { ThemeProvider, useTheme } from './styles/context/ThemeContext';
 import { ClientDashboard } from './account/components/Client/ClientDashboard';
+import DevLogin from './pages/DevLogin';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
 library.add(fas);
 
-// Protected route component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -37,18 +36,14 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
       </div>
     );
   }
-
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-// Role-based protected route
 const RoleProtectedRoute: React.FC<{
   children: React.ReactNode;
   allowedRoles: ('ADMIN' | 'EMPLOYEE' | 'CLIENT')[];
-  currentPage?: string;
 }> = ({ children, allowedRoles }) => {
   const { isAuthenticated, isLoading, user } = useAuth();
-
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -56,25 +51,18 @@ const RoleProtectedRoute: React.FC<{
       </div>
     );
   }
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" />;
-  }
-
+  if (!isAuthenticated) return <Navigate to="/login" />;
   if (!user || !allowedRoles.includes(user.role as 'ADMIN' | 'EMPLOYEE' | 'CLIENT')) {
     return <Navigate to="/" />;
   }
-
   return <>{children}</>;
 };
 
-// Public route component (redirects if authenticated)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated } = useAuth();
   return isAuthenticated ? <Navigate to="/services" /> : <>{children}</>;
 };
 
-// AppContent - Everything that needs Router context
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
   const { isAuthenticated, user } = useAuth();
@@ -102,9 +90,13 @@ const AppContent: React.FC = () => {
           <Route path="/service-provider-register" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
           <Route path="/login/employee" element={<PublicRoute><EmployeeLogin /></PublicRoute>} />
 
+          {/* DEV ONLY — remove before production */}
+          <Route path="/dev-login" element={<DevLogin />} />
+
           {/* Protected Routes */}
           <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
 
+          {/* Dashboards — currently unprotected for dev */}
           <Route path="/client/dashboard" element={<ClientDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/employee-dashboard" element={<EmployeeDashboard />} />

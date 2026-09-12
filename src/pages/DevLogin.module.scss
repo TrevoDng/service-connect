@@ -1,0 +1,352 @@
+/* src/pages/DevLogin.module.scss */
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
+
+.devLogin {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: $spacing-2xl $spacing-xl;
+  min-height: 70vh;
+  background: var(--bg-primary, #f8f9fa);
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-2xl;
+  transition: background $transition-base;
+  
+  @include mobile {
+    padding: $spacing-lg $spacing-md;
+    gap: $spacing-xl;
+  }
+}
+
+// ============================================
+// WARNING BANNER
+// ============================================
+
+.banner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: $border-radius-md;
+  color: #dc2626;
+  font-size: $font-size-sm;
+  
+  svg {
+    font-size: $font-size-lg;
+    flex-shrink: 0;
+  }
+  
+  strong {
+    font-weight: $font-weight-bold;
+  }
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+    font-size: $font-size-xs;
+  }
+}
+
+:global(.dark-theme) {
+  .banner {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #f87171;
+  }
+}
+
+// ============================================
+// CURRENT SESSION
+// ============================================
+
+.currentSession {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+  
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.sessionInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sessionLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color $transition-base;
+}
+
+.sessionName {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+}
+
+.sessionMeta {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  transition: color $transition-base;
+}
+
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  border: 1px solid $error;
+  background: transparent;
+  color: $error;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  white-space: nowrap;
+  
+  &:hover {
+    background: $error;
+    color: $text-white;
+  }
+  
+  @include mobile {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+// ============================================
+// SECTIONS
+// ============================================
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.heading {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  transition: color $transition-base;
+  
+  @include mobile {
+    font-size: $font-size-lg;
+  }
+}
+
+.subheading {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0 0 $spacing-xs;
+  transition: color $transition-base;
+}
+
+// ============================================
+// QUICK LOGIN GRID
+// ============================================
+
+.quickGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-md;
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
+}
+
+.quickCard {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  background: var(--bg-card, #ffffff);
+  text-align: left;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+    border-color: $primary;
+    
+    .quickArrow {
+      transform: translateX(4px);
+      color: $primary;
+    }
+  }
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+  }
+}
+
+.quickIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: $border-radius-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $text-white;
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+  
+  @include mobile {
+    width: 38px;
+    height: 38px;
+    font-size: $font-size-base;
+  }
+}
+
+.quickBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.quickRole {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color $transition-base;
+}
+
+.quickName {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+}
+
+.quickEmail {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color $transition-base;
+}
+
+.quickArrow {
+  color: var(--text-light, $text-light);
+  font-size: $font-size-base;
+  flex-shrink: 0;
+  transition: all $transition-base;
+}
+
+// ============================================
+// REGISTER FORM
+// ============================================
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-sm;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xxs;
+  
+  span {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--text-primary, $text-primary);
+    transition: color $transition-base;
+  }
+  
+  input,
+  select {
+    width: 100%;
+    padding: $spacing-sm $spacing-md;
+    border: 1px solid var(--border-color, $border-color);
+    border-radius: $border-radius-md;
+    background: var(--bg-primary, #f8f9fa);
+    color: var(--text-primary, $text-primary);
+    font-size: $font-size-sm;
+    font-family: inherit;
+    outline: none;
+    transition: all $transition-base;
+    
+    &::placeholder {
+      color: var(--text-light, $text-light);
+    }
+    
+    &:focus {
+      border-color: $primary;
+      background: var(--bg-card, #ffffff);
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+  }
+}
+
+.submitBtn {
+  margin-top: $spacing-xs;
+  padding: $spacing-md $spacing-xl;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  @include mobile {
+    width: 100%;
+  }
+}
