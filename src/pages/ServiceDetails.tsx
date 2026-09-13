@@ -4,24 +4,28 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
 import { serviceService } from '../services/service.service';
 import type { Service } from '../types/service.types';
-import { MapPin, User, Clock, Star, ArrowLeft } from 'lucide-react';
+import { BookingRequestForm } from '../components/Requests';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faArrowLeft,
+  faMapPin,
+  faUser,
+  faClock,
+  faStar,
+} from '@fortawesome/free-solid-svg-icons';
 import styles from './ServiceDetails.module.scss';
 
 export const ServiceDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
+
   const [service, setService] = useState<Service | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [bookingDate, setBookingDate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [isBooking, setIsBooking] = useState(false);
 
   useEffect(() => {
-    if (id) {
-      fetchService(id);
-    }
+    if (id) fetchService(id);
   }, [id]);
 
   const fetchService = async (serviceId: string) => {
@@ -35,31 +39,10 @@ export const ServiceDetails: React.FC = () => {
     }
   };
 
-  const handleBook = async () => {
-    if (!isAuthenticated) {
-      navigate('/login');
-      return;
-    }
-
-    if (!bookingDate) {
-      alert('Please select a booking date');
-      return;
-    }
-
-    setIsBooking(true);
-    try {
-      await serviceService.requestService(service!.id, {
-        bookingDate,
-        notes
-      });
-      alert('Booking request sent successfully!');
-      navigate('/client/bookings');
-    } catch (error: any) {
-      alert(error.message || 'Failed to book service');
-    } finally {
-      setIsBooking(false);
-    }
-  };
+  const isClient = user?.role === 'CLIENT';
+  const clientDisplayName = user
+    ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
+    : 'Client';
 
   if (loading) {
     return (
@@ -81,12 +64,9 @@ export const ServiceDetails: React.FC = () => {
 
   return (
     <div className={styles.serviceDetails}>
-      {/* Back Button */}
-      <button
-        onClick={() => navigate(-1)}
-        className={styles.backButton}
-      >
-        <ArrowLeft className={styles.backIcon} />
+      {/* Back */}
+      <button onClick={() => navigate(-1)} className={styles.backButton}>
+        <FontAwesomeIcon icon={faArrowLeft} />
         Back
       </button>
 
@@ -100,7 +80,7 @@ export const ServiceDetails: React.FC = () => {
             </div>
             {service.rating && (
               <div className={styles.serviceRating}>
-                <Star className={styles.starIcon} />
+                <FontAwesomeIcon icon={faStar} />
                 <span>{service.rating.toFixed(1)}</span>
               </div>
             )}
@@ -110,7 +90,7 @@ export const ServiceDetails: React.FC = () => {
         {/* Content */}
         <div className={styles.serviceContent}>
           <div className={styles.serviceContentGrid}>
-            {/* Left Column - Details */}
+            {/* Left column */}
             <div className={styles.serviceDetailsLeft}>
               <div className={styles.detailSection}>
                 <h2>Description</h2>
@@ -118,7 +98,7 @@ export const ServiceDetails: React.FC = () => {
               </div>
 
               <div className={styles.detailSection}>
-                <h2>Skills & Expertise</h2>
+                <h2>Skills &amp; Expertise</h2>
                 <div className={styles.skillsList}>
                   {service.skills.map((skill) => (
                     <span key={skill} className={styles.skillTag}>
@@ -130,76 +110,69 @@ export const ServiceDetails: React.FC = () => {
 
               <div className={styles.serviceInfoList}>
                 <div className={styles.serviceInfoItem}>
-                  <MapPin />
+                  <FontAwesomeIcon icon={faMapPin} />
                   <span>{service.location}</span>
                 </div>
                 {service.provider_name && (
                   <div className={styles.serviceInfoItem}>
-                    <User />
+                    <FontAwesomeIcon icon={faUser} />
                     <span>Provider: {service.provider_name}</span>
                   </div>
                 )}
                 {service.estimatedDuration && (
                   <div className={styles.serviceInfoItem}>
-                    <Clock />
+                    <FontAwesomeIcon icon={faClock} />
                     <span>Estimated duration: {service.estimatedDuration}</span>
                   </div>
                 )}
               </div>
             </div>
 
-            {/* Right Column - Booking */}
-            <div className={styles.bookingSection}>
+            {/* Right column — request form */}
+            <aside className={styles.bookingSection}>
               {service.price > 0 && (
                 <div className={styles.bookingPrice}>
-                  <p className={styles.priceLabel}>Price</p>
+                  <p className={styles.priceLabel}>Guide price</p>
                   <p className={styles.priceValue}>
                     R{service.price.toLocaleString()}
                   </p>
                 </div>
               )}
 
-              {isAuthenticated ? (
-                <div className={styles.bookingForm}>
-                  <div className={styles.bookingField}>
-                    <label>Booking Date *</label>
-                    <input
-                      type="datetime-local"
-                      value={bookingDate}
-                      onChange={(e) => setBookingDate(e.target.value)}
-                      className={styles.bookingInput}
-                    />
-                  </div>
-                  <div className={styles.bookingField}>
-                    <label>Notes (Optional)</label>
-                    <textarea
-                      value={notes}
-                      onChange={(e) => setNotes(e.target.value)}
-                      rows={3}
-                      className={styles.bookingTextarea}
-                      placeholder="Any special requirements..."
-                    />
-                  </div>
-                  <button
-                    onClick={handleBook}
-                    disabled={isBooking || !bookingDate}
-                    className={styles.bookingButton}
-                  >
-                    {isBooking ? 'Requesting...' : 'Request Service'}
-                  </button>
-                </div>
-              ) : (
+              {!isAuthenticated && (
                 <div className={styles.bookingLoginPrompt}>
-                  <p>Please login to book this service</p>
+                  <p>Please log in to request this service.</p>
                   <button
                     onClick={() => navigate('/login')}
                     className={styles.bookingLoginButton}
                   >
-                    Login to Book
+                    Login to continue
                   </button>
                 </div>
               )}
-            </div>
+
+              {isAuthenticated && !isClient && (
+                <div className={styles.bookingLoginPrompt}>
+                  <p>
+                    Only clients can request services. You are logged in as{' '}
+                    <strong>{user?.role}</strong>.
+                  </p>
+                </div>
+              )}
+
+              {isAuthenticated && isClient && (
+                <BookingRequestForm
+                  serviceId={service.id}
+                  serviceTitle={service.title}
+                  serviceCategory={service.category}
+                  providerId={service.providerId || 'p-001'}
+                  providerDisplayName={service.provider_name || 'Provider'}
+                  clientId={user.id}
+                  clientDisplayName={clientDisplayName}
+                  onSuccess={() => navigate('/client/dashboard')}
+                />
+              )}
+            </aside>
           </div>
         </div>
       </div>

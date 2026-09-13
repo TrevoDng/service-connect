@@ -16,9 +16,18 @@
   overflow: hidden;
   animation: slideDown 0.2s ease;
   
+  // ------------------------------------------
+  // MOBILE: fixed, centered, no anchor overflow
+  // ------------------------------------------
   @include mobile {
+    position: fixed;
+    top: 64px;                // just below the navbar
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
     width: calc(100vw - #{$spacing-md} * 2);
-    right: -#{$spacing-sm};
+    max-width: 380px;
+    animation: fadeInScale 0.2s ease;
   }
 }
 
@@ -32,6 +41,21 @@
     transform: translateY(0);
   }
 }
+
+// Mobile uses a different animation because the desktop one
+// clobbers the translateX(-50%) centering transform.
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) scale(1);
+  }
+}
+
+
 
 // ============================================
 // HEADER
