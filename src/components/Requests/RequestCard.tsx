@@ -17,7 +17,6 @@ import {
   faTimes,
   faEye,
   faFileInvoiceDollar,
-  faArrowRight,
   faDollarSign,
   faHandshake,
   faFlagCheckered,
@@ -25,6 +24,7 @@ import {
   faKey,
   faCamera,
 } from '@fortawesome/free-solid-svg-icons';
+import { ConsultationCard } from './ConsultationCard';
 import styles from './RequestCard.module.scss';
 
 // ============================================
@@ -35,32 +35,22 @@ export interface RequestCardProps {
   request: Booking;
   viewerRole: ViewerRole;
 
-  /** Open the full request detail (all roles) */
   onOpen?: (request: Booking) => void;
 
-  /** Provider-only: accept the request */
   onAccept?: (request: Booking) => void;
-  /** Provider-only: decline the request */
   onDecline?: (request: Booking) => void;
 
-  /** Client-only: pay the consultation fee */
   onPayConsultation?: (request: Booking) => void;
+  onStartConsultation?: (request: Booking) => void;
 
-  /** Provider-only: propose the final price */
   onProposeFinalPrice?: (request: Booking) => void;
-  /** Client-only: accept the proposed final price */
   onAcceptFinalPrice?: (request: Booking) => void;
-  /** Client-only: counter the proposed final price */
   onCounterFinalPrice?: (request: Booking) => void;
-  /** Client-only: dispute the proposed final price */
   onDisputeFinalPrice?: (request: Booking) => void;
 
-  /** All roles: open the Consultation Final Outcomes page */
   onViewOutcomes?: (request: Booking) => void;
-  /** All roles: open the live work session */
   onViewWorkSession?: (request: Booking) => void;
 
-  /** Compact mode: smaller paddings, hides some meta */
   compact?: boolean;
 }
 
@@ -70,7 +60,7 @@ export interface RequestCardProps {
 
 interface StatusSpec {
   label: string;
-  className: string;   // matches a module class
+  className: string;
 }
 
 const getStatusSpec = (status: BookingStatus): StatusSpec => {
@@ -106,8 +96,6 @@ const getStatusSpec = (status: BookingStatus): StatusSpec => {
 // HELPERS
 // ============================================
 
-// "Outcomes" button only appears when there are outcomes to show.
-// Per plan: status is 'evaluated' or later.
 const canViewOutcomes = (status: BookingStatus): boolean => {
   return (
     status === 'evaluated' ||
@@ -123,6 +111,18 @@ const canViewWorkSession = (status: BookingStatus): boolean => {
   return status === 'in_progress' || status === 'completed';
 };
 
+const shouldShowConsultation = (status: BookingStatus): boolean => {
+  // Render ConsultationCard for anything past 'requested'
+  return status !== 'requested';
+};
+
+// Client-side default — expand on desktop, collapse on mobile.
+// Cheap one-liner, doesn't need React state.
+const defaultConsultationExpanded = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  return window.innerWidth > 768;
+};
+
 // ============================================
 // COMPONENT
 // ============================================
@@ -134,6 +134,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   onAccept,
   onDecline,
   onPayConsultation,
+  onStartConsultation,
   onProposeFinalPrice,
   onAcceptFinalPrice,
   onCounterFinalPrice,
@@ -144,73 +145,55 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 }) => {
   const statusSpec = getStatusSpec(request.status);
 
-  // Which counterpart name to show
   const counterpartName =
     viewerRole === 'CLIENT'
       ? request.providerDisplayName
       : request.clientDisplayName;
   const counterpartLabel = viewerRole === 'CLIENT' ? 'Provider' : 'Client';
 
-  // Should we show the consultation fee paid badge?
   const showFeeBadge = canSeeConsultationFeeStatus(viewerRole);
   const feePaid = !!request.consultationPaidAt;
 
-  // Photo preview (max 3 + overflow count)
   const previewPhotos = request.requestPhotos.slice(0, 3);
   const extraPhotoCount = Math.max(0, request.requestPhotos.length - 3);
 
-  // -------------- ACTION BUTTONS BY STATUS --------------
-
+  // ------------------------------------------
+  // ACTIONS
+  // ------------------------------------------
   const renderActions = () => {
     const actions: React.ReactNode[] = [];
 
-    // -------- PROVIDER ACTIONS --------
-    if (canAcceptRequest(viewerRole)) {
-      if (request.status === 'requested') {
-        if (onAccept) {
-          actions.push(
-            <button
-              key="accept"
-              type="button"
-              className={styles.primaryBtn}
-              onClick={() => onAccept(request)}
-            >
-              <FontAwesomeIcon icon={faCheck} />
-              Accept
-            </button>
-          );
-        }
-        if (onDecline) {
-          actions.push(
-            <button
-              key="decline"
-              type="button"
-              className={styles.dangerBtn}
-              onClick={() => onDecline(request)}
-            >
-              <FontAwesomeIcon icon={faTimes} />
-              Decline
-            </button>
-          );
-        }
-      }
-
-      if (request.status === 'evaluated' && canProposePrice(viewerRole) && onProposeFinalPrice) {
+    // -------- PROVIDER: accept / decline --------
+    if (canAcceptRequest(viewerRole) && request.status === 'requested') {
+      if (onAccept) {
         actions.push(
           <button
-            key="propose"
+            key="accept"
             type="button"
             className={styles.primaryBtn}
-            onClick={() => onProposeFinalPrice(request)}
+            onClick={() => onAccept(request)}
           >
-            <FontAwesomeIcon icon={faDollarSign} />
-            Propose final price
+            <FontAwesomeIcon icon={faCheck} />
+            Accept
+          </button>
+        );
+      }
+      if (onDecline) {
+        actions.push(
+          <button
+            key="decline"
+            type="button"
+            className={styles.dangerBtn}
+            onClick={() => onDecline(request)}
+          >
+            <FontAwesomeIcon icon={faTimes} />
+            Decline
           </button>
         );
       }
     }
 
-    // -------- CLIENT ACTIONS --------
+    // -------- CLIENT: pay consultation --------
     if (canPayConsultation(viewerRole)) {
       if (request.status === 'accepted' && onPayConsultation) {
         actions.push(
@@ -227,6 +210,26 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       }
     }
 
+    // -------- PROVIDER: propose final price --------
+    if (
+      request.status === 'evaluated' &&
+      canProposePrice(viewerRole) &&
+      onProposeFinalPrice
+    ) {
+      actions.push(
+        <button
+          key="propose"
+          type="button"
+          className={styles.primaryBtn}
+          onClick={() => onProposeFinalPrice(request)}
+        >
+          <FontAwesomeIcon icon={faDollarSign} />
+          Propose final price
+        </button>
+      );
+    }
+
+    // -------- CLIENT: accept / counter / dispute price --------
     if (canRespondToPrice(viewerRole) && request.status === 'price_proposed') {
       if (onAcceptFinalPrice) {
         actions.push(
@@ -268,7 +271,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       }
     }
 
-    // -------- SHARED ACTIONS (all roles) --------
+    // -------- SHARED --------
     if (onViewWorkSession && canViewWorkSession(request.status)) {
       actions.push(
         <button
@@ -297,7 +300,6 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       );
     }
 
-    // -------- OPEN DETAIL (fallback / always available) --------
     if (onOpen) {
       actions.push(
         <button
@@ -320,10 +322,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   // ============================================
 
   return (
-    <article
-      className={`${styles.card} ${compact ? styles.compact : ''}`}
-    >
-      {/* Header: ref + status + timestamp */}
+    <article className={`${styles.card} ${compact ? styles.compact : ''}`}>
+      {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
           <span className={styles.ref}>{request.requestRef}</span>
@@ -331,17 +331,18 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             {statusSpec.label}
           </span>
 
-          {showFeeBadge && request.status !== 'requested' && request.status !== 'declined' && (
-            <span
-              className={`${styles.feeBadge} ${
-                feePaid ? styles.feePaid : styles.feeUnpaid
-              }`}
-              title={feePaid ? 'Consultation fee paid' : 'Consultation fee pending'}
-            >
-              <FontAwesomeIcon icon={faFileInvoiceDollar} />
-              {feePaid ? 'Fee paid' : 'Fee unpaid'}
-            </span>
-          )}
+          {showFeeBadge &&
+            request.status !== 'requested' &&
+            request.status !== 'declined' && (
+              <span
+                className={`${styles.feeBadge} ${
+                  feePaid ? styles.feePaid : styles.feeUnpaid
+                }`}
+              >
+                <FontAwesomeIcon icon={faFileInvoiceDollar} />
+                {feePaid ? 'Fee paid' : 'Fee unpaid'}
+              </span>
+            )}
         </div>
 
         <span className={styles.timestamp}>
@@ -371,7 +372,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             <span className={styles.metaLabel}>Suggested price:</span>
             <span className={styles.metaValue}>
               {formatPrice(request.suggestedPrice)}
-              <span className={styles.helper} title="Not binding — final price after evaluation">
+              <span className={styles.helper} title="Not binding">
                 {' '}(suggestion)
               </span>
             </span>
@@ -391,7 +392,6 @@ export const RequestCard: React.FC<RequestCardProps> = ({
           <p className={styles.description}>{request.description}</p>
         )}
 
-        {/* Request photos preview */}
         {request.requestPhotos.length > 0 && !compact && (
           <div className={styles.photoStrip}>
             {previewPhotos.map((url, i) => (
@@ -409,6 +409,19 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             <span className={styles.photoCountLabel}>
               <FontAwesomeIcon icon={faCamera} /> {request.requestPhotos.length}
             </span>
+          </div>
+        )}
+
+        {/* Consultation (collapsible, shared) */}
+        {shouldShowConsultation(request.status) && (
+          <div className={styles.consultationWrapper}>
+            <ConsultationCard
+              request={request}
+              viewerRole={viewerRole}
+              onPay={onPayConsultation}
+              onStartConsultation={onStartConsultation}
+              defaultExpanded={defaultConsultationExpanded()}
+            />
           </div>
         )}
       </div>

@@ -1,0 +1,351 @@
+/* src/components/Requests/ConsultationCard.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+// ============================================
+// CARD SHELL
+// ============================================
+
+.card {
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary, #f8f9fa);
+  overflow: hidden;
+  transition: all $transition-base;
+}
+
+// ============================================
+// HEADER (toggle)
+// ============================================
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-sm;
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background $transition-fast;
+  
+  &:hover {
+    background: var(--bg-card, #ffffff);
+  }
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+    flex-wrap: wrap;
+  }
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+}
+
+.feeAmount {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary;
+}
+
+.chevron {
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  transition: color $transition-base;
+}
+
+// ============================================
+// BADGES
+// ============================================
+
+.phaseBadge,
+.feeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  padding: $spacing-xxs $spacing-sm;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+  
+  svg {
+    font-size: 0.65rem;
+  }
+}
+
+.phasePending {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+.phaseInfo {
+  background: rgba(59, 130, 246, 0.15);
+  color: #2563eb;
+}
+
+.phaseSuccess {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+.phaseMuted {
+  background: var(--bg-card, #ffffff);
+  color: var(--text-light, $text-light);
+  border: 1px solid var(--border-color, $border-color);
+}
+
+:global(.dark-theme) {
+  .phasePending {
+    background: rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+  }
+  .phaseInfo {
+    background: rgba(96, 165, 250, 0.25);
+    color: #60a5fa;
+  }
+  .phaseSuccess {
+    background: rgba(52, 211, 153, 0.25);
+    color: #34d399;
+  }
+}
+
+.feePaid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.feeUnpaid {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+:global(.dark-theme) {
+  .feePaid {
+    background: rgba(52, 211, 153, 0.2);
+    color: #34d399;
+  }
+  .feeUnpaid {
+    background: rgba(251, 191, 36, 0.25);
+    color: #fbbf24;
+  }
+}
+
+// ============================================
+// BODY
+// ============================================
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: 0 $spacing-lg $spacing-lg;
+  border-top: 1px solid var(--border-color, $border-color);
+  padding-top: $spacing-md;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+// ============================================
+// SUMMARY GRID
+// ============================================
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: $spacing-sm;
+  
+  @include mobile {
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-xs;
+  }
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-sm;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-xs $spacing-sm;
+  }
+}
+
+.summaryLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  transition: color $transition-base;
+}
+
+.summaryValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  transition: color $transition-base;
+}
+
+// ============================================
+// SECTIONS (notes, photos)
+// ============================================
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.sectionTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  transition: color $transition-base;
+  
+  svg {
+    color: $primary;
+    font-size: $font-size-xs;
+  }
+}
+
+.notes {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  line-height: $line-height-relaxed;
+  margin: 0;
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border-left: 3px solid $primary;
+  border-radius: $border-radius-sm;
+  transition: all $transition-base;
+}
+
+// ============================================
+// PHOTO GRID
+// ============================================
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: $spacing-xs;
+  
+  @include mobile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.photoTile {
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  border-radius: $border-radius-sm;
+  overflow: hidden;
+  border: 1px solid var(--border-color, $border-color);
+  background: var(--bg-card, #ffffff);
+  transition: all $transition-base;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  
+  &:hover {
+    border-color: $primary;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+  }
+}
+
+// ============================================
+// PAYMENT ROW
+// ============================================
+
+.paymentRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  color: #059669;
+  
+  svg {
+    flex-shrink: 0;
+  }
+}
+
+:global(.dark-theme) {
+  .paymentRow {
+    background: rgba(52, 211, 153, 0.15);
+    color: #34d399;
+  }
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+
+.actions {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  padding-top: $spacing-sm;
+  
+  @include mobile {
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.primaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  white-space: nowrap;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}

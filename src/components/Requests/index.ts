@@ -2,10 +2,12 @@
 export { RequestCard } from './RequestCard';
 export type { RequestCardProps } from './RequestCard';
 
+export { ConsultationCard } from './ConsultationCard';
+export type { ConsultationCardProps } from './ConsultationCard';
+
 export { BookingRequestForm } from './BookingRequestForm';
 export type { BookingRequestFormProps } from './BookingRequestForm';
 
-// Future components (added in later 7x sub-steps):
-// export { ProviderRequestsView } from './ProviderRequestsView';
-// export { ClientRequestsView } from './ClientRequestsView';
-// export { ConsultationCard } from './ConsultationCard';
+export { ProviderRequestsView } from './ProviderRequestsView';
+
+// Future: ClientRequestsView, ConsultationOutcomes

@@ -1,19 +1,25 @@
 // src/utils/allBookings.ts
 //
 // Single source of truth for reading bookings anywhere in the app.
-// Merges the static demo seed with any bookings created at runtime
-// (currently persisted to localStorage).
+// Merges:
+//   1. Bookings created at runtime (localStorage)
+//   2. Overrides applied at runtime (localStorage)
+//   3. Static demo seed data
+//
+// When the backend is ready, replace the bodies with API calls.
 
 import type { Booking } from '../types';
 import { demoBookings } from '../data/demoBookings';
 import { getLocalBookings } from './localBookings';
+import { applyBookingOverrides } from './localBookingOverrides';
 
 // ============================================
 // READ
 // ============================================
 
 export const getAllBookings = (): Booking[] => {
-  return [...getLocalBookings(), ...demoBookings];
+  const merged = [...getLocalBookings(), ...demoBookings];
+  return applyBookingOverrides(merged);
 };
 
 export const getBookingById = (id: string): Booking | undefined => {
@@ -39,10 +45,9 @@ export const getBookingsForProvider = (providerId: string): Booking[] => {
 };
 
 // ============================================
-// FILTERS USED BY THE REQUESTS VIEWS
+// FILTERS
 // ============================================
 
-// A request is "current" while it hasn't reached a terminal state.
 export const isCurrentRequest = (b: Booking): boolean => {
   return (
     b.status === 'requested' ||

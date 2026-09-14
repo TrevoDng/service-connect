@@ -1,7 +1,13 @@
 // src/components/Client/ServiceCard.tsx
 import React from 'react';
 import type { Service } from '../../types/service.types';
-import { MapPin, Star, User, Clock } from 'lucide-react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import {
+  faMapPin,
+  faStar,
+  faUser,
+  faClock,
+} from '@fortawesome/free-solid-svg-icons';
 import styles from './ServiceCard.module.scss';
 
 interface ServiceCardProps {
@@ -10,57 +16,66 @@ interface ServiceCardProps {
   onHire: (service: Service) => void;
 }
 
-export const ServiceCard: React.FC<ServiceCardProps> = ({ 
-  service, 
-  onViewDetails, 
-  onHire 
+export const ServiceCard: React.FC<ServiceCardProps> = ({
+  service,
+  onViewDetails,
+  onHire,
 }) => {
+  const handleCardClick = () => {
+    onViewDetails(service);
+  };
+
+  const handleCardKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onViewDetails(service);
+    }
+  };
+
   return (
-    <div className={styles.serviceCard}>
+    <div
+      className={styles.serviceCard}
+      onClick={handleCardClick}
+      onKeyDown={handleCardKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-label={`View details for ${service.title}`}
+    >
       <div className={styles.serviceCardBody}>
         {/* Category Badge & Rating */}
         <div className={styles.serviceCardHeader}>
-          <span className={styles.categoryBadge}>
-            {service.category}
-          </span>
+          <span className={styles.categoryBadge}>{service.category}</span>
           {service.rating && (
             <div className={styles.ratingBadge}>
-              <Star className={styles.starIcon} />
+              <FontAwesomeIcon icon={faStar} />
               <span>{service.rating.toFixed(1)}</span>
             </div>
           )}
         </div>
 
         {/* Title */}
-        <h3 className={styles.serviceTitle}>
-          {service.title}
-        </h3>
+        <h3 className={styles.serviceTitle}>{service.title}</h3>
 
         {/* Description */}
-        <p className={styles.serviceDescription}>
-          {service.description}
-        </p>
+        <p className={styles.serviceDescription}>{service.description}</p>
 
         {/* Details */}
         <div className={styles.serviceDetails}>
-          {/* Location */}
           <div className={styles.detailItem}>
-            <MapPin />
+            <FontAwesomeIcon icon={faMapPin} />
             <span>{service.location}</span>
           </div>
 
-          {/* Provider */}
           {service.provider_name && (
             <div className={styles.detailItem}>
-              <User />
+              <FontAwesomeIcon icon={faUser} />
               <span>{service.provider_name}</span>
             </div>
           )}
 
-          {/* Estimated Duration */}
           {service.estimatedDuration && (
             <div className={styles.detailItem}>
-              <Clock />
+              <FontAwesomeIcon icon={faClock} />
               <span>{service.estimatedDuration}</span>
             </div>
           )}
@@ -94,13 +109,19 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         {/* Actions */}
         <div className={styles.serviceActions}>
           <button
-            onClick={() => onViewDetails(service)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onViewDetails(service);
+            }}
             className={styles.viewDetailsBtn}
           >
             View Details
           </button>
           <button
-            onClick={() => onHire(service)}
+            onClick={(e) => {
+              e.stopPropagation();
+              onHire(service);
+            }}
             className={styles.hireBtn}
           >
             Contact Expert

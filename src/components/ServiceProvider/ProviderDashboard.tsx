@@ -9,7 +9,7 @@ import { serviceService } from '../../services/service.service';
 import type { ServiceStats } from '../../types/service.types';
 import type { WorkSession, ProgressStage, WorkPhoto } from '../../types';
 import { demoWorkSessions } from '../../data/demoWorkSessions';
-import { getBookingById } from '../../data/demoBookings';
+import { getBookingById } from '../../utils/allBookings';
 import {
   generateClockInCode,
   clockInCodeExpiry,
@@ -17,16 +17,23 @@ import {
 } from '../../utils/referenceCode';
 import { formatRelative, formatDuration } from '../../utils/formatters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faList, faComments, faHardHat } from '@fortawesome/free-solid-svg-icons';
+import {
+  faList,
+  faComments,
+  faHardHat,
+  faInbox,
+} from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../layout';
 import type { SidebarNavItem } from '../layout';
 import { MessagesView } from '../Chat';
 import { WorkSessionPanel } from '../WorkSession';
+import { ProviderRequestsView } from '../Requests';
 import { getUnreadCount } from '../../data/demoNotifications';
+import { getBookingsForProvider, isCurrentRequest } from '../../utils/allBookings';
 import styles from './ProviderDashboard.module.scss';
 
 // ============================================
-// PROVIDER THEME CONSTANTS
+// THEME CONSTANTS
 // ============================================
 
 const PROVIDER_ACCENT = '#f59e0b';
@@ -41,7 +48,7 @@ const DEMO_PROVIDER_ID = 'p-001';
 // TYPES
 // ============================================
 
-type ProviderView = 'my-services' | 'work-log' | 'messages';
+type ProviderView = 'requests' | 'my-services' | 'work-log' | 'messages';
 type ServicesTab = 'list' | 'add';
 
 // ============================================
@@ -53,7 +60,7 @@ export const ProviderDashboard: React.FC = () => {
   const { logout } = useAuth();
   const { theme } = useTheme();
 
-  const [activeView, setActiveView] = useState<ProviderView>('my-services');
+  const [activeView, setActiveView] = useState<ProviderView>('requests');
   const [activeTab, setActiveTab] = useState<ServicesTab>('list');
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
@@ -70,17 +77,11 @@ export const ProviderDashboard: React.FC = () => {
       ...s,
       clockEvents: [...s.clockEvents],
       beforePhotos: [...s.beforePhotos],
-      progressStages: s.progressStages.map((st) => ({
-        ...st,
-        photos: [...st.photos],
-      })),
+      progressStages: s.progressStages.map((st) => ({ ...st, photos: [...st.photos] })),
       finalPhotos: [...s.finalPhotos],
     }))
   );
 
-  // ------------------------------------------
-  // Fetch stats
-  // ------------------------------------------
   useEffect(() => {
     fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,16 +99,15 @@ export const ProviderDashboard: React.FC = () => {
   };
 
   // ------------------------------------------
-  // Session mutation helper
+  // Sidebar badge counts
   // ------------------------------------------
-  const updateSession = (
-    sessionId: string,
-    updater: (s: WorkSession) => WorkSession
-  ) => {
-    setSessions((prev) =>
-      prev.map((s) => (s.id === sessionId ? updater(s) : s))
-    );
-  };
+  const unreadMessages = getUnreadCount(DEMO_PROVIDER_ID);
+  const activeRequestCount = useMemo(
+    () => getBookingsForProvider(DEMO_PROVIDER_ID).filter(isCurrentRequest).length,
+    // Recomputed each render of the dashboard — cheap enough for demo
+    // and reflects any overrides written from the Requests view.
+    []
+  );
 
   // ------------------------------------------
   // Actions
@@ -128,30 +128,15 @@ export const ProviderDashboard: React.FC = () => {
   };
 
   // ------------------------------------------
-  // Work log helpers
+  // Session mutators
   // ------------------------------------------
-  const providerSessions = useMemo(
-    () =>
-      sessions
-        .filter((s) => s.providerId === DEMO_PROVIDER_ID)
-        .sort(
-          (a, b) =>
-            new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
-        ),
-    [sessions]
-  );
+  const updateSession = (
+    sessionId: string,
+    updater: (s: WorkSession) => WorkSession
+  ) => {
+    setSessions((prev) => prev.map((s) => (s.id === sessionId ? updater(s) : s)));
+  };
 
-  const selectedSession = selectedSessionId
-    ? sessions.find((s) => s.id === selectedSessionId) || null
-    : null;
-
-  const selectedBooking = selectedSession
-    ? getBookingById(selectedSession.bookingId)
-    : undefined;
-
-  // ------------------------------------------
-  // Clock actions
-  // ------------------------------------------
   const handleClockIn = (sessionId: string) => {
     updateSession(sessionId, (s) => {
       const code = generateClockInCode();
@@ -180,14 +165,11 @@ export const ProviderDashboard: React.FC = () => {
     updateSession(sessionId, (s) => {
       const lastIn = [...s.clockEvents].reverse().find((e) => e.type === 'in');
       const outAt = new Date().toISOString();
-
       let addedHours = 0;
       if (lastIn) {
         addedHours =
-          (new Date(outAt).getTime() - new Date(lastIn.at).getTime()) /
-          3_600_000;
+          (new Date(outAt).getTime() - new Date(lastIn.at).getTime()) / 3_600_000;
       }
-
       return {
         ...s,
         status: 'in_progress',
@@ -195,12 +177,7 @@ export const ProviderDashboard: React.FC = () => {
         referenceCodeExpiresAt: undefined,
         clockEvents: [
           ...s.clockEvents,
-          {
-            id: generateId(),
-            type: 'out',
-            at: outAt,
-            confirmedByClient: false,
-          },
+          { id: generateId(), type: 'out', at: outAt, confirmedByClient: false },
         ],
         daysWorked: s.daysWorked + 1,
         totalHours: Number((s.totalHours + addedHours).toFixed(2)),
@@ -220,9 +197,6 @@ export const ProviderDashboard: React.FC = () => {
     }));
   };
 
-  // ------------------------------------------
-  // Photo actions
-  // ------------------------------------------
   const handleAddBeforePhotos = (sessionId: string, photos: WorkPhoto[]) => {
     updateSession(sessionId, (s) => ({
       ...s,
@@ -239,20 +213,13 @@ export const ProviderDashboard: React.FC = () => {
     }));
   };
 
-  const handleSaveProgressStage = (
-    sessionId: string,
-    stage: ProgressStage
-  ) => {
+  const handleSaveProgressStage = (sessionId: string, stage: ProgressStage) => {
     updateSession(sessionId, (s) => {
       const exists = s.progressStages.some((st) => st.id === stage.id);
       const nextStages = exists
         ? s.progressStages.map((st) => (st.id === stage.id ? stage : st))
         : [...s.progressStages, stage];
-      return {
-        ...s,
-        progressStages: nextStages,
-        updatedAt: new Date().toISOString(),
-      };
+      return { ...s, progressStages: nextStages, updatedAt: new Date().toISOString() };
     });
   };
 
@@ -281,19 +248,24 @@ export const ProviderDashboard: React.FC = () => {
   };
 
   // ------------------------------------------
-  // Sidebar nav items
+  // Sidebar
   // ------------------------------------------
-  const unreadMessages = getUnreadCount(DEMO_PROVIDER_ID);
-
   const navItems: SidebarNavItem[] = [
+    {
+      key: 'requests',
+      label: 'Requests',
+      icon: faInbox,
+      badge: activeRequestCount || undefined,
+    },
     { key: 'my-services', label: 'My Services', icon: faList },
     {
       key: 'work-log',
       label: 'Work Log',
       icon: faHardHat,
       badge:
-        providerSessions.filter((s) => s.status !== 'completed').length ||
-        undefined,
+        sessions.filter(
+          (s) => s.providerId === DEMO_PROVIDER_ID && s.status !== 'completed'
+        ).length || undefined,
     },
     {
       key: 'messages',
@@ -304,7 +276,7 @@ export const ProviderDashboard: React.FC = () => {
   ];
 
   // ------------------------------------------
-  // Render — "My Services"
+  // My Services view
   // ------------------------------------------
   const renderMyServices = () => (
     <div className={styles.mainContent}>
@@ -373,7 +345,16 @@ export const ProviderDashboard: React.FC = () => {
   );
 
   // ------------------------------------------
-  // Render — "Work Log"
+  // Requests view
+  // ------------------------------------------
+  const renderRequests = () => (
+    <div className={styles.mainContent}>
+      <ProviderRequestsView />
+    </div>
+  );
+
+  // ------------------------------------------
+  // Work Log view
   // ------------------------------------------
   const renderWorkLog = () => {
     if (selectedSession && selectedBooking) {
@@ -399,13 +380,15 @@ export const ProviderDashboard: React.FC = () => {
       );
     }
 
+    const providerSessions = sessions
+      .filter((s) => s.providerId === DEMO_PROVIDER_ID)
+      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
     return (
       <div className={styles.mainContent}>
         <div className={styles.workLogHeader}>
           <h2>Work Log</h2>
-          <p className={styles.workLogSubtitle}>
-            Active and recent job sessions.
-          </p>
+          <p className={styles.workLogSubtitle}>Active and recent job sessions.</p>
         </div>
 
         {providerSessions.length === 0 ? (
@@ -420,7 +403,6 @@ export const ProviderDashboard: React.FC = () => {
               const booking = getBookingById(session.bookingId);
               if (!booking) return null;
               const isActive = session.status !== 'completed';
-
               return (
                 <button
                   key={session.id}
@@ -429,22 +411,14 @@ export const ProviderDashboard: React.FC = () => {
                   onClick={() => setSelectedSessionId(session.id)}
                 >
                   <div className={styles.sessionLeft}>
-                    <span className={styles.sessionRef}>
-                      {booking.requestRef}
-                    </span>
-                    <h4 className={styles.sessionTitle}>
-                      {booking.serviceTitle}
-                    </h4>
-                    <p className={styles.sessionClient}>
-                      Client: {booking.clientDisplayName}
-                    </p>
+                    <span className={styles.sessionRef}>{booking.requestRef}</span>
+                    <h4 className={styles.sessionTitle}>{booking.serviceTitle}</h4>
+                    <p className={styles.sessionClient}>Client: {booking.clientDisplayName}</p>
                   </div>
                   <div className={styles.sessionRight}>
                     <span
                       className={`${styles.sessionStatus} ${
-                        isActive
-                          ? styles.sessionStatusActive
-                          : styles.sessionStatusDone
+                        isActive ? styles.sessionStatusActive : styles.sessionStatusDone
                       }`}
                     >
                       {session.status}
@@ -467,7 +441,7 @@ export const ProviderDashboard: React.FC = () => {
   };
 
   // ------------------------------------------
-  // Render — "Messages"
+  // Messages view
   // ------------------------------------------
   const renderMessages = () => (
     <div className={styles.mainContent}>
@@ -476,8 +450,16 @@ export const ProviderDashboard: React.FC = () => {
   );
 
   // ------------------------------------------
-  // Render
+  // Compose
   // ------------------------------------------
+  const selectedSession = selectedSessionId
+    ? sessions.find((s) => s.id === selectedSessionId) || null
+    : null;
+
+  const selectedBooking = selectedSession
+    ? getBookingById(selectedSession.bookingId)
+    : undefined;
+
   return (
     <div className={theme === 'dark' ? 'dark-theme' : ''}>
       <DashboardLayout
@@ -498,6 +480,7 @@ export const ProviderDashboard: React.FC = () => {
           />
         }
       >
+        {activeView === 'requests' && renderRequests()}
         {activeView === 'my-services' && renderMyServices()}
         {activeView === 'work-log' && renderWorkLog()}
         {activeView === 'messages' && renderMessages()}
