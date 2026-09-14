@@ -118,6 +118,11 @@
     margin-top: 2px;
   }
   
+  span {
+    flex: 1;        // ← new
+    min-width: 0;   // ← new (prevents flex overflow)
+  }
+  
   strong {
     color: var(--text-primary, $text-primary);
     font-weight: $font-weight-semibold;

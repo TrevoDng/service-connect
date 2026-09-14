@@ -195,9 +195,11 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
         </div>
         <p className={styles.helper}>
           <FontAwesomeIcon icon={faInfoCircle} />
-          This is only a suggestion. The final price will be agreed after{' '}
+          <span>
+             This is only a suggestion. The final price will be agreed after{' '}
           <strong>{providerDisplayName}</strong> evaluates the job on-site.
-        </p>
+          </span>
+</p>
       </div>
 
       {/* Photos */}

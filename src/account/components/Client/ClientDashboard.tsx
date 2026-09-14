@@ -5,16 +5,13 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
 import type { WorkSession, Booking as BookingModel } from '../../../types';
 import { demoWorkSessions } from '../../../data/demoWorkSessions';
-import { demoBookings } from '../../../data/demoBookings';
+import { getBookingsForClient, isCurrentRequest, isClosedRequest } from '../../../utils/allBookings';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
   faHistory,
   faPlusCircle,
   faComments,
-  faCheckCircle,
-  faClock,
-  faTimesCircle,
   faSearch,
   faBell,
   faChevronDown,
@@ -24,38 +21,12 @@ import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
 import { MessagesView } from '../../../components/Chat';
 import { ClockConfirmCard, ClientWorkSessionCard } from '../../../components/WorkSession';
+import { RequestCard } from '../../../components/Requests';
 import { getUnreadCount } from '../../../data/demoNotifications';
 import styles from './ClientDashboard.module.scss';
 
 // ============================================
-// TYPES
-// ============================================
-
-interface Booking {
-  id: string;
-  serviceTitle: string;
-  providerName: string;
-  date: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  price: number;
-}
-
-type ClientTab = 'bookings' | 'history' | 'messages';
-
-// ============================================
-// DEMO DATA — simple list
-// ============================================
-
-const demoBookingsSimple: Booking[] = [
-  { id: '1', serviceTitle: 'Plumbing Repair', providerName: 'John Doe', date: '2026-09-10T14:00:00', status: 'pending', price: 350 },
-  { id: '2', serviceTitle: 'Electrical Installation', providerName: 'Jane Smith', date: '2026-09-08T09:00:00', status: 'confirmed', price: 450 },
-  { id: '3', serviceTitle: 'Garden Maintenance', providerName: 'Mike Johnson', date: '2026-09-05T10:00:00', status: 'completed', price: 250 },
-  { id: '4', serviceTitle: 'Renovation Project', providerName: 'Sarah Wilson', date: '2026-09-01T08:00:00', status: 'cancelled', price: 800 },
-  { id: '5', serviceTitle: 'Computer Repair', providerName: 'Tom Brown', date: '2026-09-12T13:00:00', status: 'pending', price: 200 },
-];
-
-// ============================================
-// CLIENT THEME CONSTANTS
+// THEME CONSTANTS
 // ============================================
 
 const CLIENT_ACCENT = '#667eea';
@@ -67,6 +38,12 @@ const CLIENT_ROLE_BG = 'rgba(102, 126, 234, 0.1)';
 const DEMO_CLIENT_ID = 'c-001';
 
 // ============================================
+// TYPES
+// ============================================
+
+type ClientTab = 'requests' | 'history' | 'messages';
+
+// ============================================
 // COMPONENT
 // ============================================
 
@@ -75,19 +52,16 @@ export const ClientDashboard: React.FC = () => {
   const { logout } = useAuth();
   const { theme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<ClientTab>('bookings');
-  const [bookings, setBookings] = useState<Booking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<ClientTab>('requests');
+  const [searchQuery, setSearchQuery] = useState('');
 
+  // Local work sessions (Step 5b) — mutable for gate confirmation
   const [sessions, setSessions] = useState<WorkSession[]>(() =>
     demoWorkSessions.map((s) => ({
       ...s,
       clockEvents: [...s.clockEvents],
       beforePhotos: [...s.beforePhotos],
-      progressStages: s.progressStages.map((st) => ({
-        ...st,
-        photos: [...st.photos],
-      })),
+      progressStages: s.progressStages.map((st) => ({ ...st, photos: [...st.photos] })),
       finalPhotos: [...s.finalPhotos],
     }))
   );
@@ -95,23 +69,18 @@ export const ClientDashboard: React.FC = () => {
   const [expandedConfirmBookingId, setExpandedConfirmBookingId] = useState<string | null>(null);
 
   // ------------------------------------------
-  // Load demo data
+  // Bookings from the merged store
   // ------------------------------------------
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setBookings(demoBookingsSimple);
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // ------------------------------------------
-  // Rich bookings for this client
-  // ------------------------------------------
-  const richBookings: BookingModel[] = useMemo(
-    () => demoBookings.filter((b) => b.clientId === DEMO_CLIENT_ID),
+  const allClientBookings = useMemo(
+    () => getBookingsForClient(DEMO_CLIENT_ID),
     []
   );
+
+  // ------------------------------------------
+  // Sidebar counts
+  // ------------------------------------------
+  const currentCount = allClientBookings.filter(isCurrentRequest).length;
+  const unreadMessages = getUnreadCount(DEMO_CLIENT_ID);
 
   // ------------------------------------------
   // Actions
@@ -166,97 +135,70 @@ export const ClientDashboard: React.FC = () => {
   };
 
   // ------------------------------------------
-  // Simple bookings helpers
+  // RequestCard callbacks (stubs wired in 7e / 7h)
   // ------------------------------------------
-  const getStatusIcon = (status: Booking['status']) => {
-    switch (status) {
-      case 'pending':
-        return <FontAwesomeIcon icon={faClock} />;
-      case 'confirmed':
-      case 'completed':
-        return <FontAwesomeIcon icon={faCheckCircle} />;
-      case 'cancelled':
-        return <FontAwesomeIcon icon={faTimesCircle} />;
-      default:
-        return null;
-    }
+  const handlePayConsultation = (booking: BookingModel) => {
+    console.log('[7e TODO] Pay consultation for', booking.id);
   };
 
-  const getStatusText = (status: Booking['status']) => {
-    switch (status) {
-      case 'pending':
-        return 'Pending';
-      case 'confirmed':
-        return 'Confirmed';
-      case 'completed':
-        return 'Completed';
-      case 'cancelled':
-        return 'Cancelled';
-      default:
-        return status;
-    }
+  const handleAcceptFinalPrice = (booking: BookingModel) => {
+    console.log('[7h TODO] Accept final price for', booking.id);
   };
 
-  const getStatusClass = (status: Booking['status']) => {
-    switch (status) {
-      case 'pending':
-        return styles.statusPending;
-      case 'confirmed':
-        return styles.statusConfirmed;
-      case 'completed':
-        return styles.statusCompleted;
-      case 'cancelled':
-        return styles.statusCancelled;
-      default:
-        return '';
-    }
+  const handleCounterFinalPrice = (booking: BookingModel) => {
+    console.log('[7h TODO] Counter final price for', booking.id);
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-ZA', {
-      weekday: 'short',
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
+  const handleDisputeFinalPrice = (booking: BookingModel) => {
+    console.log('[7h TODO] Dispute final price for', booking.id);
   };
 
-  const filteredBookings = (() => {
-    if (activeTab === 'history') {
-      return bookings.filter((b) => b.status === 'completed' || b.status === 'cancelled');
+  const handleViewOutcomes = (booking: BookingModel) => {
+    console.log('[7i TODO] View outcomes for', booking.id);
+  };
+
+  const handleViewWorkSession = (booking: BookingModel) => {
+    // For now — nothing else to do. In a later step we may scroll to the
+    // active work card above, or open a dedicated session page.
+    console.log('[7x TODO] Open work session for', booking.id);
+  };
+
+  // ------------------------------------------
+  // Filtered lists
+  // ------------------------------------------
+  const filteredCurrent = useMemo(() => {
+    let list = allClientBookings.filter(isCurrentRequest);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (b) =>
+          b.serviceTitle.toLowerCase().includes(q) ||
+          b.providerDisplayName.toLowerCase().includes(q) ||
+          b.requestRef.toLowerCase().includes(q)
+      );
     }
-    return bookings.filter((b) => b.status === 'pending' || b.status === 'confirmed');
-  })();
+    return list;
+  }, [allClientBookings, searchQuery]);
 
-  const activeCount = bookings.filter(
-    (b) => b.status === 'pending' || b.status === 'confirmed'
-  ).length;
-
-  const unreadMessages = getUnreadCount(DEMO_CLIENT_ID);
-
-  // ------------------------------------------
-  // Sidebar nav items
-  // ------------------------------------------
-  const navItems: SidebarNavItem[] = [
-    { key: 'bookings', label: 'Services Requested', icon: faClipboardList, badge: activeCount },
-    { key: 'history', label: 'History', icon: faHistory },
-    {
-      key: 'messages',
-      label: 'Messages',
-      icon: faComments,
-      badge: unreadMessages > 0 ? unreadMessages : undefined,
-    },
-    { key: 'new', label: 'Request New Service', icon: faPlusCircle },
-  ];
+  const filteredClosed = useMemo(() => {
+    let list = allClientBookings.filter(isClosedRequest);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(
+        (b) =>
+          b.serviceTitle.toLowerCase().includes(q) ||
+          b.providerDisplayName.toLowerCase().includes(q) ||
+          b.requestRef.toLowerCase().includes(q)
+      );
+    }
+    return list;
+  }, [allClientBookings, searchQuery]);
 
   // ------------------------------------------
-  // Arrival banners
+  // Arrival banners (Step 4d)
   // ------------------------------------------
   const arrivedSessions = useMemo(() => {
-    return richBookings
+    return allClientBookings
       .map((b) => {
         const session = sessions.find((s) => s.bookingId === b.id);
         return session && session.status === 'arrived'
@@ -264,7 +206,7 @@ export const ClientDashboard: React.FC = () => {
           : null;
       })
       .filter((x): x is { booking: BookingModel; session: WorkSession } => !!x);
-  }, [richBookings, sessions]);
+  }, [allClientBookings, sessions]);
 
   const renderArrivalSection = () => {
     if (arrivedSessions.length === 0) return null;
@@ -284,8 +226,7 @@ export const ClientDashboard: React.FC = () => {
               >
                 <FontAwesomeIcon icon={faBell} className={styles.arrivalBell} />
                 <span className={styles.arrivalText}>
-                  <strong>{booking.providerDisplayName}</strong> is at your gate —
-                  confirm access
+                  <strong>{booking.providerDisplayName}</strong> is at your gate — confirm access
                 </span>
                 <FontAwesomeIcon
                   icon={isExpanded ? faChevronUp : faChevronDown}
@@ -311,14 +252,13 @@ export const ClientDashboard: React.FC = () => {
   };
 
   // ------------------------------------------
-  // Active work sessions (5b)
+  // Active work (Step 5b)
   // ------------------------------------------
   const activeSessions = useMemo(() => {
-    return richBookings
+    return allClientBookings
       .map((b) => {
         const session = sessions.find((s) => s.bookingId === b.id);
         if (!session) return null;
-        // Active = arrived, confirmed, or in_progress
         if (
           session.status === 'arrived' ||
           session.status === 'confirmed' ||
@@ -329,7 +269,7 @@ export const ClientDashboard: React.FC = () => {
         return null;
       })
       .filter((x): x is { booking: BookingModel; session: WorkSession } => !!x);
-  }, [richBookings, sessions]);
+  }, [allClientBookings, sessions]);
 
   const renderActiveWorkSection = () => {
     if (activeSessions.length === 0) return null;
@@ -342,18 +282,34 @@ export const ClientDashboard: React.FC = () => {
         </div>
 
         {activeSessions.map(({ booking, session }) => (
-          <ClientWorkSessionCard
-            key={session.id}
-            session={session}
-            booking={booking}
-          />
+          <ClientWorkSessionCard key={session.id} session={session} booking={booking} />
         ))}
       </div>
     );
   };
 
   // ------------------------------------------
-  // Render
+  // Sidebar nav items
+  // ------------------------------------------
+  const navItems: SidebarNavItem[] = [
+    {
+      key: 'requests',
+      label: 'Requests',
+      icon: faClipboardList,
+      badge: currentCount || undefined,
+    },
+    { key: 'history', label: 'History', icon: faHistory },
+    {
+      key: 'messages',
+      label: 'Messages',
+      icon: faComments,
+      badge: unreadMessages > 0 ? unreadMessages : undefined,
+    },
+    { key: 'new', label: 'Request New Service', icon: faPlusCircle },
+  ];
+
+  // ------------------------------------------
+  // Render content
   // ------------------------------------------
   const renderContent = () => {
     if (activeTab === 'messages') {
@@ -364,45 +320,43 @@ export const ClientDashboard: React.FC = () => {
       );
     }
 
+    const isRequests = activeTab === 'requests';
+    const list = isRequests ? filteredCurrent : filteredClosed;
+
     return (
       <div className={styles.mainContent}>
+        {/* Header */}
         <div className={styles.contentHeader}>
-          <h2>
-            {activeTab === 'bookings' && 'Your Service Requests'}
-            {activeTab === 'history' && 'Request History'}
-          </h2>
+          <h2>{isRequests ? 'Your Requests' : 'Request History'}</h2>
           <div className={styles.headerActions}>
             <div className={styles.searchBox}>
               <FontAwesomeIcon icon={faSearch} />
               <input
                 type="text"
                 placeholder="Search requests..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className={styles.searchInput}
               />
             </div>
           </div>
         </div>
 
-        {/* Arrivals (always on top) */}
-        {activeTab === 'bookings' && renderArrivalSection()}
+        {/* Arrival banners (requests tab only) */}
+        {isRequests && renderArrivalSection()}
 
-        {/* Active work sessions */}
-        {activeTab === 'bookings' && renderActiveWorkSection()}
+        {/* Active work (requests tab only) */}
+        {isRequests && renderActiveWorkSection()}
 
-        {/* Booking list */}
-        {loading ? (
-          <div className={styles.loading}>
-            <div className={styles.spinner}></div>
-            <p>Loading your requests...</p>
-          </div>
-        ) : filteredBookings.length === 0 ? (
+        {/* Requests list */}
+        {list.length === 0 ? (
           <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>📭</span>
+            <span className={styles.emptyIcon}>{isRequests ? '📭' : '📁'}</span>
             <h3>
-              No {activeTab === 'bookings' ? 'pending' : 'completed'} requests
+              {isRequests ? 'No active requests' : 'No past requests yet'}
             </h3>
             <p>
-              {activeTab === 'bookings'
+              {isRequests
                 ? 'You have no pending service requests. Browse services to get started!'
                 : 'Your completed and cancelled requests will appear here.'}
             </p>
@@ -414,39 +368,19 @@ export const ClientDashboard: React.FC = () => {
             </button>
           </div>
         ) : (
-          <div className={styles.bookingsList}>
-            {filteredBookings.map((booking) => (
-              <div key={booking.id} className={styles.bookingCard}>
-                <div className={styles.bookingHeader}>
-                  <div className={styles.bookingTitle}>
-                    <h4>{booking.serviceTitle}</h4>
-                    <span className={`${styles.statusBadge} ${getStatusClass(booking.status)}`}>
-                      {getStatusIcon(booking.status)}
-                      {getStatusText(booking.status)}
-                    </span>
-                  </div>
-                </div>
-                <div className={styles.bookingDetails}>
-                  <div className={styles.bookingInfo}>
-                    <span className={styles.infoLabel}>Provider:</span>
-                    <span className={styles.infoValue}>{booking.providerName}</span>
-                  </div>
-                  <div className={styles.bookingInfo}>
-                    <span className={styles.infoLabel}>Date:</span>
-                    <span className={styles.infoValue}>{formatDate(booking.date)}</span>
-                  </div>
-                  <div className={styles.bookingInfo}>
-                    <span className={styles.infoLabel}>Price:</span>
-                    <span className={styles.infoValue}>R{booking.price.toLocaleString()}</span>
-                  </div>
-                </div>
-                {booking.status === 'pending' && (
-                  <div className={styles.bookingActions}>
-                    <button className={styles.cancelBtn}>Cancel</button>
-                    <button className={styles.contactBtn}>Contact Provider</button>
-                  </div>
-                )}
-              </div>
+          <div className={styles.requestsList}>
+            {list.map((request) => (
+              <RequestCard
+                key={request.id}
+                request={request}
+                viewerRole="CLIENT"
+                onPayConsultation={handlePayConsultation}
+                onAcceptFinalPrice={handleAcceptFinalPrice}
+                onCounterFinalPrice={handleCounterFinalPrice}
+                onDisputeFinalPrice={handleDisputeFinalPrice}
+                onViewOutcomes={handleViewOutcomes}
+                onViewWorkSession={handleViewWorkSession}
+              />
             ))}
           </div>
         )}

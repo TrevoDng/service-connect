@@ -1,5 +1,6 @@
 // src/pages/ClientServices.tsx
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { serviceService } from '../services/service.service';
 import type { Service, ServiceFilterOptions } from '../types/service.types';
 import { ServicesGrid } from '../components/Client/ServicesGrid';
@@ -7,24 +8,28 @@ import { ServicesFilter } from '../components/Client/ServicesFilter';
 import styles from './ClientServices.module.scss';
 
 export const ClientServices: React.FC = () => {
+  const navigate = useNavigate();
+
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<string[]>([]);
-  
+
   const [filters, setFilters] = useState<ServiceFilterOptions>({
     searchQuery: '',
     categories: [],
-    sortBy: 'recent'
+    sortBy: 'recent',
   });
 
   useEffect(() => {
     fetchCategories();
     fetchServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
     fetchServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters]);
 
   const fetchCategories = async () => {
@@ -39,7 +44,7 @@ export const ClientServices: React.FC = () => {
   const fetchServices = async () => {
     setLoading(true);
     setError('');
-    
+
     try {
       const data = await serviceService.getServices(filters);
       setServices(data);
@@ -54,12 +59,14 @@ export const ClientServices: React.FC = () => {
     setFilters(newFilters);
   };
 
+  // Both actions lead to the details page for now.
+  // A dedicated hire flow will replace `handleHire` in a later step.
   const handleViewDetails = (service: Service) => {
-    console.log('View service:', service.id);
+    navigate(`/services/${service.id}`);
   };
 
   const handleHire = (service: Service) => {
-    console.log('Hire service:', service.id);
+    navigate(`/services/${service.id}`);
   };
 
   return (
@@ -70,7 +77,7 @@ export const ClientServices: React.FC = () => {
       </div>
 
       <div className={styles.clientServicesFilterSection}>
-        <ServicesFilter 
+        <ServicesFilter
           onFilterChange={handleFilterChange}
           availableCategories={categories}
         />
@@ -95,7 +102,7 @@ export const ClientServices: React.FC = () => {
               Showing {services.length} service{services.length !== 1 ? 's' : ''}
             </p>
           </div>
-          <ServicesGrid 
+          <ServicesGrid
             services={services}
             onViewDetails={handleViewDetails}
             onHire={handleHire}

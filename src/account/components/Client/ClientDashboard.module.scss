@@ -537,3 +537,13 @@
   gap: $spacing-md;
   margin-bottom: $spacing-lg;
 }
+
+// ============================================
+// REQUESTS LIST (Step 7c)
+// ============================================
+
+.requestsList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
