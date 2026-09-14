@@ -126,6 +126,10 @@ export const ProviderRequestsView: React.FC = () => {
     console.log('[7h TODO] Propose final price for', booking.id);
   };
 
+  const handleStartConsultation = (booking: Booking) => {
+  navigate(`/provider/bookings/${booking.id}/consultation`);
+};
+
   // ------------------------------------------
   // Render
   // ------------------------------------------
@@ -210,6 +214,7 @@ export const ProviderRequestsView: React.FC = () => {
               onProposeFinalPrice={handleProposeFinalPrice}
               onViewOutcomes={handleViewOutcomes}
               onViewWorkSession={handleViewWorkSession}
+	      onStartConsultation={handleStartConsultation}
               onOpen={handleOpen}
             />
           ))}
