@@ -138,8 +138,8 @@ export const ClientDashboard: React.FC = () => {
   // RequestCard callbacks (stubs wired in 7e / 7h)
   // ------------------------------------------
   const handlePayConsultation = (booking: BookingModel) => {
-    console.log('[7e TODO] Pay consultation for', booking.id);
-  };
+  navigate(`/bookings/${booking.id}/consultation`);
+};
 
   const handleAcceptFinalPrice = (booking: BookingModel) => {
     console.log('[7h TODO] Accept final price for', booking.id);

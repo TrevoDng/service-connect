@@ -3,20 +3,7 @@
 // ============================================
 // BOOKING STATUS FLOW
 // ============================================
-//
-// requested         → client sent a request with a suggested price
-// accepted          → provider agreed to evaluate the job
-// consultation_paid → client paid the consultation fee
-// evaluated         → provider/employee visited the site and uploaded photos
-// price_proposed    → final price has been proposed
-// price_agreed      → both sides agreed on the final price
-// in_progress       → work has started (clock-in flow active)
-// completed         → work is finished and confirmed
-//
-// declined          → provider declined the request
-// cancelled         → client cancelled before work started
-// price_disputed    → negotiation failed; admin intervention needed
-//
+
 export type BookingStatus =
   | 'requested'
   | 'accepted'
@@ -35,28 +22,25 @@ export type BookingStatus =
 // ============================================
 
 export type PriceStage =
-  | 'suggested'      // client's suggestion — not binding
-  | 'consultation'   // paid by client after provider accepts
-  | 'final_proposed' // provider's final price after evaluation
-  | 'final_agreed';  // both sides agreed
+  | 'suggested'
+  | 'consultation'
+  | 'final_proposed'
+  | 'final_agreed';
 
 export interface PriceHistoryEntry {
   stage: PriceStage;
   amount: number;
-  at: string;               // ISO timestamp
-  byUserId: string;         // who set it
+  at: string;
+  byUserId: string;
   note?: string;
 }
 
 // ============================================
 // CLIENT PRIVACY CONTROLS
 // ============================================
-//
-// By default, a client's personal details are hidden from the provider.
-// The client can opt to share specific fields with a single provider.
-//
+
 export interface ClientSharedFields {
-  displayName: boolean;         // always true — visible in chat and request
+  displayName: boolean;
   phone: boolean;
   address: boolean;
   gateCode: boolean;
@@ -68,12 +52,12 @@ export interface ClientSharedFields {
 // ============================================
 
 export interface Booking {
-  id: string;                     // internal ID
-  requestRef: string;             // human reference, e.g. REQ-2026-0001
+  id: string;
+  requestRef: string;
 
   // parties
   clientId: string;
-  clientDisplayName: string;      // always available
+  clientDisplayName: string;
   providerId: string;
   providerDisplayName: string;
 
@@ -81,32 +65,51 @@ export interface Booking {
   serviceTitle: string;
   serviceCategory: string;
   description: string;
-  requestPhotos: string[];        // client-uploaded photos at request time (URLs)
+  requestPhotos: string[];
 
   // scheduling
-  requestedDate: string;          // ISO timestamp the client asked for
+  requestedDate: string;
   createdAt: string;
   updatedAt: string;
 
   // status
   status: BookingStatus;
-  declineReason?: string;         // if status === 'declined'
+  declineReason?: string;
 
   // pricing
-  suggestedPrice: number;         // client's initial suggestion (ZAR)
-  consultationFee: number;        // set when status reaches 'accepted'
+  suggestedPrice: number;
+  consultationFee: number;
   consultationPaidAt?: string;
-  finalPrice?: number;            // set when status reaches 'price_proposed'
+  finalPrice?: number;
   priceHistory: PriceHistoryEntry[];
 
-  // consultation
-  siteVisited: boolean;           // did the provider physically visit?
-  consultationPhotos?: string[];  // provider-uploaded site photos (URLs)
+  // consultation findings
+  siteVisited: boolean;
+  consultationPhotos?: string[];
   consultationNotes?: string;
 
   // privacy
   clientSharedFields: ClientSharedFields;
 
-  // work session (present once clock-in has happened)
+  // work session (once clock-in has happened)
   workSessionId?: string;
+
+  // ============================================
+  // CONSULTATION VISIT TRACKING (Step 7g)
+  // ============================================
+  //
+  // Tracks the provider's physical arrival at the site for the consultation.
+  // Distinct from the work session clock-in, which happens later once the
+  // price is agreed and work begins.
+
+  /** ISO timestamp of when the provider clocked in for the consultation visit */
+  consultationClockIn?: string;
+  /** ISO timestamp of when the provider clocked out */
+  consultationClockOut?: string;
+  /** Active reference code shown for gate confirmation */
+  consultationReferenceCode?: string;
+  /** ISO timestamp of when the reference code expires */
+  consultationReferenceExpiresAt?: string;
+  /** Whether the client confirmed the visit at the gate */
+  consultationClockConfirmedByClient?: boolean;
 }

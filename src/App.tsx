@@ -21,7 +21,9 @@ import EmployeeRegister from './account/components/Auth/employee/EmployeeRegiste
 import EmployeeLogin from './account/components/Auth/employee/EmployeeLogin';
 import { ThemeProvider, useTheme } from './styles/context/ThemeContext';
 import { ClientDashboard } from './account/components/Client/ClientDashboard';
+import ConsultationUpload from './pages/ConsultationUpload';
 import DevLogin from './pages/DevLogin';
+import ConsultationPayment from './pages/ConsultationPayment';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
@@ -37,25 +39,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     );
   }
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
-};
-
-const RoleProtectedRoute: React.FC<{
-  children: React.ReactNode;
-  allowedRoles: ('ADMIN' | 'EMPLOYEE' | 'CLIENT')[];
-}> = ({ children, allowedRoles }) => {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600">loading...</div>
-      </div>
-    );
-  }
-  if (!isAuthenticated) return <Navigate to="/login" />;
-  if (!user || !allowedRoles.includes(user.role as 'ADMIN' | 'EMPLOYEE' | 'CLIENT')) {
-    return <Navigate to="/" />;
-  }
-  return <>{children}</>;
 };
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -93,14 +76,18 @@ const AppContent: React.FC = () => {
           {/* DEV ONLY — remove before production */}
           <Route path="/dev-login" element={<DevLogin />} />
 
+          {/* Booking flow */}
+          <Route path="/bookings/:id/consultation" element={<ConsultationPayment />} />
+
           {/* Protected Routes */}
           <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
 
-          {/* Dashboards — currently unprotected for dev */}
+          {/* Dashboards */}
           <Route path="/client/dashboard" element={<ClientDashboard />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
           <Route path="/provider/dashboard" element={<ProviderDashboard />} />
+	  <Route path="/provider/bookings/:id/consultation" element={<ConsultationUpload />} />
 
           {/* 404 */}
           <Route path="*" element={<PageNotFound />} />
