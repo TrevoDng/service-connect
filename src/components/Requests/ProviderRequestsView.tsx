@@ -12,6 +12,7 @@ import { setBookingOverride } from '../../utils/localBookingOverrides';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSearch } from '@fortawesome/free-solid-svg-icons';
 import { RequestCard } from './RequestCard';
+import { generateId } from '../../utils/referenceCode';
 import styles from './ProviderRequestsView.module.scss';
 
 // ============================================
@@ -122,9 +123,59 @@ export const ProviderRequestsView: React.FC = () => {
     console.log('[7x TODO] Open request detail for', booking.id);
   };
 
-  const handleProposeFinalPrice = (booking: Booking) => {
-    console.log('[7h TODO] Propose final price for', booking.id);
-  };
+  const handleProposeFinalPrice = (
+  booking: Booking,
+  amount: number,
+  note: string
+) => {
+  setBookingOverride(booking.id, {
+    status: 'price_proposed',
+    finalPrice: amount,
+    holdFirm: false,
+    pendingCounterParty: 'CLIENT',
+    priceHistory: [
+      ...booking.priceHistory,
+      {
+        stage: 'final_proposed',
+        amount,
+        at: new Date().toISOString(),
+        byUserId: booking.providerId,
+        note: note || undefined,
+      },
+    ],
+    updatedAt: new Date().toISOString(),
+  });
+  setRefreshTick((t) => t + 1);
+};
+
+const handleAcceptCounter = (booking: Booking) => {
+  setBookingOverride(booking.id, {
+    status: 'price_agreed',
+    pendingCounterParty: undefined,
+    holdFirm: false,
+    priceHistory: [
+      ...booking.priceHistory,
+      {
+        stage: 'final_agreed',
+        amount: booking.finalPrice ?? 0,
+        at: new Date().toISOString(),
+        byUserId: booking.providerId,
+        note: 'Provider accepted the client counter.',
+      },
+    ],
+    updatedAt: new Date().toISOString(),
+  });
+  setRefreshTick((t) => t + 1);
+};
+
+const handleHoldFirm = (booking: Booking) => {
+  setBookingOverride(booking.id, {
+    holdFirm: true,
+    pendingCounterParty: 'CLIENT',
+    updatedAt: new Date().toISOString(),
+  });
+  setRefreshTick((t) => t + 1);
+};
 
   const handleStartConsultation = (booking: Booking) => {
   navigate(`/provider/bookings/${booking.id}/consultation`);
@@ -211,10 +262,12 @@ export const ProviderRequestsView: React.FC = () => {
               viewerRole="PROVIDER"
               onAccept={handleAccept}
               onDecline={handleDecline}
-              onProposeFinalPrice={handleProposeFinalPrice}
               onViewOutcomes={handleViewOutcomes}
               onViewWorkSession={handleViewWorkSession}
 	      onStartConsultation={handleStartConsultation}
+	      onProposeFinalPrice={handleProposeFinalPrice}
+              onAcceptCounter={handleAcceptCounter}
+              onHoldFirm={handleHoldFirm}
               onOpen={handleOpen}
             />
           ))}

@@ -1,6 +1,6 @@
 // src/components/Requests/RequestCard.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { Booking, BookingStatus } from '../../types';
 import {
   canAcceptRequest,
@@ -23,8 +23,10 @@ import {
   faGavel,
   faKey,
   faCamera,
+  faLock,
 } from '@fortawesome/free-solid-svg-icons';
 import { ConsultationCard } from './ConsultationCard';
+import { FinalPricePanel } from './FinalPricePanel';
 import styles from './RequestCard.module.scss';
 
 // ============================================
@@ -36,17 +38,18 @@ export interface RequestCardProps {
   viewerRole: ViewerRole;
 
   onOpen?: (request: Booking) => void;
-
   onAccept?: (request: Booking) => void;
   onDecline?: (request: Booking) => void;
 
   onPayConsultation?: (request: Booking) => void;
   onStartConsultation?: (request: Booking) => void;
 
-  onProposeFinalPrice?: (request: Booking) => void;
+  onProposeFinalPrice?: (request: Booking, amount: number, note: string) => void;
   onAcceptFinalPrice?: (request: Booking) => void;
-  onCounterFinalPrice?: (request: Booking) => void;
-  onDisputeFinalPrice?: (request: Booking) => void;
+  onCounterFinalPrice?: (request: Booking, amount: number, note: string) => void;
+  onDisputeFinalPrice?: (request: Booking, reason: string) => void;
+  onAcceptCounter?: (request: Booking) => void;
+  onHoldFirm?: (request: Booking) => void;
 
   onViewOutcomes?: (request: Booking) => void;
   onViewWorkSession?: (request: Booking) => void;
@@ -74,7 +77,7 @@ const getStatusSpec = (status: BookingStatus): StatusSpec => {
     case 'evaluated':
       return { label: 'Site evaluated', className: styles.statusInfo };
     case 'price_proposed':
-      return { label: 'Final price proposed', className: styles.statusInfo };
+      return { label: 'Price negotiation', className: styles.statusInfo };
     case 'price_agreed':
       return { label: 'Price agreed', className: styles.statusSuccess };
     case 'in_progress':
@@ -96,28 +99,20 @@ const getStatusSpec = (status: BookingStatus): StatusSpec => {
 // HELPERS
 // ============================================
 
-const canViewOutcomes = (status: BookingStatus): boolean => {
-  return (
-    status === 'evaluated' ||
-    status === 'price_proposed' ||
-    status === 'price_agreed' ||
-    status === 'in_progress' ||
-    status === 'completed' ||
-    status === 'price_disputed'
-  );
-};
+const canViewOutcomes = (status: BookingStatus): boolean =>
+  status === 'evaluated' ||
+  status === 'price_proposed' ||
+  status === 'price_agreed' ||
+  status === 'in_progress' ||
+  status === 'completed' ||
+  status === 'price_disputed';
 
-const canViewWorkSession = (status: BookingStatus): boolean => {
-  return status === 'in_progress' || status === 'completed';
-};
+const canViewWorkSession = (status: BookingStatus): boolean =>
+  status === 'in_progress' || status === 'completed';
 
-const shouldShowConsultation = (status: BookingStatus): boolean => {
-  // Render ConsultationCard for anything past 'requested'
-  return status !== 'requested';
-};
+const shouldShowConsultation = (status: BookingStatus): boolean =>
+  status !== 'requested';
 
-// Client-side default — expand on desktop, collapse on mobile.
-// Cheap one-liner, doesn't need React state.
 const defaultConsultationExpanded = (): boolean => {
   if (typeof window === 'undefined') return true;
   return window.innerWidth > 768;
@@ -139,11 +134,19 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   onAcceptFinalPrice,
   onCounterFinalPrice,
   onDisputeFinalPrice,
+  onAcceptCounter,
+  onHoldFirm,
   onViewOutcomes,
   onViewWorkSession,
   compact = false,
 }) => {
   const statusSpec = getStatusSpec(request.status);
+
+  // Inline panel state
+  const [showProposePanel, setShowProposePanel] = useState(false);
+  const [showCounterPanel, setShowCounterPanel] = useState(false);
+  const [showDisputePanel, setShowDisputePanel] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('');
 
   const counterpartName =
     viewerRole === 'CLIENT'
@@ -156,6 +159,26 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   const previewPhotos = request.requestPhotos.slice(0, 3);
   const extraPhotoCount = Math.max(0, request.requestPhotos.length - 3);
+
+  // ------------------------------------------
+  // NEGOTIATION CONTEXT
+  // ------------------------------------------
+  // What's the current "live" price on the table? (finalPrice or fall back)
+  const livePrice = request.finalPrice ?? request.suggestedPrice;
+
+  // Whose turn is it? Undefined = no active negotiation
+  const turn = request.pendingCounterParty;
+
+  // Provider-side: they can accept a client's counter when it's their turn
+  const providerCanAcceptCounter =
+    viewerRole === 'PROVIDER' && turn === 'PROVIDER' && !!onAcceptCounter;
+
+  const providerCanHoldFirm =
+    viewerRole === 'PROVIDER' && turn === 'PROVIDER' && !!onHoldFirm;
+
+  // Client-side after provider holds firm
+  const clientSeesHoldFirm =
+    viewerRole === 'CLIENT' && turn === 'CLIENT' && request.holdFirm === true;
 
   // ------------------------------------------
   // ACTIONS
@@ -214,14 +237,15 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     if (
       request.status === 'evaluated' &&
       canProposePrice(viewerRole) &&
-      onProposeFinalPrice
+      onProposeFinalPrice &&
+      !showProposePanel
     ) {
       actions.push(
         <button
           key="propose"
           type="button"
           className={styles.primaryBtn}
-          onClick={() => onProposeFinalPrice(request)}
+          onClick={() => setShowProposePanel(true)}
         >
           <FontAwesomeIcon icon={faDollarSign} />
           Propose final price
@@ -229,8 +253,13 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       );
     }
 
-    // -------- CLIENT: accept / counter / dispute price --------
-    if (canRespondToPrice(viewerRole) && request.status === 'price_proposed') {
+    // -------- CLIENT: accept / counter / dispute (initial proposal) --------
+    if ( canRespondToPrice(viewerRole) &&
+  request.status === 'price_proposed' &&
+  turn === 'CLIENT' &&
+  !request.holdFirm
+ // no counter in progress — client is responding to the initial
+    ) {
       if (onAcceptFinalPrice) {
         actions.push(
           <button
@@ -244,25 +273,83 @@ export const RequestCard: React.FC<RequestCardProps> = ({
           </button>
         );
       }
-      if (onCounterFinalPrice) {
+      if (onCounterFinalPrice && !showCounterPanel) {
         actions.push(
           <button
             key="counter-price"
             type="button"
             className={styles.secondaryBtn}
-            onClick={() => onCounterFinalPrice(request)}
+            onClick={() => setShowCounterPanel(true)}
           >
             Counter
           </button>
         );
       }
-      if (onDisputeFinalPrice) {
+      if (onDisputeFinalPrice && !showDisputePanel) {
         actions.push(
           <button
             key="dispute-price"
             type="button"
             className={styles.dangerBtn}
-            onClick={() => onDisputeFinalPrice(request)}
+            onClick={() => setShowDisputePanel(true)}
+          >
+            <FontAwesomeIcon icon={faGavel} />
+            Dispute
+          </button>
+        );
+      }
+    }
+
+    // -------- PROVIDER: accept client's counter / hold firm --------
+    if (providerCanAcceptCounter) {
+      actions.push(
+        <button
+          key="accept-counter"
+          type="button"
+          className={styles.primaryBtn}
+          onClick={() => onAcceptCounter!(request)}
+        >
+          <FontAwesomeIcon icon={faHandshake} />
+          Accept counter
+        </button>
+      );
+    }
+    if (providerCanHoldFirm) {
+      actions.push(
+        <button
+          key="hold-firm"
+          type="button"
+          className={styles.secondaryBtn}
+          onClick={() => onHoldFirm!(request)}
+        >
+          <FontAwesomeIcon icon={faLock} />
+          Hold firm
+        </button>
+      );
+    }
+
+    // -------- CLIENT: accept held-firm original / dispute --------
+    if (clientSeesHoldFirm) {
+      if (onAcceptFinalPrice) {
+        actions.push(
+          <button
+            key="accept-held"
+            type="button"
+            className={styles.primaryBtn}
+            onClick={() => onAcceptFinalPrice(request)}
+          >
+            <FontAwesomeIcon icon={faHandshake} />
+            Accept original price
+          </button>
+        );
+      }
+      if (onDisputeFinalPrice && !showDisputePanel) {
+        actions.push(
+          <button
+            key="dispute-held"
+            type="button"
+            className={styles.dangerBtn}
+            onClick={() => setShowDisputePanel(true)}
           >
             <FontAwesomeIcon icon={faGavel} />
             Dispute
@@ -422,6 +509,75 @@ export const RequestCard: React.FC<RequestCardProps> = ({
               onStartConsultation={onStartConsultation}
               defaultExpanded={defaultConsultationExpanded()}
             />
+          </div>
+        )}
+
+        {/* Propose final price panel (provider) */}
+        {showProposePanel && onProposeFinalPrice && (
+          <FinalPricePanel
+            mode="propose"
+            initialAmount={request.suggestedPrice}
+            onSave={(amount, note) => {
+              onProposeFinalPrice(request, amount, note);
+              setShowProposePanel(false);
+            }}
+            onCancel={() => setShowProposePanel(false)}
+          />
+        )}
+
+        {/* Counter panel (client) */}
+        {showCounterPanel && onCounterFinalPrice && (
+          <FinalPricePanel
+            mode="counter"
+            currentPrice={livePrice}
+            initialAmount={livePrice}
+            onSave={(amount, note) => {
+              onCounterFinalPrice(request, amount, note);
+              setShowCounterPanel(false);
+            }}
+            onCancel={() => setShowCounterPanel(false)}
+          />
+        )}
+
+        {/* Dispute panel (client) */}
+        {showDisputePanel && onDisputeFinalPrice && (
+          <div className={styles.disputePanel}>
+            <h4 className={styles.disputeTitle}>Dispute this price</h4>
+            <p className={styles.disputeHint}>
+              Your dispute will be sent to our support team for review.
+            </p>
+            <textarea
+              value={disputeReason}
+              onChange={(e) => setDisputeReason(e.target.value)}
+              rows={3}
+              className={styles.disputeTextarea}
+              placeholder="Explain why you're disputing this price…"
+            />
+            <div className={styles.disputeActions}>
+              <button
+                type="button"
+                className={styles.secondaryBtn}
+                onClick={() => {
+                  setShowDisputePanel(false);
+                  setDisputeReason('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className={styles.dangerBtn}
+                disabled={!disputeReason.trim()}
+                onClick={() => {
+                  onDisputeFinalPrice(request, disputeReason.trim());
+                  setShowDisputePanel(false);
+                  setDisputeReason('');
+                }}
+              >
+                <FontAwesomeIcon icon={faGavel} />
+                Submit dispute
+              </button>
+            </div>
           </div>
         )}
       </div>

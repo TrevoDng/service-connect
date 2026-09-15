@@ -83,6 +83,12 @@ export interface Booking {
   finalPrice?: number;
   priceHistory: PriceHistoryEntry[];
 
+  // negotiation state (Step 7h)
+  /** Whose turn it is during price negotiation. Undefined = no negotiation in progress. */
+  pendingCounterParty?: 'CLIENT' | 'PROVIDER';
+  /** Provider holds firm on the original amount after a client counter. */
+  holdFirm?: boolean;
+
   // consultation findings
   siteVisited: boolean;
   consultationPhotos?: string[];
@@ -97,10 +103,6 @@ export interface Booking {
   // ============================================
   // CONSULTATION VISIT TRACKING (Step 7g)
   // ============================================
-  //
-  // Tracks the provider's physical arrival at the site for the consultation.
-  // Distinct from the work session clock-in, which happens later once the
-  // price is agreed and work begins.
 
   /** ISO timestamp of when the provider clocked in for the consultation visit */
   consultationClockIn?: string;

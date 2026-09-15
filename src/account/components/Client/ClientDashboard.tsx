@@ -23,6 +23,8 @@ import { MessagesView } from '../../../components/Chat';
 import { ClockConfirmCard, ClientWorkSessionCard } from '../../../components/WorkSession';
 import { RequestCard } from '../../../components/Requests';
 import { getUnreadCount } from '../../../data/demoNotifications';
+import { generateId } from '../../../utils/referenceCode';
+import { setBookingOverride } from '../../../utils/localBookingOverrides';
 import styles from './ClientDashboard.module.scss';
 
 // ============================================
@@ -141,17 +143,75 @@ export const ClientDashboard: React.FC = () => {
   navigate(`/bookings/${booking.id}/consultation`);
 };
 
+  
   const handleAcceptFinalPrice = (booking: BookingModel) => {
-    console.log('[7h TODO] Accept final price for', booking.id);
-  };
+  setBookingOverride(booking.id, {
+    status: 'price_agreed',
+    pendingCounterParty: undefined,
+    holdFirm: false,
+    priceHistory: [
+      ...booking.priceHistory,
+      {
+        stage: 'final_agreed',
+        amount: booking.finalPrice ?? 0,
+        at: new Date().toISOString(),
+        byUserId: booking.clientId,
+        note: 'Client accepted the final price.',
+      },
+    ],
+    updatedAt: new Date().toISOString(),
+  });
+  // Force re-read of bookings
+  setSessions((prev) => [...prev]);
+};
 
-  const handleCounterFinalPrice = (booking: BookingModel) => {
-    console.log('[7h TODO] Counter final price for', booking.id);
-  };
+const handleCounterFinalPrice = (
+  booking: BookingModel,
+  amount: number,
+  note: string
+) => {
+  setBookingOverride(booking.id, {
+    finalPrice: amount,
+    holdFirm: false,
+    pendingCounterParty: 'PROVIDER',
+    priceHistory: [
+      ...booking.priceHistory,
+      {
+        stage: 'final_proposed',
+        amount,
+        at: new Date().toISOString(),
+        byUserId: booking.clientId,
+        note: note ? `Client counter: ${note}` : 'Client counter.',
+      },
+    ],
+    updatedAt: new Date().toISOString(),
+  });
+  setSessions((prev) => [...prev]);
+};
 
-  const handleDisputeFinalPrice = (booking: BookingModel) => {
-    console.log('[7h TODO] Dispute final price for', booking.id);
-  };
+const handleDisputeFinalPrice = (
+  booking: BookingModel,
+  reason: string
+) => {
+  setBookingOverride(booking.id, {
+    status: 'price_disputed',
+    pendingCounterParty: undefined,
+    declineReason: undefined,
+    updatedAt: new Date().toISOString(),
+    priceHistory: [
+      ...booking.priceHistory,
+      {
+        stage: 'final_proposed',
+        amount: booking.finalPrice ?? booking.suggestedPrice,
+        at: new Date().toISOString(),
+        byUserId: booking.clientId,
+        note: `Disputed: ${reason}`,
+      },
+    ],
+  });
+  setSessions((prev) => [...prev]);
+};
+  
 
   const handleViewOutcomes = (booking: BookingModel) => {
     console.log('[7i TODO] View outcomes for', booking.id);
