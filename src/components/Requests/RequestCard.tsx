@@ -1,7 +1,14 @@
 // src/components/Requests/RequestCard.tsx
 
 import React, { useState } from 'react';
-import type { Booking, BookingStatus } from '../../types';
+import type {
+  Booking,
+  BookingStatus,
+  Review,
+  ReviewFormData,
+  Dispute,
+  RaiseDisputeFormData,
+} from '../../types';
 import {
   canAcceptRequest,
   canPayConsultation,
@@ -24,24 +31,19 @@ import {
   faKey,
   faCamera,
   faLock,
+  faStar,
+  faComment,
+  faCircleExclamation,
 } from '@fortawesome/free-solid-svg-icons';
 import { ConsultationCard } from './ConsultationCard';
 import { FinalPricePanel } from './FinalPricePanel';
 import { LeaveReviewPanel } from './LeaveReviewPanel';
-import type { Review, ReviewFormData } from '../../types';
+import { RaiseDisputePanel } from './RaiseDisputePanel';
 import { getReviewForBooking } from '../../utils/allReviews';
 import { addLocalReview, setProviderReply } from '../../utils/localReviews';
-import { generateId } from '../../utils/referenceCode';
-import { RaiseDisputePanel } from './RaiseDisputePanel';
-import type { RaiseDisputeFormData, Dispute } from '../../types';
 import { getDisputeByBooking } from '../../utils/allDisputes';
-import {
-  addLocalDispute,
-  addDisputeMessage,
-} from '../../utils/localDisputes';
+import { addLocalDispute, addDisputeMessage } from '../../utils/localDisputes';
 import { generateId } from '../../utils/referenceCode';
-import { faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
-import { faStar, faComment } from '@fortawesome/free-solid-svg-icons';
 import styles from './RequestCard.module.scss';
 
 // ============================================
@@ -68,11 +70,10 @@ export interface RequestCardProps {
 
   onViewOutcomes?: (request: Booking) => void;
   onViewWorkSession?: (request: Booking) => void;
-  /** Fired after a review is submitted. Parent should refresh. */
   onReviewSubmitted?: () => void;
+  onDisputeChanged?: () => void;
 
   compact?: boolean;
-  onDisputeChanged?: () => void;
 }
 
 // ============================================
@@ -162,104 +163,33 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 }) => {
   const statusSpec = getStatusSpec(request.status);
 
-  // Inline panel state
+  // ------------------------------------------
+  // PANEL STATE
+  // ------------------------------------------
   const [showProposePanel, setShowProposePanel] = useState(false);
   const [showCounterPanel, setShowCounterPanel] = useState(false);
-  const [showDisputePanel, setShowDisputePanel] = useState(false);
-  const [disputeReason, setDisputeReason] = useState('');
+  const [showPriceDisputePanel, setShowPriceDisputePanel] = useState(false);
+  const [priceDisputeReason, setPriceDisputeReason] = useState('');
 
-  // Review code section
+  // Review state
   const [showReviewPanel, setShowReviewPanel] = useState(false);
-const [reviewReplyOpen, setReviewReplyOpen] = useState(false);
-const [reviewReplyText, setReviewReplyText] = useState('');
+  const [reviewReplyOpen, setReviewReplyOpen] = useState(false);
+  const [reviewReplyText, setReviewReplyText] = useState('');
 
-// Read any existing review for this booking
-const existingReview = getReviewForBooking(request.id);
+  // Dispute state (Step 9)
+  const [showRaiseDisputePanel, setShowRaiseDisputePanel] = useState(false);
 
-const [showDisputePanel, setShowDisputePanel] = useState(false);
-const existingDispute: Dispute | undefined = getDisputeByBooking(request.id);
+  // ------------------------------------------
+  // DERIVED DATA
+  // ------------------------------------------
+  const existingReview = getReviewForBooking(request.id);
+  const existingDispute: Dispute | undefined = getDisputeByBooking(request.id);
 
-// Can the current viewer raise a dispute?
-const canRaiseDispute =
-  (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER') &&
-  request.status !== 'requested' &&
-  request.status !== 'cancelled' &&
-  !existingDispute;
-
-const handleRaiseDispute = (form: RaiseDisputeFormData) => {
-  const now = new Date().toISOString();
-  const isClient = viewerRole === 'CLIENT';
-
-  const raisedByUserId = isClient ? request.clientId : request.providerId;
-  const raisedByDisplayName = isClient
-    ? request.clientDisplayName
-    : request.providerDisplayName;
-  const againstUserId = isClient ? request.providerId : request.clientId;
-  const againstDisplayName = isClient
-    ? request.providerDisplayName
-    : request.clientDisplayName;
-
-  const dispute: Dispute = {
-    id: generateId(),
-    bookingId: request.id,
-    requestRef: request.requestRef,
-    raisedByUserId,
-    raisedByRole: viewerRole,
-    raisedByDisplayName,
-    againstUserId,
-    againstRole: isClient ? 'PROVIDER' : 'CLIENT',
-    againstDisplayName,
-    category: form.category,
-    reason: form.reason,
-    photos: form.photos,
-    status: 'open',
-    messages: [],
-    createdAt: now,
-    updatedAt: now,
-  };
-
-  addLocalDispute(dispute);
-
-  // Seed an initial system message so the thread isn't empty
-  addDisputeMessage(dispute.id, {
-    authorId: 'system',
-    authorDisplayName: 'ServiceConnect',
-    authorRole: 'SYSTEM',
-    text: `Dispute raised by ${raisedByDisplayName}. A support agent will review this and respond shortly.`,
-    internal: false,
-  });
-
-  setShowDisputePanel(false);
-  if (onDisputeChanged) onDisputeChanged();
-};
-
-const handleSubmitReview = (args: { id: string; formData: ReviewFormData }) => {
-  const review: Review = {
-    id: args.id,
-    bookingId: request.id,
-    clientId: request.clientId,
-    clientDisplayName: request.clientDisplayName,
-    providerId: request.providerId,
-    providerDisplayName: request.providerDisplayName,
-    rating: args.formData.rating,
-    comment: args.formData.comment,
-    photos: args.formData.photos,
-    tags: args.formData.tags,
-    wouldRecommend: args.formData.wouldRecommend,
-    createdAt: new Date().toISOString(),
-  };
-  addLocalReview(review);
-  setShowReviewPanel(false);
-  if (onReviewSubmitted) onReviewSubmitted();
-};
-
-const handleSubmitReply = () => {
-  if (!existingReview || !reviewReplyText.trim()) return;
-  setProviderReply(existingReview.id, reviewReplyText.trim());
-  setReviewReplyOpen(false);
-  setReviewReplyText('');
-  if (onReviewSubmitted) onReviewSubmitted();
-};
+  const canRaiseDispute =
+    (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER') &&
+    request.status !== 'requested' &&
+    request.status !== 'cancelled' &&
+    !existingDispute;
 
   const counterpartName =
     viewerRole === 'CLIENT'
@@ -273,25 +203,95 @@ const handleSubmitReply = () => {
   const previewPhotos = request.requestPhotos.slice(0, 3);
   const extraPhotoCount = Math.max(0, request.requestPhotos.length - 3);
 
-  // ------------------------------------------
-  // NEGOTIATION CONTEXT
-  // ------------------------------------------
-  // What's the current "live" price on the table? (finalPrice or fall back)
+  // Negotiation
   const livePrice = request.finalPrice ?? request.suggestedPrice;
-
-  // Whose turn is it? Undefined = no active negotiation
   const turn = request.pendingCounterParty;
 
-  // Provider-side: they can accept a client's counter when it's their turn
   const providerCanAcceptCounter =
     viewerRole === 'PROVIDER' && turn === 'PROVIDER' && !!onAcceptCounter;
 
   const providerCanHoldFirm =
     viewerRole === 'PROVIDER' && turn === 'PROVIDER' && !!onHoldFirm;
 
-  // Client-side after provider holds firm
   const clientSeesHoldFirm =
     viewerRole === 'CLIENT' && turn === 'CLIENT' && request.holdFirm === true;
+
+  // ------------------------------------------
+  // HANDLERS
+  // ------------------------------------------
+  const handleSubmitReview = (args: { id: string; formData: ReviewFormData }) => {
+    const review: Review = {
+      id: args.id,
+      bookingId: request.id,
+      clientId: request.clientId,
+      clientDisplayName: request.clientDisplayName,
+      providerId: request.providerId,
+      providerDisplayName: request.providerDisplayName,
+      rating: args.formData.rating,
+      comment: args.formData.comment,
+      photos: args.formData.photos,
+      tags: args.formData.tags,
+      wouldRecommend: args.formData.wouldRecommend,
+      createdAt: new Date().toISOString(),
+    };
+    addLocalReview(review);
+    setShowReviewPanel(false);
+    if (onReviewSubmitted) onReviewSubmitted();
+  };
+
+  const handleSubmitReply = () => {
+    if (!existingReview || !reviewReplyText.trim()) return;
+    setProviderReply(existingReview.id, reviewReplyText.trim());
+    setReviewReplyOpen(false);
+    setReviewReplyText('');
+    if (onReviewSubmitted) onReviewSubmitted();
+  };
+
+  const handleRaiseDispute = (form: RaiseDisputeFormData) => {
+    const now = new Date().toISOString();
+    const isClient = viewerRole === 'CLIENT';
+
+    const raisedByUserId = isClient ? request.clientId : request.providerId;
+    const raisedByDisplayName = isClient
+      ? request.clientDisplayName
+      : request.providerDisplayName;
+    const againstUserId = isClient ? request.providerId : request.clientId;
+    const againstDisplayName = isClient
+      ? request.providerDisplayName
+      : request.clientDisplayName;
+
+    const dispute: Dispute = {
+      id: generateId(),
+      bookingId: request.id,
+      requestRef: request.requestRef,
+      raisedByUserId,
+      raisedByRole: viewerRole === 'CLIENT' ? 'CLIENT' : 'PROVIDER',
+      raisedByDisplayName,
+      againstUserId,
+      againstRole: isClient ? 'PROVIDER' : 'CLIENT',
+      againstDisplayName,
+      category: form.category,
+      reason: form.reason,
+      photos: form.photos,
+      status: 'open',
+      messages: [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    addLocalDispute(dispute);
+
+    addDisputeMessage(dispute.id, {
+      authorId: 'system',
+      authorDisplayName: 'ServiceConnect',
+      authorRole: 'SYSTEM',
+      text: `Dispute raised by ${raisedByDisplayName}. A support agent will review this and respond shortly.`,
+      internal: false,
+    });
+
+    setShowRaiseDisputePanel(false);
+    if (onDisputeChanged) onDisputeChanged();
+  };
 
   // ------------------------------------------
   // ACTIONS
@@ -330,20 +330,18 @@ const handleSubmitReply = () => {
     }
 
     // -------- CLIENT: pay consultation --------
-    if (canPayConsultation(viewerRole)) {
-      if (request.status === 'accepted' && onPayConsultation) {
-        actions.push(
-          <button
-            key="pay"
-            type="button"
-            className={styles.primaryBtn}
-            onClick={() => onPayConsultation(request)}
-          >
-            <FontAwesomeIcon icon={faFileInvoiceDollar} />
-            Pay consultation fee
-          </button>
-        );
-      }
+    if (canPayConsultation(viewerRole) && request.status === 'accepted' && onPayConsultation) {
+      actions.push(
+        <button
+          key="pay"
+          type="button"
+          className={styles.primaryBtn}
+          onClick={() => onPayConsultation(request)}
+        >
+          <FontAwesomeIcon icon={faFileInvoiceDollar} />
+          Pay consultation fee
+        </button>
+      );
     }
 
     // -------- PROVIDER: propose final price --------
@@ -366,12 +364,12 @@ const handleSubmitReply = () => {
       );
     }
 
-    // -------- CLIENT: accept / counter / dispute (initial proposal) --------
-    if ( canRespondToPrice(viewerRole) &&
-  request.status === 'price_proposed' &&
-  turn === 'CLIENT' &&
-  !request.holdFirm
- // no counter in progress — client is responding to the initial
+    // -------- CLIENT: accept / counter / dispute --------
+    if (
+      canRespondToPrice(viewerRole) &&
+      request.status === 'price_proposed' &&
+      turn === 'CLIENT' &&
+      !request.holdFirm
     ) {
       if (onAcceptFinalPrice) {
         actions.push(
@@ -398,13 +396,13 @@ const handleSubmitReply = () => {
           </button>
         );
       }
-      if (onDisputeFinalPrice && !showDisputePanel) {
+      if (onDisputeFinalPrice && !showPriceDisputePanel) {
         actions.push(
           <button
             key="dispute-price"
             type="button"
             className={styles.dangerBtn}
-            onClick={() => setShowDisputePanel(true)}
+            onClick={() => setShowPriceDisputePanel(true)}
           >
             <FontAwesomeIcon icon={faGavel} />
             Dispute
@@ -413,7 +411,7 @@ const handleSubmitReply = () => {
       }
     }
 
-    // -------- PROVIDER: accept client's counter / hold firm --------
+    // -------- PROVIDER: accept counter / hold firm --------
     if (providerCanAcceptCounter) {
       actions.push(
         <button
@@ -441,7 +439,7 @@ const handleSubmitReply = () => {
       );
     }
 
-    // -------- CLIENT: accept held-firm original / dispute --------
+    // -------- CLIENT: accept held-firm / dispute --------
     if (clientSeesHoldFirm) {
       if (onAcceptFinalPrice) {
         actions.push(
@@ -456,19 +454,54 @@ const handleSubmitReply = () => {
           </button>
         );
       }
-      if (onDisputeFinalPrice && !showDisputePanel) {
+      if (onDisputeFinalPrice && !showPriceDisputePanel) {
         actions.push(
           <button
             key="dispute-held"
             type="button"
             className={styles.dangerBtn}
-            onClick={() => setShowDisputePanel(true)}
+            onClick={() => setShowPriceDisputePanel(true)}
           >
             <FontAwesomeIcon icon={faGavel} />
             Dispute
           </button>
         );
       }
+    }
+
+    // -------- CLIENT: leave review --------
+    if (
+      viewerRole === 'CLIENT' &&
+      request.status === 'completed' &&
+      !existingReview &&
+      !showReviewPanel
+    ) {
+      actions.push(
+        <button
+          key="leave-review"
+          type="button"
+          className={styles.primaryBtn}
+          onClick={() => setShowReviewPanel(true)}
+        >
+          <FontAwesomeIcon icon={faStar} />
+          Leave review
+        </button>
+      );
+    }
+
+    // -------- Either party: raise dispute --------
+    if (canRaiseDispute && !showRaiseDisputePanel) {
+      actions.push(
+        <button
+          key="raise-dispute"
+          type="button"
+          className={styles.dangerBtn}
+          onClick={() => setShowRaiseDisputePanel(true)}
+        >
+          <FontAwesomeIcon icon={faGavel} />
+          Raise dispute
+        </button>
+      );
     }
 
     // -------- SHARED --------
@@ -485,42 +518,6 @@ const handleSubmitReply = () => {
         </button>
       );
     }
-
-    // rating section
-    // -------- CLIENT: leave review on completed bookings --------
-if (
-  viewerRole === 'CLIENT' &&
-  request.status === 'completed' &&
-  !existingReview &&
-  !showReviewPanel
-) {
-  actions.push(
-    <button
-      key="leave-review"
-      type="button"
-      className={styles.primaryBtn}
-      onClick={() => setShowReviewPanel(true)}
-    >
-      <FontAwesomeIcon icon={faStar} />
-      Leave review
-    </button>
-  );
-}
-
-// -------- Either party: raise a dispute --------
-if (canRaiseDispute && !showDisputePanel) {
-  actions.push(
-    <button
-      key="raise-dispute"
-      type="button"
-      className={styles.dangerBtn}
-      onClick={() => setShowDisputePanel(true)}
-    >
-      <FontAwesomeIcon icon={faGavel} />
-      Raise dispute
-    </button>
-  );
-}
 
     if (onViewOutcomes && canViewOutcomes(request.status)) {
       actions.push(
@@ -648,7 +645,7 @@ if (canRaiseDispute && !showDisputePanel) {
           </div>
         )}
 
-        {/* Consultation (collapsible, shared) */}
+        {/* Consultation */}
         {shouldShowConsultation(request.status) && (
           <div className={styles.consultationWrapper}>
             <ConsultationCard
@@ -661,202 +658,209 @@ if (canRaiseDispute && !showDisputePanel) {
           </div>
         )}
 
-	{/* Provider-only: price agreed confirmation */}
+        {/* Price agreed — provider */}
         {viewerRole === 'PROVIDER' &&
           request.status === 'price_agreed' &&
           request.finalPrice !== undefined && (
-           <div className={styles.agreedBanner}>
-             <FontAwesomeIcon icon={faHandshake} />
-           <div>
-        <strong>Client accepted your price</strong>
-        <span>
-          {formatPrice(request.finalPrice)} agreed. You're ready to start
-          the work session.
-        </span>
-      </div>
-    </div>
-  )}
+            <div className={styles.agreedBanner}>
+              <FontAwesomeIcon icon={faHandshake} />
+              <div>
+                <strong>Client accepted your price</strong>
+                <span>
+                  {formatPrice(request.finalPrice)} agreed. You're ready to
+                  start the work session.
+                </span>
+              </div>
+            </div>
+          )}
 
-       {/* Client-only: price agreed confirmation */}
-       {viewerRole === 'CLIENT' &&
-         request.status === 'price_agreed' &&
+        {/* Price agreed — client */}
+        {viewerRole === 'CLIENT' &&
+          request.status === 'price_agreed' &&
           request.finalPrice !== undefined && (
-           <div className={styles.agreedBanner}>
-             <FontAwesomeIcon icon={faHandshake} />
-           <div>
-           <strong>Price agreed</strong>
-           <span>
-          {request.providerDisplayName} will begin the work and clock in on
-          the agreed date.
-        </span>
-      </div>
-    </div>
-  )}
+            <div className={styles.agreedBanner}>
+              <FontAwesomeIcon icon={faHandshake} />
+              <div>
+                <strong>Price agreed</strong>
+                <span>
+                  {request.providerDisplayName} will begin the work and clock
+                  in on the agreed date.
+                </span>
+              </div>
+            </div>
+          )}
 
-  {/* Provider-only: client disputed the price */}
-{viewerRole === 'PROVIDER' &&
-  request.status === 'price_disputed' && (
-    <div className={styles.disputeInfoBanner}>
-      <FontAwesomeIcon icon={faGavel} />
-      <div>
-        <strong>Client disputed the price</strong>
-        <span>
-          Our support team will review this. You'll be contacted
-          shortly.
-        </span>
-      </div>
-    </div>
-  )}
-
-  {/* Client-only: dispute acknowledged */}
-{viewerRole === 'CLIENT' &&
-  request.status === 'price_disputed' && (
-    <div className={styles.disputeInfoBanner}>
-      <FontAwesomeIcon icon={faGavel} />
-      <div>
-        <strong>Dispute submitted</strong>
-        <span>
-          Our support team will review your dispute and contact you
-          shortly.
-        </span>
-      </div>
-    </div>
-  )}
-
-  {/* Dispute banner (both parties + support see this) */}
-{existingDispute && (
-  <div
-    className={`${styles.disputeBanner} ${
-      existingDispute.status === 'resolved' ||
-      existingDispute.status === 'closed'
-        ? styles.disputeBannerResolved
-        : ''
-    }`}
-  >
-    <FontAwesomeIcon icon={faCircleExclamation} />
-    <div>
-      <strong>
-        Dispute {existingDispute.status === 'open' || existingDispute.status === 'awaiting_info' ? 'in progress' : 'resolved'}
-      </strong>
-      <span>
-        Raised by {existingDispute.raisedByDisplayName} ·{' '}
-        {new Date(existingDispute.createdAt).toLocaleDateString('en-ZA')}
-        {existingDispute.resolutionNote && (
-          <> · {existingDispute.resolutionNote}</>
+        {/* Price disputed — provider */}
+        {viewerRole === 'PROVIDER' && request.status === 'price_disputed' && (
+          <div className={styles.disputeInfoBanner}>
+            <FontAwesomeIcon icon={faGavel} />
+            <div>
+              <strong>Client disputed the price</strong>
+              <span>
+                Our support team will review this. You'll be contacted shortly.
+              </span>
+            </div>
+          </div>
         )}
-      </span>
-    </div>
-  </div>
-)}
 
-{/* Raise dispute panel */}
-{showDisputePanel && (
-  <RaiseDisputePanel
-    againstName={
-      viewerRole === 'CLIENT'
-        ? request.providerDisplayName
-        : request.clientDisplayName
-    }
-    serviceTitle={request.serviceTitle}
-    onSubmit={handleRaiseDispute}
-    onCancel={() => setShowDisputePanel(false)}
-  />
-)}
+        {/* Price disputed — client */}
+        {viewerRole === 'CLIENT' && request.status === 'price_disputed' && (
+          <div className={styles.disputeInfoBanner}>
+            <FontAwesomeIcon icon={faGavel} />
+            <div>
+              <strong>Dispute submitted</strong>
+              <span>
+                Our support team will review your dispute and contact you
+                shortly.
+              </span>
+            </div>
+          </div>
+        )}
 
-  {/* Existing review (all roles can see it) */}
-{existingReview && (
-  <div className={styles.reviewCard}>
-    <div className={styles.reviewHeader}>
-      <span className={styles.reviewStars}>
-        {[1, 2, 3, 4, 5].map((n) => (
-          <FontAwesomeIcon
-            key={n}
-            icon={faStar}
-            className={n <= existingReview.rating ? styles.starOn : styles.starOff}
+        {/* Dispute banner (Step 9) */}
+        {existingDispute && (
+          <div
+            className={`${styles.disputeBanner} ${
+              existingDispute.status === 'resolved' ||
+              existingDispute.status === 'closed'
+                ? styles.disputeBannerResolved
+                : ''
+            }`}
+          >
+            <FontAwesomeIcon icon={faCircleExclamation} />
+            <div>
+              <strong>
+                Dispute{' '}
+                {existingDispute.status === 'open' ||
+                existingDispute.status === 'awaiting_info'
+                  ? 'in progress'
+                  : 'resolved'}
+              </strong>
+              <span>
+                Raised by {existingDispute.raisedByDisplayName} ·{' '}
+                {new Date(existingDispute.createdAt).toLocaleDateString('en-ZA')}
+                {existingDispute.resolutionNote && (
+                  <> · {existingDispute.resolutionNote}</>
+                )}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Raise dispute panel */}
+        {showRaiseDisputePanel && (
+          <RaiseDisputePanel
+            againstName={
+              viewerRole === 'CLIENT'
+                ? request.providerDisplayName
+                : request.clientDisplayName
+            }
+            serviceTitle={request.serviceTitle}
+            onSubmit={handleRaiseDispute}
+            onCancel={() => setShowRaiseDisputePanel(false)}
           />
-        ))}
-      </span>
-      <span className={styles.reviewBy}>
-        by {existingReview.clientDisplayName}
-      </span>
-    </div>
-    {existingReview.comment && (
-      <p className={styles.reviewComment}>{existingReview.comment}</p>
-    )}
-    {existingReview.tags && existingReview.tags.length > 0 && (
-      <div className={styles.reviewTags}>
-        {existingReview.tags.map((t) => (
-          <span key={t} className={styles.reviewTag}>{t}</span>
-        ))}
-      </div>
-    )}
-    {existingReview.providerReply ? (
-      <div className={styles.providerReply}>
-        <strong>Provider reply</strong>
-        <p>{existingReview.providerReply.text}</p>
-      </div>
-    ) : (
-      viewerRole === 'PROVIDER' && !reviewReplyOpen && (
-        <button
-          type="button"
-          className={styles.replyBtn}
-          onClick={() => setReviewReplyOpen(true)}
-        >
-          <FontAwesomeIcon icon={faComment} />
-          Reply
-        </button>
-      )
-    )}
+        )}
 
-    {reviewReplyOpen && viewerRole === 'PROVIDER' && (
-      <div className={styles.replyForm}>
-        <textarea
-          value={reviewReplyText}
-          onChange={(e) => setReviewReplyText(e.target.value)}
-          rows={2}
-          className={styles.replyTextarea}
-          placeholder="Reply publicly to this review…"
-        />
-        <div className={styles.replyActions}>
-          <button
-            type="button"
-            className={styles.secondaryBtn}
-            onClick={() => {
-              setReviewReplyOpen(false);
-              setReviewReplyText('');
-            }}
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            className={styles.primaryBtn}
-            disabled={!reviewReplyText.trim()}
-            onClick={handleSubmitReply}
-          >
-            Post reply
-          </button>
-        </div>
-      </div>
-    )}
-  </div>
-)}
+        {/* Existing review */}
+        {existingReview && (
+          <div className={styles.reviewCard}>
+            <div className={styles.reviewHeader}>
+              <span className={styles.reviewStars}>
+                {[1, 2, 3, 4, 5].map((n) => (
+                  <FontAwesomeIcon
+                    key={n}
+                    icon={faStar}
+                    className={
+                      n <= existingReview.rating ? styles.starOn : styles.starOff
+                    }
+                  />
+                ))}
+              </span>
+              <span className={styles.reviewBy}>
+                by {existingReview.clientDisplayName}
+              </span>
+            </div>
+            {existingReview.comment && (
+              <p className={styles.reviewComment}>{existingReview.comment}</p>
+            )}
+            {existingReview.tags && existingReview.tags.length > 0 && (
+              <div className={styles.reviewTags}>
+                {existingReview.tags.map((t) => (
+                  <span key={t} className={styles.reviewTag}>
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
 
-{/* Leave review panel (client only) */}
-{showReviewPanel && !existingReview && (
-  <LeaveReviewPanel
-    providerName={request.providerDisplayName}
-    serviceTitle={request.serviceTitle}
-    providerId={request.providerId}
-    clientId={request.clientId}
-    clientDisplayName={request.clientDisplayName}
-    bookingId={request.id}
-    onSubmit={handleSubmitReview}
-    onCancel={() => setShowReviewPanel(false)}
-  />
-)}
+            {existingReview.providerReply ? (
+              <div className={styles.providerReply}>
+                <strong>Provider reply</strong>
+                <p>{existingReview.providerReply.text}</p>
+              </div>
+            ) : (
+              viewerRole === 'PROVIDER' &&
+              !reviewReplyOpen && (
+                <button
+                  type="button"
+                  className={styles.replyBtn}
+                  onClick={() => setReviewReplyOpen(true)}
+                >
+                  <FontAwesomeIcon icon={faComment} />
+                  Reply
+                </button>
+              )
+            )}
 
-        {/* Propose final price panel (provider) */}
+            {reviewReplyOpen && viewerRole === 'PROVIDER' && (
+              <div className={styles.replyForm}>
+                <textarea
+                  value={reviewReplyText}
+                  onChange={(e) => setReviewReplyText(e.target.value)}
+                  rows={2}
+                  className={styles.replyTextarea}
+                  placeholder="Reply publicly to this review…"
+                />
+                <div className={styles.replyActions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryBtn}
+                    onClick={() => {
+                      setReviewReplyOpen(false);
+                      setReviewReplyText('');
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.primaryBtn}
+                    disabled={!reviewReplyText.trim()}
+                    onClick={handleSubmitReply}
+                  >
+                    Post reply
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Leave review panel */}
+        {showReviewPanel && !existingReview && (
+          <LeaveReviewPanel
+            providerName={request.providerDisplayName}
+            serviceTitle={request.serviceTitle}
+            providerId={request.providerId}
+            clientId={request.clientId}
+            clientDisplayName={request.clientDisplayName}
+            bookingId={request.id}
+            onSubmit={handleSubmitReview}
+            onCancel={() => setShowReviewPanel(false)}
+          />
+        )}
+
+        {/* Propose final price */}
         {showProposePanel && onProposeFinalPrice && (
           <FinalPricePanel
             mode="propose"
@@ -869,7 +873,7 @@ if (canRaiseDispute && !showDisputePanel) {
           />
         )}
 
-        {/* Counter panel (client) */}
+        {/* Counter panel */}
         {showCounterPanel && onCounterFinalPrice && (
           <FinalPricePanel
             mode="counter"
@@ -883,16 +887,16 @@ if (canRaiseDispute && !showDisputePanel) {
           />
         )}
 
-        {/* Dispute panel (client) */}
-        {showDisputePanel && onDisputeFinalPrice && (
+        {/* Price dispute panel (Step 7h) */}
+        {showPriceDisputePanel && onDisputeFinalPrice && (
           <div className={styles.disputePanel}>
             <h4 className={styles.disputeTitle}>Dispute this price</h4>
             <p className={styles.disputeHint}>
               Your dispute will be sent to our support team for review.
             </p>
             <textarea
-              value={disputeReason}
-              onChange={(e) => setDisputeReason(e.target.value)}
+              value={priceDisputeReason}
+              onChange={(e) => setPriceDisputeReason(e.target.value)}
               rows={3}
               className={styles.disputeTextarea}
               placeholder="Explain why you're disputing this price…"
@@ -902,8 +906,8 @@ if (canRaiseDispute && !showDisputePanel) {
                 type="button"
                 className={styles.secondaryBtn}
                 onClick={() => {
-                  setShowDisputePanel(false);
-                  setDisputeReason('');
+                  setShowPriceDisputePanel(false);
+                  setPriceDisputeReason('');
                 }}
               >
                 Cancel
@@ -911,11 +915,11 @@ if (canRaiseDispute && !showDisputePanel) {
               <button
                 type="button"
                 className={styles.dangerBtn}
-                disabled={!disputeReason.trim()}
+                disabled={!priceDisputeReason.trim()}
                 onClick={() => {
-                  onDisputeFinalPrice(request, disputeReason.trim());
-                  setShowDisputePanel(false);
-                  setDisputeReason('');
+                  onDisputeFinalPrice(request, priceDisputeReason.trim());
+                  setShowPriceDisputePanel(false);
+                  setPriceDisputeReason('');
                 }}
               >
                 <FontAwesomeIcon icon={faGavel} />

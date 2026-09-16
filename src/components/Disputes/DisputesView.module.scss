@@ -1,0 +1,289 @@
+/* src/components/Disputes/DisputesView.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.view {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: $font-size-xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-xxs;
+  transition: color $transition-base;
+  
+  @include mobile { font-size: $font-size-lg; }
+}
+
+.subtitle {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  transition: color $transition-base;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-full;
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+  min-width: 260px;
+  
+  svg {
+    color: var(--text-light, $text-light);
+    font-size: $font-size-sm;
+  }
+  
+  &:focus-within {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+  
+  @include mobile {
+    width: 100%;
+    min-width: unset;
+  }
+}
+
+.searchInput {
+  border: none;
+  background: none;
+  padding: $spacing-xs 0;
+  font-size: $font-size-sm;
+  color: var(--text-primary, $text-primary);
+  outline: none;
+  width: 100%;
+  
+  &::placeholder { color: var(--text-light, $text-light); }
+}
+
+// ============================================
+// TABS
+// ============================================
+
+.tabs {
+  display: flex;
+  gap: $spacing-sm;
+  border-bottom: 1px solid var(--border-color, $border-color);
+}
+
+.tabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-md;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: all $transition-fast;
+  
+  &:hover { color: $primary; }
+}
+
+.tabActive {
+  color: $primary;
+  border-bottom-color: $primary;
+  font-weight: $font-weight-semibold;
+}
+
+.tabCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 20px;
+  padding: 0 6px;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-secondary, $text-secondary);
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.tabActive .tabCount {
+  background: rgba(102, 126, 234, 0.15);
+  color: $primary;
+}
+
+// ============================================
+// LIST
+// ============================================
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  text-align: left;
+  cursor: pointer;
+  transition: all $transition-base;
+  width: 100%;
+  
+  &:hover {
+    border-color: $primary;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+  }
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+.rowIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-md;
+  background: rgba(239, 68, 68, 0.12);
+  color: $error;
+  font-size: $font-size-base;
+  flex-shrink: 0;
+}
+
+.rowBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.rowRef {
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  background: var(--bg-primary, #f8f9fa);
+  padding: 2px 6px;
+  border-radius: $border-radius-sm;
+}
+
+.rowStatus {
+  font-size: 0.7rem;
+  font-weight: $font-weight-semibold;
+  padding: 2px 8px;
+  border-radius: $border-radius-full;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.statusOpen {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+}
+
+.statusResolved {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+}
+
+:global(.dark-theme) {
+  .statusOpen { background: rgba(248, 113, 113, 0.25); color: #f87171; }
+  .statusResolved { background: rgba(52, 211, 153, 0.25); color: #34d399; }
+}
+
+.rowAge {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  margin-left: auto;
+}
+
+.rowTitle {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 2px;
+  transition: color $transition-base;
+}
+
+.rowMeta {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-medium;
+  }
+}
+
+.rowChevron {
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  flex-shrink: 0;
+}
+
+// ============================================
+// EMPTY
+// ============================================
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: $spacing-3xl $spacing-lg;
+  background: var(--bg-primary, #f8f9fa);
+  border: 2px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  
+  h3 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin: $spacing-md 0 $spacing-xs;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    margin: 0;
+    max-width: 320px;
+  }
+}
+
+.emptyIcon {
+  font-size: $font-size-4xl;
+  opacity: 0.7;
+}
