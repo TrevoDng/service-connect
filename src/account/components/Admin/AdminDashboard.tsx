@@ -13,9 +13,12 @@ import {
   faCheckCircle,
   faTimesCircle,
   faEye,
+  faGavel,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
+import { DisputesView } from '../../../components/Disputes';
+import { getOpenDisputeCount } from '../../../utils/allDisputes';
 import styles from './AdminDashboard.module.scss';
 
 // ============================================
@@ -218,7 +221,247 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     { key: 'employees', label: 'Employees', icon: faUserCog, badge: employees.length },
     { key: 'providers', label: 'Service Providers', icon: faUserTie, badge: providers.length },
     { key: 'clients', label: 'Clients', icon: faUsers, badge: clients.length },
+    {
+      key: 'disputes',
+      label: 'Disputes',
+      icon: faGavel,
+      badge: getOpenDisputeCount() || undefined,
+    },
   ];
+
+  // ============================================
+  // MAIN CONTENT — dispatches per tab
+  // ============================================
+  // When activeTab === 'disputes', we short-circuit and render only the
+  // DisputesView. Otherwise we render the stats grid + tab content as before.
+
+  const renderMainContent = () => {
+    if (activeTab === 'disputes') {
+      return (
+        <div className={styles.mainContent}>
+          <DisputesView />
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.mainContent}>
+        {/* Header */}
+        <div className={styles.contentHeader}>
+          <h2>{getContentTitle()}</h2>
+          <div className={styles.headerActions}>
+            <div className={styles.searchBox}>
+              <FontAwesomeIcon icon={faSearch} />
+              <input
+                type="text"
+                placeholder="Search..."
+                className={styles.searchInput}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className={styles.statsGrid}>
+          {stats.map((stat) => (
+            <div key={stat.key} className={`${styles.statCard} ${stat.className}`}>
+              <div className={styles.statIcon}>
+                <FontAwesomeIcon icon={stat.icon} />
+              </div>
+              <div className={styles.statInfo}>
+                <h3>{stat.label}</h3>
+                <span className={styles.statNumber}>{stat.value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Content */}
+        {loading ? (
+          <div className={styles.loading}>
+            <div className={styles.spinner}></div>
+            <p>Loading data...</p>
+          </div>
+        ) : activeTab === 'employees' ? (
+          employees.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>👔</span>
+              <h3>No employees found</h3>
+              <p>There are no employees registered yet.</p>
+            </div>
+          ) : (
+            <div className={styles.activityList}>
+              {employees.map((employee) => (
+                <div key={employee.id} className={styles.activityCard}>
+                  <div className={styles.activityHeader}>
+                    <div className={styles.activityTitle}>
+                      <h4>{employee.name}</h4>
+                      <span className={`${styles.statusBadge} ${getStatusClass(employee.status)}`}>
+                        {getStatusIcon(employee.status)}
+                        {employee.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.activityDetails}>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Email:</span>
+                      <span className={styles.infoValue}>{employee.email}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Role:</span>
+                      <span className={styles.infoValue}>{employee.role}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Joined:</span>
+                      <span className={styles.infoValue}>{formatDate(employee.joinDate)}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Last Login:</span>
+                      <span className={styles.infoValue}>{formatDateTime(employee.lastLogin)}</span>
+                    </div>
+                  </div>
+                  <div className={styles.activityActions}>
+                    <button className={styles.viewBtn}>
+                      <FontAwesomeIcon icon={faEye} />
+                      View Details
+                    </button>
+                    {employee.status === 'pending' && (
+                      <>
+                        <button className={styles.approveBtn}>
+                          <FontAwesomeIcon icon={faCheckCircle} />
+                          Approve
+                        </button>
+                        <button className={styles.rejectBtn}>
+                          <FontAwesomeIcon icon={faTimesCircle} />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : activeTab === 'providers' ? (
+          providers.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>👔</span>
+              <h3>No service providers found</h3>
+              <p>There are no service providers registered yet.</p>
+            </div>
+          ) : (
+            <div className={styles.activityList}>
+              {providers.map((provider) => (
+                <div key={provider.id} className={styles.activityCard}>
+                  <div className={styles.activityHeader}>
+                    <div className={styles.activityTitle}>
+                      <h4>{provider.name}</h4>
+                      <span className={`${styles.statusBadge} ${getStatusClass(provider.status)}`}>
+                        {getStatusIcon(provider.status)}
+                        {provider.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.activityDetails}>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Email:</span>
+                      <span className={styles.infoValue}>{provider.email}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Category:</span>
+                      <span className={styles.infoValue}>{provider.category}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Rating:</span>
+                      <span className={styles.infoValue}>⭐ {provider.rating.toFixed(1)}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Services:</span>
+                      <span className={styles.infoValue}>{provider.services}</span>
+                    </div>
+                  </div>
+                  <div className={styles.activityActions}>
+                    <button className={styles.viewBtn}>
+                      <FontAwesomeIcon icon={faEye} />
+                      View Details
+                    </button>
+                    {provider.status === 'pending' && (
+                      <>
+                        <button className={styles.approveBtn}>
+                          <FontAwesomeIcon icon={faCheckCircle} />
+                          Approve
+                        </button>
+                        <button className={styles.rejectBtn}>
+                          <FontAwesomeIcon icon={faTimesCircle} />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          clients.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>👥</span>
+              <h3>No clients found</h3>
+              <p>There are no clients registered yet.</p>
+            </div>
+          ) : (
+            <div className={styles.activityList}>
+              {clients.map((client) => (
+                <div key={client.id} className={styles.activityCard}>
+                  <div className={styles.activityHeader}>
+                    <div className={styles.activityTitle}>
+                      <h4>{client.name}</h4>
+                      <span className={`${styles.statusBadge} ${getStatusClass(client.status)}`}>
+                        {getStatusIcon(client.status)}
+                        {client.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.activityDetails}>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Email:</span>
+                      <span className={styles.infoValue}>{client.email}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Joined:</span>
+                      <span className={styles.infoValue}>{formatDate(client.joinDate)}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Bookings:</span>
+                      <span className={styles.infoValue}>{client.bookings}</span>
+                    </div>
+                  </div>
+                  <div className={styles.activityActions}>
+                    <button className={styles.viewBtn}>
+                      <FontAwesomeIcon icon={faEye} />
+                      View Details
+                    </button>
+                    {client.status === 'pending' && (
+                      <>
+                        <button className={styles.approveBtn}>
+                          <FontAwesomeIcon icon={faCheckCircle} />
+                          Approve
+                        </button>
+                        <button className={styles.rejectBtn}>
+                          <FontAwesomeIcon icon={faTimesCircle} />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+      </div>
+    );
+  };
 
   // ------------------------------------------
   // Render
@@ -243,225 +486,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           />
         }
       >
-        <div className={styles.mainContent}>
-          {/* Header */}
-          <div className={styles.contentHeader}>
-            <h2>{getContentTitle()}</h2>
-            <div className={styles.headerActions}>
-              <div className={styles.searchBox}>
-                <FontAwesomeIcon icon={faSearch} />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className={styles.searchInput}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className={styles.statsGrid}>
-            {stats.map((stat) => (
-              <div key={stat.key} className={`${styles.statCard} ${stat.className}`}>
-                <div className={styles.statIcon}>
-                  <FontAwesomeIcon icon={stat.icon} />
-                </div>
-                <div className={styles.statInfo}>
-                  <h3>{stat.label}</h3>
-                  <span className={styles.statNumber}>{stat.value}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Content */}
-          {loading ? (
-            <div className={styles.loading}>
-              <div className={styles.spinner}></div>
-              <p>Loading data...</p>
-            </div>
-          ) : activeTab === 'employees' ? (
-            employees.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>👔</span>
-                <h3>No employees found</h3>
-                <p>There are no employees registered yet.</p>
-              </div>
-            ) : activeTab === 'disputes' ? (
-  <div className={styles.mainContent}>
-    <DisputesView />
-  </div>
-) : (
-              <div className={styles.activityList}>
-                {employees.map((employee) => (
-                  <div key={employee.id} className={styles.activityCard}>
-                    <div className={styles.activityHeader}>
-                      <div className={styles.activityTitle}>
-                        <h4>{employee.name}</h4>
-                        <span className={`${styles.statusBadge} ${getStatusClass(employee.status)}`}>
-                          {getStatusIcon(employee.status)}
-                          {employee.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.activityDetails}>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Email:</span>
-                        <span className={styles.infoValue}>{employee.email}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Role:</span>
-                        <span className={styles.infoValue}>{employee.role}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Joined:</span>
-                        <span className={styles.infoValue}>{formatDate(employee.joinDate)}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Last Login:</span>
-                        <span className={styles.infoValue}>{formatDateTime(employee.lastLogin)}</span>
-                      </div>
-                    </div>
-                    <div className={styles.activityActions}>
-                      <button className={styles.viewBtn}>
-                        <FontAwesomeIcon icon={faEye} />
-                        View Details
-                      </button>
-                      {employee.status === 'pending' && (
-                        <>
-                          <button className={styles.approveBtn}>
-                            <FontAwesomeIcon icon={faCheckCircle} />
-                            Approve
-                          </button>
-                          <button className={styles.rejectBtn}>
-                            <FontAwesomeIcon icon={faTimesCircle} />
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : activeTab === 'providers' ? (
-            providers.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>👔</span>
-                <h3>No service providers found</h3>
-                <p>There are no service providers registered yet.</p>
-              </div>
-            ) : (
-              <div className={styles.activityList}>
-                {providers.map((provider) => (
-                  <div key={provider.id} className={styles.activityCard}>
-                    <div className={styles.activityHeader}>
-                      <div className={styles.activityTitle}>
-                        <h4>{provider.name}</h4>
-                        <span className={`${styles.statusBadge} ${getStatusClass(provider.status)}`}>
-                          {getStatusIcon(provider.status)}
-                          {provider.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.activityDetails}>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Email:</span>
-                        <span className={styles.infoValue}>{provider.email}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Category:</span>
-                        <span className={styles.infoValue}>{provider.category}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Rating:</span>
-                        <span className={styles.infoValue}>⭐ {provider.rating.toFixed(1)}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Services:</span>
-                        <span className={styles.infoValue}>{provider.services}</span>
-                      </div>
-                    </div>
-                    <div className={styles.activityActions}>
-                      <button className={styles.viewBtn}>
-                        <FontAwesomeIcon icon={faEye} />
-                        View Details
-                      </button>
-                      {provider.status === 'pending' && (
-                        <>
-                          <button className={styles.approveBtn}>
-                            <FontAwesomeIcon icon={faCheckCircle} />
-                            Approve
-                          </button>
-                          <button className={styles.rejectBtn}>
-                            <FontAwesomeIcon icon={faTimesCircle} />
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : (
-            clients.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>👥</span>
-                <h3>No clients found</h3>
-                <p>There are no clients registered yet.</p>
-              </div>
-            ) : (
-              <div className={styles.activityList}>
-                {clients.map((client) => (
-                  <div key={client.id} className={styles.activityCard}>
-                    <div className={styles.activityHeader}>
-                      <div className={styles.activityTitle}>
-                        <h4>{client.name}</h4>
-                        <span className={`${styles.statusBadge} ${getStatusClass(client.status)}`}>
-                          {getStatusIcon(client.status)}
-                          {client.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.activityDetails}>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Email:</span>
-                        <span className={styles.infoValue}>{client.email}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Joined:</span>
-                        <span className={styles.infoValue}>{formatDate(client.joinDate)}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Bookings:</span>
-                        <span className={styles.infoValue}>{client.bookings}</span>
-                      </div>
-                    </div>
-                    <div className={styles.activityActions}>
-                      <button className={styles.viewBtn}>
-                        <FontAwesomeIcon icon={faEye} />
-                        View Details
-                      </button>
-                      {client.status === 'pending' && (
-                        <>
-                          <button className={styles.approveBtn}>
-                            <FontAwesomeIcon icon={faCheckCircle} />
-                            Approve
-                          </button>
-                          <button className={styles.rejectBtn}>
-                            <FontAwesomeIcon icon={faTimesCircle} />
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          )}
-        </div>
+        {renderMainContent()}
       </DashboardLayout>
     </div>
   );

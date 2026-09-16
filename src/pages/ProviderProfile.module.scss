@@ -1,0 +1,386 @@
+/* src/pages/ProviderProfile.module.scss */
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
+
+.page {
+  min-height: 70vh;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-2xl $spacing-xl;
+  transition: background $transition-base;
+  
+  @include mobile {
+    padding: $spacing-lg $spacing-md;
+  }
+}
+
+.container {
+  max-width: 780px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+}
+
+// ============================================
+// BACK
+// ============================================
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-xs $spacing-md;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border-radius: $border-radius-md;
+  align-self: flex-start;
+  transition: all $transition-fast;
+  
+  &:hover {
+    color: var(--text-primary, $text-primary);
+    background: var(--bg-card, #ffffff);
+  }
+  
+  svg { transition: transform $transition-fast; }
+  &:hover svg { transform: translateX(-4px); }
+}
+
+// ============================================
+// HERO
+// ============================================
+
+.hero {
+  display: flex;
+  gap: $spacing-lg;
+  align-items: flex-start;
+  padding: $spacing-xl;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-xl;
+  transition: all $transition-base;
+  
+  @include mobile {
+    flex-direction: column;
+    padding: $spacing-lg;
+    gap: $spacing-md;
+  }
+}
+
+.avatar {
+  width: 96px;
+  height: 96px;
+  border-radius: $border-radius-full;
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  
+  @include mobile {
+    width: 72px;
+    height: 72px;
+    font-size: $font-size-2xl;
+  }
+}
+
+.heroBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.name {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  
+  @include mobile { font-size: $font-size-xl; }
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  
+  svg { font-size: 0.7rem; }
+}
+
+:global(.dark-theme) {
+  .verifiedBadge {
+    background: rgba(52, 211, 153, 0.2);
+    color: #34d399;
+  }
+}
+
+.categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.categoryTag {
+  padding: 2px 10px;
+  background: rgba(102, 126, 234, 0.1);
+  color: $primary;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.statsRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  flex-wrap: wrap;
+  margin-top: $spacing-xs;
+  
+  @include mobile { gap: $spacing-sm; }
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  
+  svg {
+    font-size: $font-size-xs;
+    color: var(--text-light, $text-light);
+    margin-bottom: 2px;
+  }
+}
+
+.statIconStar { color: #f59e0b !important; }
+.statIcon { color: $primary !important; }
+
+.statValue {
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  line-height: 1;
+}
+
+.statLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+}
+
+.statDivider {
+  width: 1px;
+  height: 32px;
+  background: var(--border-color, $border-color);
+  
+  @include mobile { display: none; }
+}
+
+// ============================================
+// CARD
+// ============================================
+
+.card {
+  padding: $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  transition: all $transition-base;
+  
+  @include mobile { padding: $spacing-md; }
+}
+
+.cardTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 $spacing-sm;
+  padding-bottom: $spacing-xs;
+  border-bottom: 1px dashed var(--border-color, $border-color);
+  
+  svg { color: $primary; font-size: $font-size-sm; }
+}
+
+.reviewCount {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--text-light, $text-light);
+  margin-left: auto;
+}
+
+.about {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  line-height: $line-height-relaxed;
+  margin: 0;
+}
+
+// ============================================
+// MESSAGE BUTTON
+// ============================================
+
+.messageBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  align-self: flex-start;
+  padding: $spacing-sm $spacing-xl;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  @include mobile {
+    width: 100%;
+    align-self: stretch;
+  }
+}
+
+// ============================================
+// REVIEWS
+// ============================================
+
+.noReviews {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: $spacing-xl $spacing-md;
+  
+  p {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--text-primary, $text-primary);
+    margin: $spacing-xs 0 2px;
+  }
+}
+
+.noReviewsIcon {
+  font-size: $font-size-3xl;
+  opacity: 0.7;
+}
+
+.noReviewsHint {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  max-width: 320px;
+}
+
+.reviewList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.review {
+  padding: $spacing-md;
+  background: var(--bg-primary, #f8f9fa);
+  border-radius: $border-radius-md;
+}
+
+.reviewHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  margin-bottom: $spacing-xs;
+}
+
+.reviewStars {
+  display: inline-flex;
+  gap: 2px;
+  font-size: $font-size-xs;
+}
+
+.starOn { color: #f59e0b; }
+.starOff { color: var(--border-color, $border-color); }
+
+.reviewBy {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+}
+
+.reviewTime {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  margin-left: auto;
+}
+
+.reviewComment {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  line-height: $line-height-normal;
+  margin: 0 0 $spacing-xs;
+}
+
+.reviewTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xxs;
+  margin-bottom: $spacing-xs;
+}
+
+.reviewTag {
+  padding: 2px 8px;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+}
+
+.providerReply {
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border-left: 3px solid $primary;
+  border-radius: $border-radius-sm;
+  margin-top: $spacing-xs;
+  
+  strong {
+    display: block;
+    font-size: $font-size-xs;
+    color: $primary;
+    margin-bottom: 2px;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    margin: 0;
+    line-height: $line-height-normal;
+  }
+}

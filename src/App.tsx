@@ -25,6 +25,7 @@ import ConsultationUpload from './pages/ConsultationUpload';
 import DevLogin from './pages/DevLogin';
 import ConsultationPayment from './pages/ConsultationPayment';
 import ConsultationOutcomes from './pages/ConsultationOutcomes';
+import ProviderProfile from './pages/ProviderProfile';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
@@ -72,6 +73,7 @@ const AppContent: React.FC = () => {
           <Route path="/login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
           <Route path="/service-provider-register" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
+	  <Route path="/providers/:id" element={<ProviderProfile />} />
           <Route path="/login/employee" element={<PublicRoute><EmployeeLogin /></PublicRoute>} />
 
           {/* DEV ONLY — remove before production */}

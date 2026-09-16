@@ -17,10 +17,10 @@ import {
   faUserPlus,
   faChartLine,
   faCog,
+  faGavel,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
-import { faGavel } from '@fortawesome/free-solid-svg-icons';
 import { DisputesView } from '../../../components/Disputes';
 import { getOpenDisputeCount } from '../../../utils/allDisputes';
 import styles from './EmployeeDashboard.module.scss';
@@ -202,8 +202,6 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
         return 'Service Provider Management';
       case 'bookings':
         return 'Booking Overview';
-      case 'disputes':
-        return 'Disputes';
       default:
         return 'Dashboard';
     }
@@ -232,12 +230,270 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
     { key: 'providers', label: 'Service Providers', icon: faUserTie, badge: providers.length },
     { key: 'bookings', label: 'Bookings', icon: faClipboardList, badge: bookings.length },
     {
-  key: 'disputes',
-  label: 'Disputes',
-  icon: faGavel,
-  badge: getOpenDisputeCount() || undefined,
-},
+      key: 'disputes',
+      label: 'Disputes',
+      icon: faGavel,
+      badge: getOpenDisputeCount() || undefined,
+    },
   ];
+
+  // ============================================
+  // DISPUTES VIEW — short circuit
+  // ============================================
+  // When the user is on the disputes tab, we skip the stats/quick-actions
+  // wrapper and render only the DisputesView. This keeps the layout clean
+  // and avoids cramming disputes into the tab-content conditional chain.
+
+  const renderMainContent = () => {
+    if (activeTab === 'disputes') {
+      return (
+        <div className={styles.mainContent}>
+          <DisputesView />
+        </div>
+      );
+    }
+
+    return (
+      <div className={styles.mainContent}>
+        {/* Header */}
+        <div className={styles.contentHeader}>
+          <h2>{getContentTitle()}</h2>
+          <div className={styles.headerActions}>
+            <div className={styles.searchBox}>
+              <FontAwesomeIcon icon={faSearch} />
+              <input
+                type="text"
+                placeholder="Search..."
+                className={styles.searchInput}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className={styles.statsGrid}>
+          {stats.map((stat) => (
+            <div key={stat.key} className={`${styles.statCard} ${stat.className}`}>
+              <div className={styles.statIcon}>
+                <FontAwesomeIcon icon={stat.icon} />
+              </div>
+              <div className={styles.statInfo}>
+                <h3>{stat.label}</h3>
+                <span className={styles.statNumber}>{stat.value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Quick Actions */}
+        <div className={styles.quickActions}>
+          <h3>Quick Actions</h3>
+          <div className={styles.actionsGrid}>
+            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
+              <FontAwesomeIcon icon={faUserPlus} />
+              <span>Add New Client</span>
+            </button>
+            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
+              <FontAwesomeIcon icon={faUserTie} />
+              <span>Approve Provider</span>
+            </button>
+            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
+              <FontAwesomeIcon icon={faChartLine} />
+              <span>View Reports</span>
+            </button>
+            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
+              <FontAwesomeIcon icon={faCog} />
+              <span>Settings</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Tab content */}
+        {loading ? (
+          <div className={styles.loading}>
+            <div className={styles.spinner}></div>
+            <p>Loading data...</p>
+          </div>
+        ) : activeTab === 'clients' ? (
+          clients.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>👥</span>
+              <h3>{emptyMessage.title}</h3>
+              <p>{emptyMessage.message}</p>
+              <button
+                className={styles.approveBtn}
+                onClick={() => navigate('/admin-dashboard')}
+              >
+                Add New Client
+              </button>
+            </div>
+          ) : (
+            <div className={styles.activityList}>
+              {clients.map((client) => (
+                <div key={client.id} className={styles.activityCard}>
+                  <div className={styles.activityHeader}>
+                    <div className={styles.activityTitle}>
+                      <h4>{client.name}</h4>
+                      <span className={`${styles.statusBadge} ${getStatusClass(client.status)}`}>
+                        {getStatusIcon(client.status)}
+                        {client.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.activityDetails}>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Email:</span>
+                      <span className={styles.infoValue}>{client.email}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Joined:</span>
+                      <span className={styles.infoValue}>{formatDate(client.joinDate)}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Bookings:</span>
+                      <span className={styles.infoValue}>{client.bookings}</span>
+                    </div>
+                  </div>
+                  <div className={styles.activityActions}>
+                    <button className={styles.viewBtn}>
+                      <FontAwesomeIcon icon={faEye} />
+                      View Details
+                    </button>
+                    {client.status === 'pending' && (
+                      <>
+                        <button className={styles.approveBtn}>
+                          <FontAwesomeIcon icon={faCheckCircle} />
+                          Approve
+                        </button>
+                        <button className={styles.rejectBtn}>
+                          <FontAwesomeIcon icon={faTimesCircle} />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : activeTab === 'providers' ? (
+          providers.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>👔</span>
+              <h3>{emptyMessage.title}</h3>
+              <p>{emptyMessage.message}</p>
+              <button
+                className={styles.approveBtn}
+                onClick={() => navigate('/admin-dashboard')}
+              >
+                Add New Provider
+              </button>
+            </div>
+          ) : (
+            <div className={styles.activityList}>
+              {providers.map((provider) => (
+                <div key={provider.id} className={styles.activityCard}>
+                  <div className={styles.activityHeader}>
+                    <div className={styles.activityTitle}>
+                      <h4>{provider.name}</h4>
+                      <span className={`${styles.statusBadge} ${getStatusClass(provider.status)}`}>
+                        {getStatusIcon(provider.status)}
+                        {provider.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.activityDetails}>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Email:</span>
+                      <span className={styles.infoValue}>{provider.email}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Category:</span>
+                      <span className={styles.infoValue}>{provider.category}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Rating:</span>
+                      <span className={styles.infoValue}>⭐ {provider.rating.toFixed(1)}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Services:</span>
+                      <span className={styles.infoValue}>{provider.services}</span>
+                    </div>
+                  </div>
+                  <div className={styles.activityActions}>
+                    <button className={styles.viewBtn}>
+                      <FontAwesomeIcon icon={faEye} />
+                      View Details
+                    </button>
+                    {provider.status === 'pending' && (
+                      <>
+                        <button className={styles.approveBtn}>
+                          <FontAwesomeIcon icon={faCheckCircle} />
+                          Approve
+                        </button>
+                        <button className={styles.rejectBtn}>
+                          <FontAwesomeIcon icon={faTimesCircle} />
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        ) : (
+          bookings.length === 0 ? (
+            <div className={styles.emptyState}>
+              <span className={styles.emptyIcon}>📋</span>
+              <h3>{emptyMessage.title}</h3>
+              <p>{emptyMessage.message}</p>
+            </div>
+          ) : (
+            <div className={styles.activityList}>
+              {bookings.map((booking) => (
+                <div key={booking.id} className={styles.activityCard}>
+                  <div className={styles.activityHeader}>
+                    <div className={styles.activityTitle}>
+                      <h4>{booking.serviceTitle}</h4>
+                      <span className={`${styles.statusBadge} ${getStatusClass(booking.status)}`}>
+                        {getStatusIcon(booking.status)}
+                        {booking.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className={styles.activityDetails}>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Client:</span>
+                      <span className={styles.infoValue}>{booking.clientName}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Provider:</span>
+                      <span className={styles.infoValue}>{booking.providerName}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Date:</span>
+                      <span className={styles.infoValue}>{formatDate(booking.date)}</span>
+                    </div>
+                    <div className={styles.activityInfo}>
+                      <span className={styles.infoLabel}>Price:</span>
+                      <span className={styles.infoValue}>R{booking.price.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <div className={styles.activityActions}>
+                    <button className={styles.viewBtn}>
+                      <FontAwesomeIcon icon={faEye} />
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+      </div>
+    );
+  };
 
   // ------------------------------------------
   // Render
@@ -262,248 +518,7 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
           />
         }
       >
-        <div className={styles.mainContent}>
-          {/* Header */}
-          <div className={styles.contentHeader}>
-            <h2>{getContentTitle()}</h2>
-            <div className={styles.headerActions}>
-              <div className={styles.searchBox}>
-                <FontAwesomeIcon icon={faSearch} />
-                <input
-                  type="text"
-                  placeholder="Search..."
-                  className={styles.searchInput}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Stats Grid */}
-          <div className={styles.statsGrid}>
-            {stats.map((stat) => (
-              <div key={stat.key} className={`${styles.statCard} ${stat.className}`}>
-                <div className={styles.statIcon}>
-                  <FontAwesomeIcon icon={stat.icon} />
-                </div>
-                <div className={styles.statInfo}>
-                  <h3>{stat.label}</h3>
-                  <span className={styles.statNumber}>{stat.value}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Quick Actions */}
-          <div className={styles.quickActions}>
-            <h3>Quick Actions</h3>
-            <div className={styles.actionsGrid}>
-              <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-                <FontAwesomeIcon icon={faUserPlus} />
-                <span>Add New Client</span>
-              </button>
-              <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-                <FontAwesomeIcon icon={faUserTie} />
-                <span>Approve Provider</span>
-              </button>
-              <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-                <FontAwesomeIcon icon={faChartLine} />
-                <span>View Reports</span>
-              </button>
-              <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-                <FontAwesomeIcon icon={faCog} />
-                <span>Settings</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Content */}
-          {loading ? (
-            <div className={styles.loading}>
-              <div className={styles.spinner}></div>
-              <p>Loading data...</p>
-            </div>
-          ) : activeTab === 'clients' ? (
-            clients.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>👥</span>
-                <h3>{emptyMessage.title}</h3>
-                <p>{emptyMessage.message}</p>
-                <button
-                  className={styles.approveBtn}
-                  onClick={() => navigate('/admin-dashboard')}
-                >
-                  Add New Client
-                </button>
-              </div>
-            ) :: activeTab === 'disputes' ? (
-                  <div className={styles.mainContent}>
-                    <DisputesView />
-                  </div>
-                ) : (
-              <div className={styles.activityList}>
-                {clients.map((client) => (
-                  <div key={client.id} className={styles.activityCard}>
-                    <div className={styles.activityHeader}>
-                      <div className={styles.activityTitle}>
-                        <h4>{client.name}</h4>
-                        <span className={`${styles.statusBadge} ${getStatusClass(client.status)}`}>
-                          {getStatusIcon(client.status)}
-                          {client.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.activityDetails}>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Email:</span>
-                        <span className={styles.infoValue}>{client.email}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Joined:</span>
-                        <span className={styles.infoValue}>{formatDate(client.joinDate)}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Bookings:</span>
-                        <span className={styles.infoValue}>{client.bookings}</span>
-                      </div>
-                    </div>
-                    <div className={styles.activityActions}>
-                      <button className={styles.viewBtn}>
-                        <FontAwesomeIcon icon={faEye} />
-                        View Details
-                      </button>
-                      {client.status === 'pending' && (
-                        <>
-                          <button className={styles.approveBtn}>
-                            <FontAwesomeIcon icon={faCheckCircle} />
-                            Approve
-                          </button>
-                          <button className={styles.rejectBtn}>
-                            <FontAwesomeIcon icon={faTimesCircle} />
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : activeTab === 'providers' ? (
-            providers.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>👔</span>
-                <h3>{emptyMessage.title}</h3>
-                <p>{emptyMessage.message}</p>
-                <button
-                  className={styles.approveBtn}
-                  onClick={() => navigate('/admin-dashboard')}
-                >
-                  Add New Provider
-                </button>
-              </div>
-            ) : (
-              <div className={styles.activityList}>
-                {providers.map((provider) => (
-                  <div key={provider.id} className={styles.activityCard}>
-                    <div className={styles.activityHeader}>
-                      <div className={styles.activityTitle}>
-                        <h4>{provider.name}</h4>
-                        <span className={`${styles.statusBadge} ${getStatusClass(provider.status)}`}>
-                          {getStatusIcon(provider.status)}
-                          {provider.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.activityDetails}>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Email:</span>
-                        <span className={styles.infoValue}>{provider.email}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Category:</span>
-                        <span className={styles.infoValue}>{provider.category}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Rating:</span>
-                        <span className={styles.infoValue}>⭐ {provider.rating.toFixed(1)}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Services:</span>
-                        <span className={styles.infoValue}>{provider.services}</span>
-                      </div>
-                    </div>
-                    <div className={styles.activityActions}>
-                      <button className={styles.viewBtn}>
-                        <FontAwesomeIcon icon={faEye} />
-                        View Details
-                      </button>
-                      {provider.status === 'pending' && (
-                        <>
-                          <button className={styles.approveBtn}>
-                            <FontAwesomeIcon icon={faCheckCircle} />
-                            Approve
-                          </button>
-                          <button className={styles.rejectBtn}>
-                            <FontAwesomeIcon icon={faTimesCircle} />
-                            Reject
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          ) : (
-            bookings.length === 0 ? (
-              <div className={styles.emptyState}>
-                <span className={styles.emptyIcon}>📋</span>
-                <h3>{emptyMessage.title}</h3>
-                <p>{emptyMessage.message}</p>
-              </div>
-            ) : (
-              <div className={styles.activityList}>
-                {bookings.map((booking) => (
-                  <div key={booking.id} className={styles.activityCard}>
-                    <div className={styles.activityHeader}>
-                      <div className={styles.activityTitle}>
-                        <h4>{booking.serviceTitle}</h4>
-                        <span className={`${styles.statusBadge} ${getStatusClass(booking.status)}`}>
-                          {getStatusIcon(booking.status)}
-                          {booking.status}
-                        </span>
-                      </div>
-                    </div>
-                    <div className={styles.activityDetails}>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Client:</span>
-                        <span className={styles.infoValue}>{booking.clientName}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Provider:</span>
-                        <span className={styles.infoValue}>{booking.providerName}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Date:</span>
-                        <span className={styles.infoValue}>{formatDate(booking.date)}</span>
-                      </div>
-                      <div className={styles.activityInfo}>
-                        <span className={styles.infoLabel}>Price:</span>
-                        <span className={styles.infoValue}>R{booking.price.toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <div className={styles.activityActions}>
-                      <button className={styles.viewBtn}>
-                        <FontAwesomeIcon icon={faEye} />
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          )}
-        </div>
+        {renderMainContent()}
       </DashboardLayout>
     </div>
   );

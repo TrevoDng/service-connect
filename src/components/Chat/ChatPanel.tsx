@@ -5,6 +5,7 @@ import type { ChatMessage, ChatThread } from '../../types';
 import { getMessagesByThread } from '../../data/demoChat';
 import { generateId } from '../../utils/referenceCode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useNavigate } from 'react-router-dom';
 import {
   faArrowLeft,
   faCheckCircle,
@@ -36,6 +37,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 }) => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const navigate = useNavigate();
 
   // Load messages when the thread changes
   useEffect(() => {
@@ -119,11 +121,21 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
         <div className={styles.headerInfo}>
           <div className={styles.headerName}>
-            <span>{other.displayName}</span>
-            {viewerRole === 'CLIENT' && other.providerVerified && (
-              <FontAwesomeIcon icon={faCheckCircle} className={styles.verified} />
-            )}
-          </div>
+  {viewerRole === 'CLIENT' ? (
+    <button
+      type="button"
+      className={styles.headerNameLink}
+      onClick={() => navigate(`/providers/${thread.providerId}`)}
+    >
+      {other.displayName}
+    </button>
+  ) : (
+    <span>{other.displayName}</span>
+  )}
+  {viewerRole === 'CLIENT' && other.providerVerified && (
+    <FontAwesomeIcon icon={faCheckCircle} className={styles.verified} />
+  )}
+</div>
 
           {viewerRole === 'CLIENT' && other.providerRating !== undefined && (
             <div className={styles.headerMeta}>
