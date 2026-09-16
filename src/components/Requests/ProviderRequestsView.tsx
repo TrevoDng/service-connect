@@ -50,6 +50,7 @@ export const ProviderRequestsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<Tab>('current');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTick, setRefreshTick] = useState(0);
+  const [reviewRefresh, setReviewRefresh] = useState(0);
 
   // ------------------------------------------
   // Load provider bookings (with overrides applied)
@@ -112,8 +113,8 @@ export const ProviderRequestsView: React.FC = () => {
   };
 
   const handleViewOutcomes = (booking: Booking) => {
-    console.log('[7i TODO] Open outcomes for', booking.id);
-  };
+  navigate(`/bookings/${booking.id}/outcomes`);
+};
 
   const handleViewWorkSession = (booking: Booking) => {
     console.log('[7x TODO] Open work session for', booking.id);
@@ -268,6 +269,10 @@ const handleHoldFirm = (booking: Booking) => {
 	      onProposeFinalPrice={handleProposeFinalPrice}
               onAcceptCounter={handleAcceptCounter}
               onHoldFirm={handleHoldFirm}
+	      onReviewSubmitted={() => {
+                 setRefreshTick((t) => t + 1);
+                 setReviewRefresh((t) => t + 1);
+              }}
               onOpen={handleOpen}
             />
           ))}

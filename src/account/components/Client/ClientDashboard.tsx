@@ -69,14 +69,16 @@ export const ClientDashboard: React.FC = () => {
   );
 
   const [expandedConfirmBookingId, setExpandedConfirmBookingId] = useState<string | null>(null);
+  const [reviewRefresh, setReviewRefresh] = useState(0);
 
   // ------------------------------------------
   // Bookings from the merged store
   // ------------------------------------------
   const allClientBookings = useMemo(
-    () => getBookingsForClient(DEMO_CLIENT_ID),
-    []
-  );
+  () => getBookingsForClient(DEMO_CLIENT_ID),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [reviewRefresh]
+);
 
   // ------------------------------------------
   // Sidebar counts
@@ -214,8 +216,8 @@ const handleDisputeFinalPrice = (
   
 
   const handleViewOutcomes = (booking: BookingModel) => {
-    console.log('[7i TODO] View outcomes for', booking.id);
-  };
+  navigate(`/bookings/${booking.id}/outcomes`);
+};
 
   const handleViewWorkSession = (booking: BookingModel) => {
     // For now — nothing else to do. In a later step we may scroll to the
@@ -440,6 +442,7 @@ const handleDisputeFinalPrice = (
                 onDisputeFinalPrice={handleDisputeFinalPrice}
                 onViewOutcomes={handleViewOutcomes}
                 onViewWorkSession={handleViewWorkSession}
+		onReviewSubmitted={() => setReviewRefresh((t) => t + 1)}
               />
             ))}
           </div>

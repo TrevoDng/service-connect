@@ -1,0 +1,624 @@
+/* src/pages/ConsultationOutcomes.module.scss */
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
+
+.page {
+  min-height: 70vh;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-2xl $spacing-xl;
+  transition: background $transition-base;
+  
+  @include mobile {
+    padding: $spacing-lg $spacing-md;
+  }
+}
+
+.container {
+  max-width: 900px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xl;
+  
+  @include mobile {
+    gap: $spacing-lg;
+  }
+}
+
+// ============================================
+// BACK
+// ============================================
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-xs $spacing-md;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border-radius: $border-radius-md;
+  align-self: flex-start;
+  transition: all $transition-fast;
+  
+  &:hover {
+    color: var(--text-primary, $text-primary);
+    background: var(--bg-card, #ffffff);
+  }
+  
+  svg {
+    transition: transform $transition-fast;
+  }
+  
+  &:hover svg {
+    transform: translateX(-4px);
+  }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.headerTop {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ref {
+  display: inline-block;
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  background: var(--bg-card, #ffffff);
+  padding: 2px 10px;
+  border-radius: $border-radius-sm;
+  border: 1px solid var(--border-color, $border-color);
+}
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: $spacing-xxs $spacing-md;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}
+
+.success { background: rgba(16, 185, 129, 0.15); color: #059669; }
+.info    { background: rgba(59, 130, 246, 0.15); color: #2563eb; }
+.warning { background: rgba(251, 191, 36, 0.15); color: #d97706; }
+.danger  { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+.muted   { background: var(--bg-card, #ffffff); color: var(--text-light, $text-light); border: 1px solid var(--border-color, $border-color); }
+
+:global(.dark-theme) {
+  .success { background: rgba(52, 211, 153, 0.25); color: #34d399; }
+  .info    { background: rgba(96, 165, 250, 0.25); color: #60a5fa; }
+  .warning { background: rgba(251, 191, 36, 0.25); color: #fbbf24; }
+  .danger  { background: rgba(248, 113, 113, 0.25); color: #f87171; }
+}
+
+.feeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  padding: $spacing-xxs $spacing-sm;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  
+  svg { font-size: 0.65rem; }
+}
+
+.feePaid {
+  background: rgba(16, 185, 129, 0.12);
+  color: #059669;
+}
+
+.feeUnpaid {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+}
+
+:global(.dark-theme) {
+  .feePaid { background: rgba(52, 211, 153, 0.2); color: #34d399; }
+  .feeUnpaid { background: rgba(251, 191, 36, 0.25); color: #fbbf24; }
+}
+
+.title {
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  transition: color $transition-base;
+  
+  @include mobile { font-size: $font-size-xl; }
+}
+
+.category {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0;
+}
+
+.updated {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  margin: 0;
+}
+
+// ============================================
+// SECTION
+// ============================================
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  padding-bottom: $spacing-xs;
+  border-bottom: 1px dashed var(--border-color, $border-color);
+  transition: all $transition-base;
+  
+  svg { color: $primary; }
+}
+
+// ============================================
+// PARTIES
+// ============================================
+
+.partyGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.partyCard {
+  display: flex;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  align-items: center;
+  transition: all $transition-base;
+}
+
+.partyIcon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-md;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-base;
+  flex-shrink: 0;
+}
+
+.partyRole {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.partyName {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+}
+
+// ============================================
+// PRICE TIMELINE
+// ============================================
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  position: relative;
+}
+
+.timelineItem {
+  display: flex;
+  gap: $spacing-md;
+  align-items: flex-start;
+}
+
+.timelineDot {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-full;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-bold;
+  flex-shrink: 0;
+  border: 2px solid var(--border-color, $border-color);
+  
+  svg { font-size: $font-size-xs; }
+}
+
+.dot_suggested {
+  background: rgba(102, 126, 234, 0.12);
+  color: $primary;
+  border-color: rgba(102, 126, 234, 0.3);
+}
+
+.dot_consultation {
+  background: rgba(59, 130, 246, 0.12);
+  color: #2563eb;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.dot_final_proposed {
+  background: rgba(251, 191, 36, 0.15);
+  color: #d97706;
+  border-color: rgba(251, 191, 36, 0.4);
+}
+
+.dot_final_agreed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #059669;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.timelineBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-bottom: $spacing-sm;
+  border-bottom: 1px dashed var(--border-color, $border-color);
+  
+  .timelineItem:last-child & {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+}
+
+.timelineStage {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+}
+
+.timelineAmount {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $primary;
+}
+
+.timelineMeta {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  display: flex;
+  gap: $spacing-xs;
+  flex-wrap: wrap;
+}
+
+// ============================================
+// CONSULTATION SUMMARY
+// ============================================
+
+.summaryGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: $spacing-sm;
+  
+  @include mobile {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.summaryItem {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  transition: all $transition-base;
+}
+
+.summaryLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.summaryValue {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+}
+
+.yes { color: #059669; display: inline-flex; align-items: center; gap: 4px; }
+.no  { color: var(--text-light, $text-light); display: inline-flex; align-items: center; gap: 4px; }
+
+// ============================================
+// NOTES + PHOTOS
+// ============================================
+
+.notesBlock,
+.photosBlock {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.notesTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  
+  svg { color: $primary; font-size: $font-size-xs; }
+}
+
+.notes {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  line-height: $line-height-relaxed;
+  margin: 0;
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-primary, #f8f9fa);
+  border-left: 3px solid $primary;
+  border-radius: $border-radius-sm;
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: $spacing-sm;
+  
+  @include mobile {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.photoTile {
+  margin: 0;
+  aspect-ratio: 4 / 3;
+  border-radius: $border-radius-md;
+  overflow: hidden;
+  border: 1px solid var(--border-color, $border-color);
+  background: var(--bg-primary, #f8f9fa);
+  transition: all $transition-base;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  
+  &:hover {
+    border-color: $primary;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+  }
+}
+
+// ============================================
+// FINAL CARD
+// ============================================
+
+.finalCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xl;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08), rgba(5, 150, 105, 0.05));
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: $border-radius-lg;
+  text-align: center;
+}
+
+:global(.dark-theme) {
+  .finalCard {
+    background: linear-gradient(135deg, rgba(52, 211, 153, 0.12), rgba(16, 185, 129, 0.06));
+    border-color: rgba(52, 211, 153, 0.35);
+  }
+}
+
+.finalLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: #059669;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.finalAmount {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-bold;
+  color: #059669;
+  line-height: 1;
+  
+  @include mobile { font-size: $font-size-3xl; }
+}
+
+:global(.dark-theme) {
+  .finalLabel, .finalAmount { color: #34d399; }
+}
+
+.finalHint {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xxs;
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  margin: $spacing-xs 0 0;
+}
+
+// ============================================
+// WORK SESSION CARD
+// ============================================
+
+.workSessionCard {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  flex-wrap: wrap;
+  
+  @include mobile {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.workSessionLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  
+  strong {
+    display: block;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+  }
+  
+  span {
+    display: block;
+    font-size: $font-size-xs;
+    color: var(--text-secondary, $text-secondary);
+  }
+}
+
+.workSessionIcon {
+  font-size: $font-size-xl;
+  color: $primary;
+}
+
+.workSessionBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  
+  @include mobile { width: 100%; justify-content: center; }
+}
+
+// ============================================
+// CLOSED CARD
+// ============================================
+
+.closedCard {
+  padding: $spacing-lg;
+  background: rgba(239, 68, 68, 0.06);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: $border-radius-lg;
+  
+  @include mobile { padding: $spacing-md; }
+}
+
+:global(.dark-theme) {
+  .closedCard {
+    background: rgba(248, 113, 113, 0.1);
+    border-color: rgba(248, 113, 113, 0.35);
+  }
+}
+
+.closedTitle {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: #dc2626;
+  margin: 0 0 $spacing-xs;
+  
+  @include mobile { font-size: $font-size-sm; }
+}
+
+:global(.dark-theme) {
+  .closedTitle { color: #f87171; }
+}
+
+.closedReason {
+  font-size: $font-size-sm;
+  color: var(--text-secondary, $text-secondary);
+  line-height: $line-height-relaxed;
+  margin: 0;
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-md;
+}

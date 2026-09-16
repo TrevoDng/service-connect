@@ -24,6 +24,7 @@ import { ClientDashboard } from './account/components/Client/ClientDashboard';
 import ConsultationUpload from './pages/ConsultationUpload';
 import DevLogin from './pages/DevLogin';
 import ConsultationPayment from './pages/ConsultationPayment';
+import ConsultationOutcomes from './pages/ConsultationOutcomes';
 import { library } from '@fortawesome/fontawesome-svg-core';
 import { fas } from '@fortawesome/free-solid-svg-icons';
 
@@ -78,6 +79,7 @@ const AppContent: React.FC = () => {
 
           {/* Booking flow */}
           <Route path="/bookings/:id/consultation" element={<ConsultationPayment />} />
+	  <Route path="/bookings/:id/outcomes" element={<ConsultationOutcomes />} />
 
           {/* Protected Routes */}
           <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />

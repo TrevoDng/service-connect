@@ -34,3 +34,9 @@ export const canRespondToPrice = (role: ViewerRole): boolean =>
   role === 'CLIENT';
 export const canSeeConsultationFeeStatus = (role: ViewerRole): boolean =>
   role === 'CLIENT';
+
+// Reviews
+export * from './review.types';
+
+// Disputes
+export * from './dispute.types';
