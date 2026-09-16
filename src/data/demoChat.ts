@@ -330,3 +330,15 @@ export const getThreadsForUser = (
   demoChatThreads.filter((t) =>
     role === 'CLIENT' ? t.clientId === userId : t.providerId === userId
   );
+
+// ============================================
+// SUPPORT / OBSERVER HELPERS (Step 11)
+// ============================================
+
+/** All threads, newest activity first. Used by Employee/Admin observer mode. */
+export const getAllThreads = (): ChatThread[] =>
+  [...demoChatThreads].sort(
+    (a, b) =>
+      new Date(b.lastMessageAt).getTime() -
+      new Date(a.lastMessageAt).getTime()
+  );

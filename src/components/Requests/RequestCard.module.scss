@@ -787,3 +787,18 @@
     color: #34d399;
   }
 }
+
+// ============================================
+// PROVIDER NAME LINK (Step 10)
+// ============================================
+
+.metaLink {
+  color: $primary;
+  font-weight: $font-weight-medium;
+  text-decoration: none;
+  transition: color $transition-fast;
+  
+  &:hover {
+    text-decoration: underline;
+  }
+}

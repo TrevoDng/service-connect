@@ -17,12 +17,14 @@ import {
   faUserPlus,
   faChartLine,
   faCog,
+  faComments,
   faGavel,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
 import { DisputesView } from '../../../components/Disputes';
 import { getOpenDisputeCount } from '../../../utils/allDisputes';
+import { MessagesView } from '../../../components/Chat';
 import styles from './EmployeeDashboard.module.scss';
 
 // ============================================
@@ -58,7 +60,7 @@ interface Booking {
   price: number;
 }
 
-type EmployeeTab = 'clients' | 'providers' | 'bookings' | 'disputes';
+type EmployeeTab = 'clients' | 'providers' | 'bookings' | 'disputes' | 'messages';
 
 // ============================================
 // DEMO DATA
@@ -235,6 +237,11 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
       icon: faGavel,
       badge: getOpenDisputeCount() || undefined,
     },
+    {
+  key: 'messages',
+  label: 'Messages',
+  icon: faComments,
+},
   ];
 
   // ============================================
@@ -245,6 +252,14 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
   // and avoids cramming disputes into the tab-content conditional chain.
 
   const renderMainContent = () => {
+    if (activeTab === 'messages') {
+      return (
+         <div className={styles.mainContent}>
+           <MessagesView viewerRole="CLIENT" observerMode />
+         </div>
+       );
+      }
+
     if (activeTab === 'disputes') {
       return (
         <div className={styles.mainContent}>

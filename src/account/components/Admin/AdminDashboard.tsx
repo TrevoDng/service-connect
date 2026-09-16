@@ -14,7 +14,9 @@ import {
   faTimesCircle,
   faEye,
   faGavel,
+  faComments,
 } from '@fortawesome/free-solid-svg-icons';
+import { MessagesView } from '../../../components/Chat';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
 import { DisputesView } from '../../../components/Disputes';
@@ -54,7 +56,7 @@ interface Employee {
   lastLogin: string;
 }
 
-type AdminTab = 'employees' | 'providers' | 'clients' | 'disputes';
+type AdminTab = 'employees' | 'providers' | 'clients' | 'disputes' | 'messages';
 
 // ============================================
 // DEMO DATA
@@ -226,6 +228,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
       label: 'Disputes',
       icon: faGavel,
       badge: getOpenDisputeCount() || undefined,
+    },
+    {
+      key: 'messages',
+      label: 'Messages',
+      icon: faComments,
     },
   ];
 

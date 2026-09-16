@@ -155,3 +155,27 @@
     height: 100%;
   }
 }
+
+// ============================================
+// OBSERVER BANNER (Step 11)
+// ============================================
+
+.observerBanner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-md;
+  background: rgba(102, 126, 234, 0.08);
+  border-bottom: 1px solid var(--border-color, $border-color);
+  color: $primary;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  
+  svg { font-size: $font-size-sm; }
+}
+
+:global(.dark-theme) {
+  .observerBanner {
+    background: rgba(102, 126, 234, 0.15);
+  }
+}

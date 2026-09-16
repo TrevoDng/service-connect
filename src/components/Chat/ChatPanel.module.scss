@@ -241,3 +241,44 @@
     text-decoration: underline;
   }
 }
+
+// ============================================
+// PROVIDER NAME LINK (Step 10)
+// ============================================
+
+.headerNameLink {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+  text-decoration: none;
+  transition: color $transition-fast;
+  
+  &:hover {
+    color: $primary;
+    text-decoration: underline;
+  }
+}
+
+// ============================================
+// READ-ONLY BANNER (Step 11)
+// ============================================
+
+.readOnlyBanner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-md;
+  background: var(--bg-primary, #f8f9fa);
+  border-top: 1px solid var(--border-color, $border-color);
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  
+  svg { color: $primary; }
+}

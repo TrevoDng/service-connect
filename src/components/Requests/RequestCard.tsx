@@ -1,6 +1,7 @@
 // src/components/Requests/RequestCard.tsx
 
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import type {
   Booking,
   BookingStatus,
@@ -591,8 +592,17 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         <div className={styles.metaGrid}>
           <div className={styles.meta}>
             <span className={styles.metaLabel}>{counterpartLabel}:</span>
-            <span className={styles.metaValue}>{counterpartName}</span>
-          </div>
+               {viewerRole === 'CLIENT' ? (
+             <Link
+               to={`/providers/${request.providerId}`}
+                className={styles.metaLink}
+                 >
+                 {counterpartName}
+                  </Link>
+                  ) : (
+                 <span className={styles.metaValue}>{counterpartName}</span>
+                  )}
+                 </div>
 
           <div className={styles.meta}>
             <span className={styles.metaLabel}>Requested for:</span>

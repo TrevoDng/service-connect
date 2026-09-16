@@ -7,6 +7,7 @@ import { generateId } from '../../utils/referenceCode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 import {
+  faEye,
   faArrowLeft,
   faCheckCircle,
   faComments,
@@ -16,15 +17,11 @@ import { ChatComposer } from './ChatComposer';
 import styles from './ChatPanel.module.scss';
 
 export interface ChatPanelProps {
-  /** The thread being viewed. `null` shows the empty state. */
   thread: ChatThread | null;
-  /** Which side the current viewer is on */
   viewerRole: 'CLIENT' | 'PROVIDER';
-  /** Current viewer's user id (used to decide own vs other bubbles) */
   viewerUserId: string;
-  /** Mobile-only: fired by the back button to return to the list */
+  observerMode?: boolean;
   onBack?: () => void;
-  /** Optional: fired when the client clicks "Book This Provider" */
   onBookProvider?: (providerId: string) => void;
 }
 
@@ -32,6 +29,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   thread,
   viewerRole,
   viewerUserId,
+  observerMode = false,
   onBack,
   onBookProvider,
 }) => {
@@ -58,6 +56,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   }, [messages]);
 
   const handleSend = (text: string) => {
+    if (observerMode) return;
     if (!thread) return;
     const newMessage: ChatMessage = {
       id: generateId(),
@@ -188,8 +187,15 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
         )}
       </div>
 
-      {/* Composer */}
-      <ChatComposer onSend={handleSend} />
+      {/* Composer (hidden in observer mode) */}
+{observerMode ? (
+  <div className={styles.readOnlyBanner}>
+    <FontAwesomeIcon icon={faEye} />
+    <span>Read-only — support view</span>
+  </div>
+) : (
+  <ChatComposer onSend={handleSend} />
+)}
     </div>
   );
 };
