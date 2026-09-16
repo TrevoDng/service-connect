@@ -51,7 +51,7 @@ interface Employee {
   lastLogin: string;
 }
 
-type AdminTab = 'employees' | 'providers' | 'clients';
+type AdminTab = 'employees' | 'providers' | 'clients' | 'disputes';
 
 // ============================================
 // DEMO DATA
@@ -287,7 +287,11 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
                 <h3>No employees found</h3>
                 <p>There are no employees registered yet.</p>
               </div>
-            ) : (
+            ) : activeTab === 'disputes' ? (
+  <div className={styles.mainContent}>
+    <DisputesView />
+  </div>
+) : (
               <div className={styles.activityList}>
                 {employees.map((employee) => (
                   <div key={employee.id} className={styles.activityCard}>

@@ -20,6 +20,9 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
+import { faGavel } from '@fortawesome/free-solid-svg-icons';
+import { DisputesView } from '../../../components/Disputes';
+import { getOpenDisputeCount } from '../../../utils/allDisputes';
 import styles from './EmployeeDashboard.module.scss';
 
 // ============================================
@@ -55,7 +58,7 @@ interface Booking {
   price: number;
 }
 
-type EmployeeTab = 'clients' | 'providers' | 'bookings';
+type EmployeeTab = 'clients' | 'providers' | 'bookings' | 'disputes';
 
 // ============================================
 // DEMO DATA
@@ -199,6 +202,8 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
         return 'Service Provider Management';
       case 'bookings':
         return 'Booking Overview';
+      case 'disputes':
+        return 'Disputes';
       default:
         return 'Dashboard';
     }
@@ -226,6 +231,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
     { key: 'clients', label: 'Clients', icon: faUsers, badge: clients.length },
     { key: 'providers', label: 'Service Providers', icon: faUserTie, badge: providers.length },
     { key: 'bookings', label: 'Bookings', icon: faClipboardList, badge: bookings.length },
+    {
+  key: 'disputes',
+  label: 'Disputes',
+  icon: faGavel,
+  badge: getOpenDisputeCount() || undefined,
+},
   ];
 
   // ------------------------------------------
@@ -324,7 +335,11 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
                   Add New Client
                 </button>
               </div>
-            ) : (
+            ) :: activeTab === 'disputes' ? (
+                  <div className={styles.mainContent}>
+                    <DisputesView />
+                  </div>
+                ) : (
               <div className={styles.activityList}>
                 {clients.map((client) => (
                   <div key={client.id} className={styles.activityCard}>
