@@ -243,6 +243,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   // DisputesView. Otherwise we render the stats grid + tab content as before.
 
   const renderMainContent = () => {
+    if (activeTab === 'messages') {
+       return (
+         <div className={styles.mainContent}>
+        <MessagesView viewerRole="CLIENT" observerMode />
+         </div>
+           );
+    }
+    
     if (activeTab === 'disputes') {
       return (
         <div className={styles.mainContent}>
