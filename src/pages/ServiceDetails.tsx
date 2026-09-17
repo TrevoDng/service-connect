@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
+import { resolveDemoUserId } from '../utils/demoIds';
 import { serviceService } from '../services/service.service';
 import type { Service } from '../types/service.types';
 import { BookingRequestForm } from '../components/Requests';
@@ -160,18 +161,18 @@ export const ServiceDetails: React.FC = () => {
                 </div>
               )}
 
-              {isAuthenticated && isClient && (
-                <BookingRequestForm
-                  serviceId={service.id}
-                  serviceTitle={service.title}
-                  serviceCategory={service.category}
-                  providerId={service.providerId || 'p-001'}
-                  providerDisplayName={service.provider_name || 'Provider'}
-                  clientId={user.id}
-                  clientDisplayName={clientDisplayName}
-                  onSuccess={() => navigate('/client/dashboard')}
-                />
-              )}
+        	{isAuthenticated && isClient && (
+		   <BookingRequestForm
+    			serviceId={service.id}
+    			serviceTitle={service.title}
+    			serviceCategory={service.category}
+    			providerId={service.providerId || 'p-001'}
+    			providerDisplayName={service.provider_name || 'Provider'}
+    			clientId={user ? resolveDemoUserId(user) : 'c-001'}
+    			clientDisplayName={clientDisplayName}
+    			onSuccess={() => navigate('/client/dashboard')}
+                   />
+                 )}
             </aside>
           </div>
         </div>
