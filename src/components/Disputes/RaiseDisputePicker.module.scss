@@ -1,0 +1,221 @@
+/* src/components/Disputes/RaiseDisputePicker.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+// ============================================
+// BACK LINK
+// ============================================
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xxs $spacing-sm;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border-radius: $border-radius-sm;
+  align-self: flex-start;
+  transition: all $transition-fast;
+  
+  &:hover {
+    color: $primary;
+    background: var(--bg-primary, #f8f9fa);
+  }
+  
+  svg { font-size: $font-size-xs; }
+}
+
+// ============================================
+// HEADER
+// ============================================
+
+.header {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: flex-start;
+}
+
+.headerIcon {
+  color: $error;
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.title {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 2px;
+}
+
+.subtitle {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  line-height: $line-height-normal;
+}
+
+// ============================================
+// LIST
+// ============================================
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  padding: $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: $error;
+    transform: translateX(4px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+    
+    .rowChevron {
+      color: $error;
+    }
+  }
+}
+
+.rowBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTop {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-bottom: 4px;
+}
+
+.rowRef {
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  background: var(--bg-primary, #f8f9fa);
+  padding: 1px 6px;
+  border-radius: $border-radius-sm;
+}
+
+.rowStatus {
+  font-size: 0.65rem;
+  font-weight: $font-weight-semibold;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: $primary;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 1px 8px;
+  border-radius: $border-radius-full;
+}
+
+.rowTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0 0 2px;
+}
+
+.rowMeta {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-medium;
+  }
+}
+
+.rowChevron {
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  flex-shrink: 0;
+  transition: color $transition-fast;
+}
+
+// ============================================
+// EMPTY
+// ============================================
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: $spacing-2xl $spacing-lg;
+  background: var(--bg-primary, #f8f9fa);
+  border: 2px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  
+  h4 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin: $spacing-md 0 $spacing-xs;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    margin: 0 0 $spacing-lg;
+    max-width: 380px;
+    line-height: $line-height-normal;
+  }
+}
+
+.emptyIcon {
+  font-size: $font-size-3xl;
+  color: var(--text-light, $text-light);
+  opacity: 0.6;
+}
+
+// ============================================
+// ACTIONS
+// ============================================
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: $spacing-sm;
+}
+
+.cancelBtn {
+  padding: $spacing-sm $spacing-lg;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-full;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: var(--text-primary, $text-primary);
+    color: var(--text-primary, $text-primary);
+  }
+}

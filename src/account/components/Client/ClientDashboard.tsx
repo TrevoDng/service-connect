@@ -25,6 +25,9 @@ import { RequestCard } from '../../../components/Requests';
 import { getUnreadCount } from '../../../data/demoNotifications';
 import { generateId } from '../../../utils/referenceCode';
 import { setBookingOverride } from '../../../utils/localBookingOverrides';
+import { faGavel } from '@fortawesome/free-solid-svg-icons';
+import { DisputesView } from '../../../components/Disputes';
+import { getOpenDisputeCountForUser } from '../../../utils/allDisputes';
 import styles from './ClientDashboard.module.scss';
 
 // ============================================
@@ -43,7 +46,7 @@ const DEMO_CLIENT_ID = 'c-001';
 // TYPES
 // ============================================
 
-type ClientTab = 'requests' | 'history' | 'messages';
+type ClientTab = 'requests' | 'history' | 'messages' | 'support';
 
 // ============================================
 // COMPONENT
@@ -368,6 +371,12 @@ const handleDisputeFinalPrice = (
       badge: unreadMessages > 0 ? unreadMessages : undefined,
     },
     { key: 'new', label: 'Request New Service', icon: faPlusCircle },
+    {
+  key: 'support',
+  label: 'Support',
+  icon: faGavel,
+  badge: getOpenDisputeCountForUser('c-001') || undefined,
+},
   ];
 
   // ------------------------------------------
@@ -381,6 +390,14 @@ const handleDisputeFinalPrice = (
         </div>
       );
     }
+
+    if (activeTab === 'support') {
+  return (
+    <div className={styles.mainContent}>
+      <DisputesView viewerRole="CLIENT" />
+    </div>
+  );
+}
 
     const isRequests = activeTab === 'requests';
     const list = isRequests ? filteredCurrent : filteredClosed;

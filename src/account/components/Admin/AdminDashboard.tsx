@@ -252,12 +252,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
     }
     
     if (activeTab === 'disputes') {
-      return (
-        <div className={styles.mainContent}>
-          <DisputesView />
-        </div>
-      );
-    }
+  return (
+    <div className={styles.mainContent}>
+      <DisputesView viewerRole="ADMIN" />
+    </div>
+  );
+}
 
     return (
       <div className={styles.mainContent}>

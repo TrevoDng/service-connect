@@ -184,6 +184,102 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
             })}
           </div>
         )}
+            </section>
+
+      {/* ============================================
+          CHAT-FIRST SECTION (Step 12)
+          ============================================ */}
+      <section className={styles.chatFirstSection}>
+        <div className={styles.chatFirstGrid}>
+          {/* Left column — copy */}
+          <div className={styles.chatFirstCopy}>
+            <span className={styles.chatFirstEyebrow}>
+              💬 Chat before you commit
+            </span>
+            <h2 className={styles.chatFirstTitle}>
+              Talk to providers before you book
+            </h2>
+            <p className={styles.chatFirstSubtitle}>
+              Ask questions, share photos, agree on scope — all inside
+              ServiceConnect. Your contact details stay private until you
+              choose to share them.
+            </p>
+
+            <ul className={styles.chatFirstFeatures}>
+              <li className={styles.chatFirstFeature}>
+                <span className={styles.featureIcon}>💬</span>
+                <div>
+                  <strong>Chat first</strong>
+                  <p>Message multiple providers, compare, then decide.</p>
+                </div>
+              </li>
+              <li className={styles.chatFirstFeature}>
+                <span className={styles.featureIcon}>📸</span>
+                <div>
+                  <strong>Share photos</strong>
+                  <p>Show the job so quotes are accurate from day one.</p>
+                </div>
+              </li>
+              <li className={styles.chatFirstFeature}>
+                <span className={styles.featureIcon}>🛡️</span>
+                <div>
+                  <strong>Stay private</strong>
+                  <p>Your address and phone stay hidden until you choose.</p>
+                </div>
+              </li>
+            </ul>
+
+            <button
+              type="button"
+              className={styles.chatFirstCta}
+              onClick={() => navigate(getUrl('/services', '')[0])}
+            >
+              Browse providers →
+            </button>
+          </div>
+
+          {/* Right column — chat mock */}
+          <div className={styles.chatFirstMock}>
+            <div className={styles.mockCard}>
+              {/* Mock header */}
+              <div className={styles.mockHeader}>
+                <div className={styles.mockAvatar}>TB</div>
+                <div className={styles.mockHeaderInfo}>
+                  <span className={styles.mockName}>Tom Brown</span>
+                  <span className={styles.mockMeta}>⭐ 4.8 · 46 jobs</span>
+                </div>
+              </div>
+
+              {/* Mock messages */}
+              <div className={styles.mockBody}>
+                <div className={styles.mockBubbleOther}>
+                  <span>Hi! My kitchen sink is leaking. Can you help this week?</span>
+                </div>
+                <div className={styles.mockBubbleOther}>
+                  <div className={styles.mockImageRow}>
+                    <span className={styles.mockImage}>📷</span>
+                    <span className={styles.mockImage}>📷</span>
+                  </div>
+                </div>
+                <div className={styles.mockBubbleOwn}>
+                  <span>Looks like a worn seal — around R350, confirmed on-site.</span>
+                </div>
+                <div className={styles.mockBubbleOwn}>
+                  <span>Great. Tuesday 9am works for me.</span>
+                </div>
+              </div>
+
+              {/* Mock footer */}
+              <div className={styles.mockFooter}>
+                <span>Book this provider</span>
+                <span className={styles.mockBookArrow}>→</span>
+              </div>
+            </div>
+
+            {/* Decorative glow */}
+            <div className={styles.mockGlow} aria-hidden="true" />
+          </div>
+        </div>
       </section>
     </div>
   );

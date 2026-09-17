@@ -248,28 +248,41 @@
       font-size: $font-size-sm;
     }
   }
-  
-  .logoutBtn {
-    padding: $spacing-xs $spacing-lg;
-    border-radius: $border-radius-full;
-    font-weight: $font-weight-semibold;
-    background: transparent;
-    color: var(--navbar-text, #1a1a2e);
-    border: 2px solid var(--border-color, #e9ecef);
-    cursor: pointer;
-    transition: all $transition-fast;
-    white-space: nowrap;
-    
-    &:hover {
-      border-color: $error;
-      color: $error;
-      background: rgba(239, 71, 111, 0.05);
-    }
-    
-    @include mobile {
-      padding: $spacing-xs $spacing-md;
-      font-size: $font-size-sm;
-    }
+}
+
+// ============================================
+// LOGOUT BUTTON (top-level, used when logged in)
+// ============================================
+
+.logoutBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xs $spacing-lg;
+  border-radius: $border-radius-full;
+  font-family: inherit;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  background: transparent;
+  color: var(--navbar-text, #1a1a2e);
+  border: 2px solid var(--border-color, #e9ecef);
+  cursor: pointer;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: $error;
+    color: $error;
+    background: rgba(239, 71, 111, 0.05);
+  }
+
+  &:active {
+    transform: translateY(1px);
+  }
+
+  @include mobile {
+    padding: $spacing-xs $spacing-xs;
+    font-size: $font-size-sm;
   }
 }
 

@@ -29,6 +29,9 @@ import { MessagesView } from '../Chat';
 import { WorkSessionPanel } from '../WorkSession';
 import { ProviderRequestsView } from '../Requests';
 import { getUnreadCount } from '../../data/demoNotifications';
+import { faGavel } from '@fortawesome/free-solid-svg-icons';
+import { DisputesView } from '../Disputes';
+import { getOpenDisputeCountForUser } from '../../utils/allDisputes';
 import { getBookingsForProvider, isCurrentRequest } from '../../utils/allBookings';
 import styles from './ProviderDashboard.module.scss';
 
@@ -48,7 +51,7 @@ const DEMO_PROVIDER_ID = 'p-001';
 // TYPES
 // ============================================
 
-type ProviderView = 'requests' | 'my-services' | 'work-log' | 'messages';
+type ProviderView = 'requests' | 'my-services' | 'work-log' | 'messages' | 'support';
 type ServicesTab = 'list' | 'add';
 
 // ============================================
@@ -273,6 +276,12 @@ export const ProviderDashboard: React.FC = () => {
       icon: faComments,
       badge: unreadMessages > 0 ? unreadMessages : undefined,
     },
+    {
+  key: 'support',
+  label: 'Support',
+  icon: faGavel,
+  badge: getOpenDisputeCountForUser('p-001') || undefined,
+},
   ];
 
   // ------------------------------------------
@@ -449,6 +458,12 @@ export const ProviderDashboard: React.FC = () => {
     </div>
   );
 
+  const renderSupport = () => (
+  <div className={styles.mainContent}>
+    <DisputesView viewerRole="PROVIDER" />
+  </div>
+);
+
   // ------------------------------------------
   // Compose
   // ------------------------------------------
@@ -484,6 +499,8 @@ export const ProviderDashboard: React.FC = () => {
         {activeView === 'my-services' && renderMyServices()}
         {activeView === 'work-log' && renderWorkLog()}
         {activeView === 'messages' && renderMessages()}
+	{activeView === 'support' && renderSupport()}
+
       </DashboardLayout>
     </div>
   );

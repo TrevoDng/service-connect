@@ -287,3 +287,45 @@
   font-size: $font-size-4xl;
   opacity: 0.7;
 }
+
+// ============================================
+// HEADER ACTIONS + NEW BUTTON (Step 12.5)
+// ============================================
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  
+  @include mobile {
+    width: 100%;
+    flex-direction: column-reverse;
+    align-items: stretch;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.newBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}

@@ -54,6 +54,7 @@ export interface DisputeDetailPanelProps {
   dispute: Dispute;
   onBack: () => void;
   onChanged: () => void;
+  canResolve?: boolean;
 }
 
 // ============================================
@@ -64,6 +65,7 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
   dispute,
   onBack,
   onChanged,
+  canResolve = true,
 }) => {
   const { user } = useAuth();
 
@@ -308,7 +310,8 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
             />
 
             <div className={styles.composerRow}>
-              <label className={styles.internalToggle}>
+	    { canResolve && ( 
+	    <label className={styles.internalToggle}>
                 <input
                   type="checkbox"
                   checked={internalNote}
@@ -317,6 +320,7 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
                 <FontAwesomeIcon icon={internalNote ? faLock : faUnlock} />
                 <span>Internal note</span>
               </label>
+	)}
 
               <button
                 type="button"
@@ -333,7 +337,7 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
       </section>
 
       {/* Resolution */}
-      {isOpen && !showResolve && (
+      {isOpen && canResolve  && !showResolve && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Resolution</h2>
           <div className={styles.resolveActions}>
@@ -357,7 +361,7 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
       )}
 
       {/* Resolution form */}
-      {isOpen && showResolve && (
+      {isOpen && canResolve && showResolve && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Resolve dispute</h2>
 

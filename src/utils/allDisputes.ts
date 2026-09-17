@@ -41,3 +41,23 @@ export const getDisputesForUser = (userId: string): Dispute[] =>
 
 /** Convenience: how many open disputes total (for sidebar badge) */
 export const getOpenDisputeCount = (): number => getOpenDisputes().length;
+
+// ============================================
+// ROLE-AWARE HELPERS (Step 12.5)
+// ============================================
+
+/** Disputes a specific user is involved in — either raised or against */
+export const getDisputesInvolvingUser = (userId: string): Dispute[] =>
+  getAllDisputes().filter(
+    (d) => d.raisedByUserId === userId || d.againstUserId === userId
+  );
+
+/** Open disputes a specific user is involved in */
+export const getOpenDisputesForUser = (userId: string): Dispute[] =>
+  getDisputesInvolvingUser(userId).filter(
+    (d) => d.status === 'open' || d.status === 'awaiting_info'
+  );
+
+/** Count of open disputes for a user (for badge) */
+export const getOpenDisputeCountForUser = (userId: string): number =>
+  getOpenDisputesForUser(userId).length;

@@ -502,3 +502,306 @@
     gap: $spacing-sm;
   }
 }
+
+// ============================================
+// CHAT-FIRST SECTION (Step 12)
+// ============================================
+
+.chatFirstSection {
+  padding: $spacing-3xl $spacing-xl;
+  background: var(--bg-card, #ffffff);
+  border-top: 1px solid var(--border-color, $border-color);
+  border-bottom: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+  
+  @include mobile {
+    padding: $spacing-2xl $spacing-md;
+  }
+}
+
+.chatFirstGrid {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-3xl;
+  align-items: center;
+  
+  @include tablet {
+    grid-template-columns: 1fr;
+    gap: $spacing-2xl;
+  }
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-xl;
+  }
+}
+
+// ============================================
+// LEFT COLUMN — COPY
+// ============================================
+
+.chatFirstCopy {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.chatFirstEyebrow {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: $spacing-xxs $spacing-md;
+  background: rgba(102, 126, 234, 0.1);
+  color: $primary;
+  border-radius: $border-radius-full;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  letter-spacing: 0.3px;
+}
+
+.chatFirstTitle {
+  font-size: $font-size-3xl;
+  font-weight: $font-weight-bold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  
+  @include mobile {
+    font-size: $font-size-2xl;
+  }
+}
+
+.chatFirstSubtitle {
+  font-size: $font-size-base;
+  color: var(--text-secondary, $text-secondary);
+  line-height: $line-height-relaxed;
+  margin: 0;
+  
+  @include mobile {
+    font-size: $font-size-sm;
+  }
+}
+
+.chatFirstFeatures {
+  list-style: none;
+  padding: 0;
+  margin: $spacing-sm 0;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.chatFirstFeature {
+  display: flex;
+  gap: $spacing-md;
+  align-items: flex-start;
+  
+  strong {
+    display: block;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: 2px;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    margin: 0;
+    line-height: $line-height-normal;
+  }
+}
+
+.featureIcon {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-lg;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  font-size: $font-size-lg;
+  flex-shrink: 0;
+}
+
+.chatFirstCta {
+  align-self: flex-start;
+  padding: $spacing-md $spacing-2xl;
+  border: none;
+  border-radius: $border-radius-full;
+  background: $primary-gradient;
+  color: $text-white;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  margin-top: $spacing-sm;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+  }
+  
+  @include mobile {
+    width: 100%;
+    align-self: stretch;
+  }
+}
+
+// ============================================
+// RIGHT COLUMN — MOCK CHAT
+// ============================================
+
+.chatFirstMock {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.mockCard {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-xl;
+  box-shadow: var(--shadow-xl, $shadow-xl);
+  overflow: hidden;
+  z-index: 1;
+}
+
+// --- Header ---
+.mockHeader {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border-bottom: 1px solid var(--border-color, $border-color);
+}
+
+.mockAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: $border-radius-full;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: $text-white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+}
+
+.mockHeaderInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mockName {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+}
+
+.mockMeta {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+}
+
+// --- Body ---
+.mockBody {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  padding: $spacing-md;
+  min-height: 240px;
+}
+
+.mockBubbleOther,
+.mockBubbleOwn {
+  max-width: 78%;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-lg;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+  
+  span {
+    display: block;
+  }
+}
+
+.mockBubbleOther {
+  align-self: flex-start;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, $text-primary);
+  border: 1px solid var(--border-color, $border-color);
+  border-bottom-left-radius: $border-radius-sm;
+}
+
+.mockBubbleOwn {
+  align-self: flex-end;
+  background: $primary-gradient;
+  color: $text-white;
+  border-bottom-right-radius: $border-radius-sm;
+}
+
+.mockImageRow {
+  display: flex;
+  gap: $spacing-xxs;
+}
+
+.mockImage {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-primary, #f8f9fa);
+  border-radius: $border-radius-sm;
+  border: 1px solid var(--border-color, $border-color);
+  font-size: $font-size-sm;
+}
+
+// --- Footer ---
+.mockFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border-top: 1px solid var(--border-color, $border-color);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $primary;
+}
+
+.mockBookArrow {
+  transition: transform $transition-base;
+  
+  .mockFooter:hover & {
+    transform: translateX(4px);
+  }
+}
+
+// --- Decorative glow behind the card ---
+.mockGlow {
+  position: absolute;
+  inset: 10% -10% -10% 10%;
+  background: $primary-gradient;
+  filter: blur(60px);
+  opacity: 0.25;
+  z-index: 0;
+  border-radius: 50%;
+}
+
+:global(.dark-theme) {
+  .mockGlow {
+    opacity: 0.15;
+  }
+}

@@ -10,6 +10,7 @@ import type {
   Dispute,
   RaiseDisputeFormData,
 } from '../../types';
+import { WizardStep } from './WizardStep';
 import {
   canAcceptRequest,
   canPayConsultation,
@@ -133,6 +134,16 @@ const canViewWorkSession = (status: BookingStatus): boolean =>
 const shouldShowConsultation = (status: BookingStatus): boolean =>
   status !== 'requested';
 
+// Statuses where the wizard view is appropriate (active journey)
+const isActiveStatus = (status: BookingStatus): boolean =>
+  status === 'requested' ||
+  status === 'accepted' ||
+  status === 'consultation_paid' ||
+  status === 'evaluated' ||
+  status === 'price_proposed' ||
+  status === 'price_agreed' ||
+  status === 'in_progress';
+
 const defaultConsultationExpanded = (): boolean => {
   if (typeof window === 'undefined') return true;
   return window.innerWidth > 768;
@@ -179,6 +190,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   // Dispute state (Step 9)
   const [showRaiseDisputePanel, setShowRaiseDisputePanel] = useState(false);
+  // Wizard vs detailed view
+const [showFullDetails, setShowFullDetails] = useState(false);
 
   // ------------------------------------------
   // DERIVED DATA
@@ -293,6 +306,54 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     setShowRaiseDisputePanel(false);
     if (onDisputeChanged) onDisputeChanged();
   };
+
+  // ------------------------------------------
+// WIZARD ACTION DISPATCHER
+// ------------------------------------------
+// Translates wizard step action keys to the existing handlers.
+const handleWizardAction = (actionKey: string, b: Booking) => {
+  switch (actionKey) {
+    case 'accept':
+      if (onAccept) onAccept(b);
+      break;
+    case 'decline':
+      if (onDecline) onDecline(b);
+      break;
+    case 'pay':
+      if (onPayConsultation) onPayConsultation(b);
+      break;
+    case 'start-consultation':
+      if (onStartConsultation) onStartConsultation(b);
+      break;
+    case 'propose-price':
+      setShowProposePanel(true);
+      break;
+    case 'accept-price':
+      if (onAcceptFinalPrice) onAcceptFinalPrice(b);
+      break;
+    case 'counter-price':
+      setShowCounterPanel(true);
+      break;
+    case 'dispute-price':
+      setShowPriceDisputePanel(true);
+      break;
+    case 'accept-counter':
+      if (onAcceptCounter) onAcceptCounter(b);
+      break;
+    case 'hold-firm':
+      if (onHoldFirm) onHoldFirm(b);
+      break;
+    case 'view-work-session':
+      if (onViewWorkSession) onViewWorkSession(b);
+      break;
+    case 'open-dispute':
+      setShowRaiseDisputePanel(true);
+      break;
+    default:
+      // Unknown action — no-op
+      break;
+  }
+};
 
   // ------------------------------------------
   // ACTIONS
@@ -552,11 +613,46 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   };
 
   // ============================================
+// WIZARD VIEW (active bookings, focus mode)
+// ============================================
+//
+// For active statuses, render the guided step instead of the full card,
+// unless the user has explicitly requested the detailed view.
+
+if (
+  isActiveStatus(request.status) &&
+  !showFullDetails &&
+  (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER')
+) {
+  return (
+    <WizardStep
+      booking={request}
+      viewerRole={viewerRole}
+      expanded={false}
+      onToggleExpanded={() => setShowFullDetails(true)}
+      onAction={handleWizardAction}
+    />
+  );
+}
+
+  // ============================================
   // RENDER
   // ============================================
 
   return (
     <article className={`${styles.card} ${compact ? styles.compact : ''}`}>
+  {/* "Back to wizard" pill — only shown when user expanded from wizard */}
+  {isActiveStatus(request.status) &&
+    showFullDetails &&
+    (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER') && (
+      <button
+        type="button"
+        className={styles.backToWizardBtn}
+        onClick={() => setShowFullDetails(false)}
+      >
+        ← Back to guided view
+      </button>
+    )}
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>

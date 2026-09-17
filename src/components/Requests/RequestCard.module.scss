@@ -802,3 +802,30 @@
     text-decoration: underline;
   }
 }
+
+// ============================================
+// BACK TO WIZARD PILL (Step 13)
+// ============================================
+
+.backToWizardBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  align-self: flex-start;
+  padding: $spacing-xxs $spacing-sm;
+  margin-bottom: $spacing-sm;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-full;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+  
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+    background: rgba(102, 126, 234, 0.05);
+  }
+}

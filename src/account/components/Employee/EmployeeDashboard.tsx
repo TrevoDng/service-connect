@@ -261,12 +261,12 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
       }
 
     if (activeTab === 'disputes') {
-      return (
-        <div className={styles.mainContent}>
-          <DisputesView />
-        </div>
-      );
-    }
+  return (
+    <div className={styles.mainContent}>
+      <DisputesView viewerRole="EMPLOYEE" />
+    </div>
+  );
+}
 
     return (
       <div className={styles.mainContent}>

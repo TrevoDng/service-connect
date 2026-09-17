@@ -68,3 +68,43 @@ export const isClosedRequest = (b: Booking): boolean => {
     b.status === 'price_disputed'
   );
 };
+
+// ============================================
+// DISPUTE ELIGIBILITY (Step 12.5)
+// ============================================
+//
+// A booking can be disputed by either party when it's at 'accepted' or
+// later, is not cancelled, and does not already have a dispute on it.
+//
+// Callers should additionally check for an existing dispute via
+// `getDisputeByBooking()` — this helper only handles the booking-status
+// dimension.
+
+export const isEligibleForDispute = (b: Booking): boolean => {
+  const blockedStatuses: Booking['status'][] = [
+    'requested',
+    'cancelled',
+  ];
+  return !blockedStatuses.includes(b.status);
+};
+
+// ============================================
+// DISPUTE ELIGIBILITY (Step 12.5)
+// ============================================
+//
+// A booking can be disputed by either party when it's at 'accepted' or
+// later, is not cancelled, and does not already have a dispute on it.
+//
+// Callers should additionally check for an existing dispute via
+// `getDisputeByBooking()` — this helper only handles the booking-status
+// dimension.
+
+/*
+export const isEligibleForDispute = (b: Booking): boolean => {
+  const blockedStatuses: Booking['status'][] = [
+    'requested',
+    'cancelled',
+  ];
+  return !blockedStatuses.includes(b.status); 
+};
+*/
