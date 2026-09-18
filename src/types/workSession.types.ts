@@ -88,6 +88,18 @@ export interface WorkSession {
   createdAt: string;
   updatedAt: string;
   completedAt?: string;
+
+  // ============================================
+// WORK GATE (Step 13.3)
+// ============================================
+//
+// Before clocking in for the first time, the provider must share a
+// reference code with the client at the gate. The client confirms, and
+// only then does clock-in unlock.
+
+arrivedAt?: string;
+gateConfirmedByClient?: boolean;
+gateConfirmedAt?: string;
 }
 
 // ============================================

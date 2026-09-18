@@ -16,13 +16,9 @@ import styles from './ClockInCard.module.scss';
 
 export interface ClockInCardProps {
   session: WorkSession;
-  /** Fired when the provider clicks "Clock In" */
   onClockIn: (sessionId: string) => void;
-  /** Fired when the provider clicks "Clock Out" */
   onClockOut: (sessionId: string) => void;
-  /** Optional: fired when the provider clicks "Mark Complete" (Step 5 will gate this) */
   onMarkComplete?: (sessionId: string) => void;
-  /** Set true when the site evaluation is done and work is allowed to begin */
   workReady?: boolean;
 }
 
@@ -158,7 +154,7 @@ export const ClockInCard: React.FC<ClockInCardProps> = ({
             className={styles.clockInBtn}
             onClick={() => onClockIn(session.id)}
             disabled={!workReady}
-            title={!workReady ? 'Waiting for site evaluation to complete' : undefined}
+            title={!workReady ? 'Waiting for the client to confirm your arrival code' : undefined}
           >
             <FontAwesomeIcon icon={faPlay} />
             Clock In

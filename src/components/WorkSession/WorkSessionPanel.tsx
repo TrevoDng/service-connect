@@ -144,12 +144,12 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
 
       {/* Clock-in card */}
       <ClockInCard
-        session={session}
-        onClockIn={onClockIn}
-        onClockOut={onClockOut}
-        onMarkComplete={onMarkComplete}
-        workReady={workReady}
-      />
+  	session={session}
+  	onClockIn={onClockIn}
+  	onClockOut={onClockOut}
+  	onMarkComplete={onMarkComplete}
+  	workReady={workReady && session.gateConfirmedByClient === true}
+       />
 
       {/* ---------------- PHOTO SECTIONS ---------------- */}
 

@@ -194,7 +194,7 @@ export const WizardStep: React.FC<WizardStepProps> = ({
 
           <button
             type="button"
-            className={styles.choiceCancelBtn}
+            className={styles.choiceCancel}
             onClick={() => setShowWorkChoice(false)}
           >
             Cancel

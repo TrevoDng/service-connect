@@ -28,6 +28,9 @@ import { setBookingOverride } from '../../../utils/localBookingOverrides';
 import { faGavel } from '@fortawesome/free-solid-svg-icons';
 import { DisputesView } from '../../../components/Disputes';
 import { getOpenDisputeCountForUser } from '../../../utils/allDisputes';
+import { getLocalWorkSessions } from '../../../utils/localWorkSessions';
+import { updateLocalWorkSession } from '../../../utils/localWorkSessions';
+import { faKey } from '@fortawesome/free-solid-svg-icons';
 import styles from './ClientDashboard.module.scss';
 
 // ============================================
@@ -74,6 +77,32 @@ export const ClientDashboard: React.FC = () => {
   const [expandedConfirmBookingId, setExpandedConfirmBookingId] = useState<string | null>(null);
   const [reviewRefresh, setReviewRefresh] = useState(0);
 const [bookingRefresh, setBookingRefresh] = useState(0);
+
+// Work sessions waiting for the client to confirm the gate code
+const pendingWorkGates = useMemo(() => {
+  const allSessions = getLocalWorkSessions();
+  return allSessions.filter(
+    (s) => s.clientId === DEMO_CLIENT_ID && !s.gateConfirmedByClient
+  );
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [bookingRefresh]);
+
+
+const handleConfirmWorkGate = (sessionId: string) => {
+  updateLocalWorkSession(sessionId, {
+    gateConfirmedByClient: true,
+    gateConfirmedAt: new Date().toISOString(),
+  });
+  setBookingRefresh((t) => t + 1);
+};
+
+const handleDenyWorkGate = (sessionId: string) => {
+  updateLocalWorkSession(sessionId, {
+    currentReferenceCode: undefined,
+    referenceCodeExpiresAt: undefined,
+  });
+  setBookingRefresh((t) => t + 1);
+};
 
   // ------------------------------------------
   // Bookings from the merged store
@@ -440,6 +469,62 @@ const handleDisputeFinalPrice = (
 
         {/* Arrival banners (requests tab only) */}
         {isRequests && renderArrivalSection()}
+
+	const renderWorkGateSection = () => {
+  if (pendingWorkGates.length === 0) return null;
+
+  return (
+    <div className={styles.arrivalBanners}>
+      {pendingWorkGates.map((session) => {
+        const booking = allClientBookings.find(
+          (b) => b.id === session.bookingId
+        );
+        if (!booking) return null;
+
+        return (
+          <div key={session.id} className={styles.arrivalBanner}>
+            <div className={styles.workGateInner}>
+              <div className={styles.workGateLeft}>
+                <FontAwesomeIcon icon={faKey} className={styles.arrivalBell} />
+                <div>
+                  <strong>{booking.providerDisplayName} is at your gate</strong>
+                  <span className={styles.arrivalText}>
+                    To start work on <strong>{booking.serviceTitle}</strong>.
+                    Confirm only if the code matches.
+                  </span>
+                </div>
+              </div>
+
+              <div className={styles.workGateCodeBox}>
+                <span className={styles.workGateLabel}>Reference code</span>
+                <span className={styles.workGateCode}>
+                  {session.currentReferenceCode}
+                </span>
+              </div>
+
+              <div className={styles.workGateActions}>
+                <button
+                  type="button"
+                  className={styles.workGateConfirm}
+                  onClick={() => handleConfirmWorkGate(session.id)}
+                >
+                  Confirm &amp; grant access
+                </button>
+                <button
+                  type="button"
+                  className={styles.workGateDeny}
+                  onClick={() => handleDenyWorkGate(session.id)}
+                >
+                  This isn't my provider
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
 
         {/* Active work (requests tab only) */}
         {isRequests && renderActiveWorkSection()}

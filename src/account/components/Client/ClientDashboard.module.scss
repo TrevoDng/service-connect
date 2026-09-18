@@ -547,3 +547,101 @@
   flex-direction: column;
   gap: $spacing-md;
 }
+
+// ============================================
+// WORK GATE BANNER (Step 13.3)
+// ============================================
+
+.workGateInner {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  padding: $spacing-lg;
+  
+  @include mobile { padding: $spacing-md; gap: $spacing-sm; }
+}
+
+.workGateLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  
+  strong {
+    display: block;
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: 2px;
+  }
+}
+
+.workGateCodeBox {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-xxs;
+  padding: $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border: 2px dashed $primary;
+  border-radius: $border-radius-md;
+}
+
+.workGateLabel {
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.workGateCode {
+  font-family: $font-family-mono;
+  font-size: $font-size-2xl;
+  font-weight: $font-weight-bold;
+  color: $primary;
+  letter-spacing: 0.1em;
+  
+  @include mobile { font-size: $font-size-xl; }
+}
+
+.workGateActions {
+  display: flex;
+  gap: $spacing-sm;
+  
+  @include mobile { flex-direction: column; }
+}
+
+.workGateConfirm,
+.workGateDeny {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+}
+
+.workGateConfirm {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: $text-white;
+  border: none;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
+
+.workGateDeny {
+  background: transparent;
+  color: $error;
+  border: 1px solid $error;
+  
+  &:hover {
+    background: $error;
+    color: $text-white;
+  }
+}

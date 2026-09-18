@@ -1,7 +1,7 @@
 // src/components/Requests/RequestCard.tsx
 
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type {
   Booking,
   BookingStatus,
@@ -193,6 +193,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   // Wizard vs detailed view
   const [showFullDetails, setShowFullDetails] = useState(false);
+
+  const navigate = useNavigate();
 
   // ------------------------------------------
   // DERIVED DATA
@@ -651,9 +653,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     onToggleExpanded={() => setShowFullDetails(true)}
     onAction={handleWizardAction}
     onStartWork={() => {
-      window.alert(
-        'Gate flow coming next — this will open the arrival confirmation.'
-      );
+        navigate(`/provider/bookings/${request.id}/start-work`);
     }}
     onShowProgress={() => {
       window.alert(
