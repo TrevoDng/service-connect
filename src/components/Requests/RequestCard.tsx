@@ -311,8 +311,17 @@ const [showFullDetails, setShowFullDetails] = useState(false);
 // WIZARD ACTION DISPATCHER
 // ------------------------------------------
 // Translates wizard step action keys to the existing handlers.
+//
+// Some actions open a panel that only renders inside the full card
+// (FinalPricePanel, dispute panel, etc.). For those, we must first
+// expand the full card so the panel actually mounts — otherwise
+// the panel state gets set but nothing renders.
+//
+// Actions that call a prop handler directly (accept, decline, pay,
+// navigations, etc.) don't need the expand.
 const handleWizardAction = (actionKey: string, b: Booking) => {
   switch (actionKey) {
+    // --- Direct handlers (work fine in wizard view) ---
     case 'accept':
       if (onAccept) onAccept(b);
       break;
@@ -325,17 +334,8 @@ const handleWizardAction = (actionKey: string, b: Booking) => {
     case 'start-consultation':
       if (onStartConsultation) onStartConsultation(b);
       break;
-    case 'propose-price':
-      setShowProposePanel(true);
-      break;
     case 'accept-price':
       if (onAcceptFinalPrice) onAcceptFinalPrice(b);
-      break;
-    case 'counter-price':
-      setShowCounterPanel(true);
-      break;
-    case 'dispute-price':
-      setShowPriceDisputePanel(true);
       break;
     case 'accept-counter':
       if (onAcceptCounter) onAcceptCounter(b);
@@ -343,12 +343,32 @@ const handleWizardAction = (actionKey: string, b: Booking) => {
     case 'hold-firm':
       if (onHoldFirm) onHoldFirm(b);
       break;
-    case 'view-work-session':
-      if (onViewWorkSession) onViewWorkSession(b);
+
+    // --- Panel-opening actions (need full card expanded first) ---
+    case 'propose-price':
+      setShowFullDetails(true);
+      setShowProposePanel(true);
+      break;
+    case 'counter-price':
+      setShowFullDetails(true);
+      setShowCounterPanel(true);
+      break;
+    case 'dispute-price':
+      setShowFullDetails(true);
+      setShowPriceDisputePanel(true);
       break;
     case 'open-dispute':
+      setShowFullDetails(true);
       setShowRaiseDisputePanel(true);
       break;
+    case 'view-work-session':
+      // The work session panel doesn't exist yet (Step 13.3).
+      // Keep the expand so the user at least sees the full card,
+      // and the actual session page can be wired later.
+      setShowFullDetails(true);
+      if (onViewWorkSession) onViewWorkSession(b);
+      break;
+
     default:
       // Unknown action — no-op
       break;

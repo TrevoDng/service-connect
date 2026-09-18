@@ -78,10 +78,10 @@ export const ClientDashboard: React.FC = () => {
   // Bookings from the merged store
   // ------------------------------------------
   const allClientBookings = useMemo(
-  () => getBookingsForClient(DEMO_CLIENT_ID),
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [reviewRefresh]
-);
+     () => getBookingsForClient(DEMO_CLIENT_ID),
+     // eslint-disable-next-line react-hooks/exhaustive-deps
+      [reviewRefresh, activeTab]
+  );
 
   // ------------------------------------------
   // Sidebar counts
