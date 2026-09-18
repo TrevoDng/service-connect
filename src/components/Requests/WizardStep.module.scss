@@ -437,20 +437,20 @@
 // CANCEL BUTTON (higher specificity override)
 // ============================================
 
-button.choiceCancel {
-  align-self: flex-start !important;
-  padding: 0 !important;
-  margin: 0 !important;
-  border: none !important;
-  background: transparent !important;
-  color: var(--text-light, #8a8aaa) !important;
-  font-size: $font-size-xs !important;
-  font-weight: $font-weight-medium !important;
+.choiceCancelBtn {
+  align-self: flex-start;
+  padding: 0;
+  margin: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-light, $text-light);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
   cursor: pointer;
   text-decoration: underline;
   transition: color $transition-fast;
   
   &:hover {
-    color: var(--text-primary, #1a1a2e) !important;
+    color: var(--text-primary, $text-primary);
   }
 }
