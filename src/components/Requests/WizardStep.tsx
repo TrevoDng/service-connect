@@ -1,6 +1,6 @@
 // src/components/Requests/WizardStep.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { Booking, ViewerRole } from '../../types';
 import {
   MILESTONES,
@@ -14,6 +14,8 @@ import {
   faChevronDown,
   faChevronUp,
   faGavel,
+  faPlay,
+  faHardHat,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './WizardStep.module.scss';
 
@@ -34,6 +36,11 @@ export interface WizardStepProps {
 
   /** Hide the "Raise a dispute" link (e.g. for staff view) */
   hideDisputeLink?: boolean;
+
+  /** Provider picked "Start work" from the choice panel */
+  onStartWork?: (booking: Booking) => void;
+  /** Provider picked "Show progress" */
+  onShowProgress?: (booking: Booking) => void;
 }
 
 // ============================================
@@ -47,23 +54,57 @@ export const WizardStep: React.FC<WizardStepProps> = ({
   onToggleExpanded,
   onAction,
   hideDisputeLink = false,
+  onStartWork,
+  onShowProgress,
 }) => {
+  const [showWorkChoice, setShowWorkChoice] = useState(false);
+
   const role: 'CLIENT' | 'PROVIDER' =
     viewerRole === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
 
   const step = getWizardStep(booking, role);
   const milestone = getMilestoneState(booking.status);
 
-  const renderAction = (action: WizardAction, key: string) => (
+  // ------------------------------------------
+  // WORK-SESSION CHOICE INTERCEPT
+  // ------------------------------------------
+  // When the provider is on step 5 (price_agreed), the wizard's primary
+  // action is "view-work-session". Instead of firing that action directly,
+  // we open the two-button choice panel below the actions.
+  const isProviderAtPriceAgreed =
+    viewerRole === 'PROVIDER' &&
+    booking.status === 'price_agreed' &&
+    step.primaryAction?.key === 'view-work-session';
+
+  const handlePrimaryClick = (action: WizardAction) => {
+    if (isProviderAtPriceAgreed && action.key === 'view-work-session') {
+      setShowWorkChoice(true);
+      return;
+    }
+    onAction(action.key, booking);
+  };
+
+  // ------------------------------------------
+  // ACTION RENDER
+  // ------------------------------------------
+  const renderAction = (action: WizardAction, key: 'primary' | 'secondary') => (
     <button
       key={key}
       type="button"
       className={`${styles.actionBtn} ${styles[action.variant]}`}
-      onClick={() => onAction(action.key, booking)}
+      onClick={() =>
+        key === 'primary'
+          ? handlePrimaryClick(action)
+          : onAction(action.key, booking)
+      }
     >
       {action.label}
     </button>
   );
+
+  // ============================================
+  // RENDER
+  // ============================================
 
   return (
     <div className={`${styles.wizard} ${step.passive ? styles.passive : ''}`}>
@@ -72,7 +113,13 @@ export const WizardStep: React.FC<WizardStepProps> = ({
         <span className={styles.progressLabel}>
           Step {milestone.current + 1} of {MILESTONES.length}
         </span>
-        <div className={styles.dots} role="progressbar" aria-valuenow={milestone.current + 1} aria-valuemin={1} aria-valuemax={MILESTONES.length}>
+        <div
+          className={styles.dots}
+          role="progressbar"
+          aria-valuenow={milestone.current + 1}
+          aria-valuemin={1}
+          aria-valuemax={MILESTONES.length}
+        >
           {MILESTONES.map((m, i) => {
             const isDone = milestone.completed.includes(i);
             const isCurrent = i === milestone.current;
@@ -107,6 +154,51 @@ export const WizardStep: React.FC<WizardStepProps> = ({
         <div className={styles.actions}>
           {step.primaryAction && renderAction(step.primaryAction, 'primary')}
           {step.secondaryAction && renderAction(step.secondaryAction, 'secondary')}
+        </div>
+      )}
+
+      {/* Work-session choice panel (Step 13.2) */}
+      {showWorkChoice && (
+        <div className={styles.choicePanel}>
+          <h5 className={styles.choiceTitle}>How do you want to proceed?</h5>
+          <p className={styles.choiceHint}>
+            You've agreed the price. Clock in when you're on site, or just view
+            your progress so far.
+          </p>
+
+          <div className={styles.choiceActions}>
+            <button
+              type="button"
+              className={styles.choiceBtnPrimary}
+              onClick={() => {
+                setShowWorkChoice(false);
+                if (onStartWork) onStartWork(booking);
+              }}
+            >
+              <FontAwesomeIcon icon={faPlay} />
+              Start work
+            </button>
+
+            <button
+              type="button"
+              className={styles.choiceBtnSecondary}
+              onClick={() => {
+                setShowWorkChoice(false);
+                if (onShowProgress) onShowProgress(booking);
+              }}
+            >
+              <FontAwesomeIcon icon={faHardHat} />
+              Show progress
+            </button>
+          </div>
+
+          <button
+            type="button"
+            className={styles.choiceCancel}
+            onClick={() => setShowWorkChoice(false)}
+          >
+            Cancel
+          </button>
         </div>
       )}
 

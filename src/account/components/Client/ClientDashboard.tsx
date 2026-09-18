@@ -73,15 +73,16 @@ export const ClientDashboard: React.FC = () => {
 
   const [expandedConfirmBookingId, setExpandedConfirmBookingId] = useState<string | null>(null);
   const [reviewRefresh, setReviewRefresh] = useState(0);
+const [bookingRefresh, setBookingRefresh] = useState(0);
 
   // ------------------------------------------
   // Bookings from the merged store
   // ------------------------------------------
   const allClientBookings = useMemo(
-     () => getBookingsForClient(DEMO_CLIENT_ID),
-     // eslint-disable-next-line react-hooks/exhaustive-deps
-      [reviewRefresh, activeTab]
-  );
+  () => getBookingsForClient(DEMO_CLIENT_ID),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [reviewRefresh, bookingRefresh, activeTab]
+);
 
   // ------------------------------------------
   // Sidebar counts
@@ -106,6 +107,7 @@ export const ClientDashboard: React.FC = () => {
   };
 
   const handleConfirmArrival = (sessionId: string) => {
+	  
     setSessions((prev) =>
       prev.map((s) => {
         if (s.id !== sessionId) return s;
@@ -122,11 +124,16 @@ export const ClientDashboard: React.FC = () => {
         };
       })
     );
+    
+    // Force re-read of bookings so the wizard auto-advances
+
     setExpandedConfirmBookingId(null);
+    setBookingRefresh((t) => t + 1);
   };
 
   const handleDenyArrival = (sessionId: string) => {
-    setSessions((prev) =>
+   
+	  setSessions((prev) =>
       prev.map((s) =>
         s.id === sessionId
           ? {
@@ -138,7 +145,11 @@ export const ClientDashboard: React.FC = () => {
           : s
       )
     );
+    
+    // Force re-read of bookings so the wizard auto-advances
+
     setExpandedConfirmBookingId(null);
+    setBookingRefresh((t) => t + 1);
   };
 
   // ------------------------------------------
@@ -167,7 +178,9 @@ export const ClientDashboard: React.FC = () => {
     updatedAt: new Date().toISOString(),
   });
   // Force re-read of bookings
-  setSessions((prev) => [...prev]);
+  // Force re-read of bookings so the wizard auto-advances
+    setSessions((prev) => [...prev]);
+    setBookingRefresh((t) => t + 1);
 };
 
 const handleCounterFinalPrice = (
@@ -192,6 +205,8 @@ const handleCounterFinalPrice = (
     updatedAt: new Date().toISOString(),
   });
   setSessions((prev) => [...prev]);
+  // Force re-read of bookings so the wizard auto-advances
+    setBookingRefresh((t) => t + 1);
 };
 
 const handleDisputeFinalPrice = (
@@ -215,6 +230,8 @@ const handleDisputeFinalPrice = (
     ],
   });
   setSessions((prev) => [...prev]);
+  // Force re-read of bookings so the wizard auto-advances
+    setBookingRefresh((t) => t + 1);
 };
   
 

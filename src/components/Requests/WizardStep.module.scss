@@ -325,3 +325,132 @@
   
   svg { font-size: 0.65rem; }
 }
+
+// ============================================
+// WORK-SESSION CHOICE PANEL (Step 13.2)
+// ============================================
+
+.choicePanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  margin-top: $spacing-sm;
+  background: rgba(102, 126, 234, 0.06);
+  border: 1px solid rgba(102, 126, 234, 0.25);
+  border-radius: $border-radius-md;
+  
+  @include mobile {
+    padding: $spacing-md;
+  }
+}
+
+:global(.dark-theme) {
+  .choicePanel {
+    background: rgba(102, 126, 234, 0.12);
+    border-color: rgba(102, 126, 234, 0.35);
+  }
+}
+
+.choiceTitle {
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+  margin: 0;
+}
+
+.choiceHint {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  margin: 0;
+  line-height: $line-height-normal;
+}
+
+.choiceActions {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  
+  @include mobile {
+    flex-direction: column;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.choiceBtnPrimary,
+.choiceBtnSecondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  svg { font-size: $font-size-xs; }
+}
+
+.choiceBtnPrimary {
+  background: $primary-gradient;
+  color: $text-white;
+  border: none;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
+
+.choiceBtnSecondary {
+  background: transparent;
+  color: $primary;
+  border: 1px solid $primary;
+  
+  &:hover {
+    background: rgba(102, 126, 234, 0.08);
+  }
+}
+
+.choiceCancel {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-light, $text-light);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: color $transition-fast;
+  
+  &:hover {
+    color: var(--text-primary, $text-primary);
+  }
+}
+
+// ============================================
+// CANCEL BUTTON (higher specificity override)
+// ============================================
+
+button.choiceCancel {
+  align-self: flex-start !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  color: var(--text-light, #8a8aaa) !important;
+  font-size: $font-size-xs !important;
+  font-weight: $font-weight-medium !important;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color $transition-fast;
+  
+  &:hover {
+    color: var(--text-primary, #1a1a2e) !important;
+  }
+}

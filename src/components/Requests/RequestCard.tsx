@@ -190,8 +190,9 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
   // Dispute state (Step 9)
   const [showRaiseDisputePanel, setShowRaiseDisputePanel] = useState(false);
+
   // Wizard vs detailed view
-const [showFullDetails, setShowFullDetails] = useState(false);
+  const [showFullDetails, setShowFullDetails] = useState(false);
 
   // ------------------------------------------
   // DERIVED DATA
@@ -303,77 +304,78 @@ const [showFullDetails, setShowFullDetails] = useState(false);
       internal: false,
     });
 
+    // Shrink back to wizard + notify parent
     setShowRaiseDisputePanel(false);
+    setShowFullDetails(false);
     if (onDisputeChanged) onDisputeChanged();
   };
 
   // ------------------------------------------
-// WIZARD ACTION DISPATCHER
-// ------------------------------------------
-// Translates wizard step action keys to the existing handlers.
-//
-// Some actions open a panel that only renders inside the full card
-// (FinalPricePanel, dispute panel, etc.). For those, we must first
-// expand the full card so the panel actually mounts — otherwise
-// the panel state gets set but nothing renders.
-//
-// Actions that call a prop handler directly (accept, decline, pay,
-// navigations, etc.) don't need the expand.
-const handleWizardAction = (actionKey: string, b: Booking) => {
-  switch (actionKey) {
-    // --- Direct handlers (work fine in wizard view) ---
-    case 'accept':
-      if (onAccept) onAccept(b);
-      break;
-    case 'decline':
-      if (onDecline) onDecline(b);
-      break;
-    case 'pay':
-      if (onPayConsultation) onPayConsultation(b);
-      break;
-    case 'start-consultation':
-      if (onStartConsultation) onStartConsultation(b);
-      break;
-    case 'accept-price':
-      if (onAcceptFinalPrice) onAcceptFinalPrice(b);
-      break;
-    case 'accept-counter':
-      if (onAcceptCounter) onAcceptCounter(b);
-      break;
-    case 'hold-firm':
-      if (onHoldFirm) onHoldFirm(b);
-      break;
+  // WIZARD ACTION DISPATCHER
+  // ------------------------------------------
+  // Translates wizard step action keys to the existing handlers.
+  //
+  // Some actions open a panel that only renders inside the full card
+  // (FinalPricePanel, dispute panel, etc.). For those, we must first
+  // expand the full card so the panel actually mounts — otherwise
+  // the panel state gets set but nothing renders.
+  //
+  // Actions that call a prop handler directly (accept, decline, pay,
+  // navigations, etc.) don't need the expand.
+  const handleWizardAction = (actionKey: string, b: Booking) => {
+    switch (actionKey) {
+      // --- Direct handlers (work fine in wizard view) ---
+      case 'accept':
+        if (onAccept) onAccept(b);
+        break;
+      case 'decline':
+        if (onDecline) onDecline(b);
+        break;
+      case 'pay':
+        if (onPayConsultation) onPayConsultation(b);
+        break;
+      case 'start-consultation':
+        if (onStartConsultation) onStartConsultation(b);
+        break;
+      case 'accept-price':
+        if (onAcceptFinalPrice) onAcceptFinalPrice(b);
+        break;
+      case 'accept-counter':
+        if (onAcceptCounter) onAcceptCounter(b);
+        break;
+      case 'hold-firm':
+        if (onHoldFirm) onHoldFirm(b);
+        break;
 
-    // --- Panel-opening actions (need full card expanded first) ---
-    case 'propose-price':
-      setShowFullDetails(true);
-      setShowProposePanel(true);
-      break;
-    case 'counter-price':
-      setShowFullDetails(true);
-      setShowCounterPanel(true);
-      break;
-    case 'dispute-price':
-      setShowFullDetails(true);
-      setShowPriceDisputePanel(true);
-      break;
-    case 'open-dispute':
-      setShowFullDetails(true);
-      setShowRaiseDisputePanel(true);
-      break;
-    case 'view-work-session':
-      // The work session panel doesn't exist yet (Step 13.3).
-      // Keep the expand so the user at least sees the full card,
-      // and the actual session page can be wired later.
-      setShowFullDetails(true);
-      if (onViewWorkSession) onViewWorkSession(b);
-      break;
+      // --- Panel-opening actions (need full card expanded first) ---
+      case 'propose-price':
+        setShowFullDetails(true);
+        setShowProposePanel(true);
+        break;
+      case 'counter-price':
+        setShowFullDetails(true);
+        setShowCounterPanel(true);
+        break;
+      case 'dispute-price':
+        setShowFullDetails(true);
+        setShowPriceDisputePanel(true);
+        break;
+      case 'open-dispute':
+        setShowFullDetails(true);
+        setShowRaiseDisputePanel(true);
+        break;
+      case 'view-work-session':
+        // Work session panel not built yet (Step 13.3).
+        // Keep the expand so the user sees the full card.
+        setShowFullDetails(true);
+        if (onViewWorkSession) onViewWorkSession(b);
+        break;
 
-    default:
-      // Unknown action — no-op
-      break;
-  }
-};
+      default:
+        // Unknown action — no-op
+        break;
+    }
+  };
 
   // ------------------------------------------
   // ACTIONS
@@ -633,27 +635,34 @@ const handleWizardAction = (actionKey: string, b: Booking) => {
   };
 
   // ============================================
-// WIZARD VIEW (active bookings, focus mode)
-// ============================================
-//
-// For active statuses, render the guided step instead of the full card,
-// unless the user has explicitly requested the detailed view.
+  // WIZARD VIEW (active bookings, focus mode)
+  // ============================================
 
-if (
-  isActiveStatus(request.status) &&
-  !showFullDetails &&
-  (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER')
-) {
-  return (
-    <WizardStep
-      booking={request}
-      viewerRole={viewerRole}
-      expanded={false}
-      onToggleExpanded={() => setShowFullDetails(true)}
-      onAction={handleWizardAction}
-    />
-  );
-}
+  if (
+    isActiveStatus(request.status) &&
+    !showFullDetails &&
+    (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER')
+  ) {
+    return (
+  <WizardStep
+    booking={request}
+    viewerRole={viewerRole}
+    expanded={false}
+    onToggleExpanded={() => setShowFullDetails(true)}
+    onAction={handleWizardAction}
+    onStartWork={() => {
+      window.alert(
+        'Gate flow coming next — this will open the arrival confirmation.'
+      );
+    }}
+    onShowProgress={() => {
+      window.alert(
+        'Progress view coming next — you will be able to review the work session read-only.'
+      );
+    }}
+  />
+);
+  }
 
   // ============================================
   // RENDER
@@ -661,18 +670,19 @@ if (
 
   return (
     <article className={`${styles.card} ${compact ? styles.compact : ''}`}>
-  {/* "Back to wizard" pill — only shown when user expanded from wizard */}
-  {isActiveStatus(request.status) &&
-    showFullDetails &&
-    (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER') && (
-      <button
-        type="button"
-        className={styles.backToWizardBtn}
-        onClick={() => setShowFullDetails(false)}
-      >
-        ← Back to guided view
-      </button>
-    )}
+      {/* "Back to wizard" pill */}
+      {isActiveStatus(request.status) &&
+        showFullDetails &&
+        (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER') && (
+          <button
+            type="button"
+            className={styles.backToWizardBtn}
+            onClick={() => setShowFullDetails(false)}
+          >
+            ← Back to guided view
+          </button>
+        )}
+
       {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerLeft}>
@@ -708,17 +718,17 @@ if (
         <div className={styles.metaGrid}>
           <div className={styles.meta}>
             <span className={styles.metaLabel}>{counterpartLabel}:</span>
-               {viewerRole === 'CLIENT' ? (
-             <Link
-               to={`/providers/${request.providerId}`}
+            {viewerRole === 'CLIENT' ? (
+              <Link
+                to={`/providers/${request.providerId}`}
                 className={styles.metaLink}
-                 >
-                 {counterpartName}
-                  </Link>
-                  ) : (
-                 <span className={styles.metaValue}>{counterpartName}</span>
-                  )}
-                 </div>
+              >
+                {counterpartName}
+              </Link>
+            ) : (
+              <span className={styles.metaValue}>{counterpartName}</span>
+            )}
+          </div>
 
           <div className={styles.meta}>
             <span className={styles.metaLabel}>Requested for:</span>
@@ -994,6 +1004,8 @@ if (
             onSave={(amount, note) => {
               onProposeFinalPrice(request, amount, note);
               setShowProposePanel(false);
+              // Shrink back to wizard
+              setShowFullDetails(false);
             }}
             onCancel={() => setShowProposePanel(false)}
           />
@@ -1008,6 +1020,8 @@ if (
             onSave={(amount, note) => {
               onCounterFinalPrice(request, amount, note);
               setShowCounterPanel(false);
+              // Shrink back to wizard
+              setShowFullDetails(false);
             }}
             onCancel={() => setShowCounterPanel(false)}
           />
@@ -1046,6 +1060,8 @@ if (
                   onDisputeFinalPrice(request, priceDisputeReason.trim());
                   setShowPriceDisputePanel(false);
                   setPriceDisputeReason('');
+                  // Shrink back to wizard
+                  setShowFullDetails(false);
                 }}
               >
                 <FontAwesomeIcon icon={faGavel} />
