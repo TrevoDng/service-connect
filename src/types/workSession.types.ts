@@ -1,5 +1,33 @@
 // src/types/workSession.types.ts
 
+
+// ============================================
+// STEP EVENTS (Step 13.6)
+// ============================================
+//
+// Not every step is a hard gate. Some are recommended; some are soft. Each
+// "soft" step gets a StepEvent that records what actually happened — whether
+// the client confirmed, the provider proceeded anyway, or it was skipped.
+
+export type StepStatus =
+  | 'confirmed'
+  | 'confirmed_late' 
+  | 'auto_proceeded'
+  | 'skipped'
+  | 'contested'
+  | 'pending';
+
+
+export interface StepEvent {
+  status: StepStatus;
+  attemptedAt?: string;
+  resolvedAt?: string;
+  resolvedByUserId?: string;
+  resolvedByDisplayName?: string;
+  note?: string;
+}
+
+
 // ============================================
 // WORK SESSION STATUS
 // ============================================
@@ -66,13 +94,9 @@ export interface WorkSession {
   clientId: string;
 
   // Security
-  currentReferenceCode?: string;   // active code (invalidated on clock-out)
-  referenceCodeExpiresAt?: string; // ISO timestamp — 30 min validity
-
-  // Clock tracking (multiple days allowed)
+  currentReferenceCode?: string; 
+  referenceCodeExpiresAt?: string;
   clockEvents: ClockEvent[];
-
-  // Day-level summary derived from clockEvents
   daysWorked: number;
   totalHours: number;
 
@@ -100,6 +124,7 @@ export interface WorkSession {
 arrivedAt?: string;
 gateConfirmedByClient?: boolean;
 gateConfirmedAt?: string;
+gateEvent?: StepEvent;
 }
 
 // ============================================

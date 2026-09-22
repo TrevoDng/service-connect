@@ -22,6 +22,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { formatPrice } from '../../utils/formatters';
 
+
 // ============================================
 // TYPES
 // ============================================

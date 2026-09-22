@@ -645,3 +645,28 @@
     color: $text-white;
   }
 }
+
+// ============================================
+// WORK GATE — provider note (Step 13.6c)
+// ============================================
+
+.workGateNote {
+  padding: $spacing-sm $spacing-md;
+  background: var(--bg-card, #ffffff);
+  border-left: 3px solid #f59e0b;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-xs;
+  line-height: $line-height-normal;
+  
+  strong {
+    display: block;
+    color: #d97706;
+    font-weight: $font-weight-semibold;
+    margin-bottom: 2px;
+  }
+  
+  span {
+    display: block;
+    color: var(--text-secondary, $text-secondary);
+  }
+}

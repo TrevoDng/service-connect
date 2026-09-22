@@ -7,10 +7,13 @@ import {
   getBookingsForProvider,
   isCurrentRequest,
   isClosedRequest,
+  getBookingById,
 } from '../../utils/allBookings';
+//import { getBookingById } from '../../utils/allBookings';
+import { getLocalWorkSessions } from '../../utils/localWorkSessions';
 import { setBookingOverride } from '../../utils/localBookingOverrides';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch } from '@fortawesome/free-solid-svg-icons';
+import { faSearch, faHardHat, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { RequestCard } from './RequestCard';
 import { generateId } from '../../utils/referenceCode';
 import styles from './ProviderRequestsView.module.scss';
@@ -82,6 +85,23 @@ export const ProviderRequestsView: React.FC = () => {
   const visibleList = applySearch(
     activeTab === 'current' ? currentRequests : closedRequests
   );
+
+  // ------------------------------------------
+// Resumable work sessions (Step 13.3)
+// ------------------------------------------
+// Any local work session where the provider still needs to interact
+// with the gate page (arrive → share code → client confirms → clock in).
+const resumableSessions = useMemo(
+  () =>
+    getLocalWorkSessions().filter((s) => {
+      if (s.providerId !== DEMO_PROVIDER_ID) return false;
+      const b = getBookingById(s.bookingId);
+      if (!b) return false;
+      return b.status === 'price_agreed' || b.status === 'in_progress';
+    }),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [refreshTick]
+);
 
   // ------------------------------------------
   // Actions
@@ -185,6 +205,61 @@ const handleHoldFirm = (booking: Booking) => {
   // ------------------------------------------
   // Render
   // ------------------------------------------
+
+  // ------------------------------------------
+// Resume work session banner
+// ------------------------------------------
+const renderResumeSection = () => {
+  if (resumableSessions.length === 0) return null;
+
+  return (
+    <div className={styles.resumeSection}>
+      {resumableSessions.map((session) => {
+        const booking = getBookingById(session.bookingId);
+        if (!booking) return null;
+        const gateConfirmed = session.gateConfirmedByClient === true;
+
+        return (
+          <button
+            key={session.id}
+            type="button"
+            className={styles.resumeBanner}
+            onClick={() =>
+              navigate(`/provider/bookings/${booking.id}/start-work`)
+            }
+          >
+            <div className={styles.resumeIcon}>
+              <FontAwesomeIcon icon={faHardHat} />
+            </div>
+            <div className={styles.resumeBody}>
+              <span className={styles.resumeTitle}>
+                Continue work session
+              </span>
+              <span className={styles.resumeMeta}>
+                {booking.serviceTitle} · {booking.clientDisplayName}
+              </span>
+              <span
+                className={`${styles.resumeStatus} ${
+                  gateConfirmed ? styles.resumeReady : styles.resumeWaiting
+                }`}
+              >
+                {gateConfirmed
+                  ? 'Cleared to clock in'
+                  : 'Waiting for client to confirm your code'}
+              </span>
+            </div>
+            <FontAwesomeIcon
+              icon={faArrowRight}
+              className={styles.resumeArrow}
+            />
+          </button>
+        );
+      })}
+    </div>
+  );
+};
+
+
   return (
     <div className={styles.view}>
       {/* Header */}
@@ -207,6 +282,10 @@ const handleHoldFirm = (booking: Booking) => {
           />
         </div>
       </div>
+
+      {/* Resume work session banner */}
+         {renderResumeSection()}
+
 
       {/* Tabs */}
       <div className={styles.tabs}>

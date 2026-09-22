@@ -7,6 +7,8 @@ import {
   getMilestoneState,
   getWizardStep,
 } from './wizardSteps';
+import { SubstepTimeline } from './SubstepTimeline';
+import { getWorkSessionByBooking } from '../../utils/allWorkSessions';
 import type { WizardAction } from './wizardSteps';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -26,21 +28,14 @@ import styles from './WizardStep.module.scss';
 export interface WizardStepProps {
   booking: Booking;
   viewerRole: ViewerRole;
-
-  /** Whether the full RequestCard is currently expanded underneath */
   expanded: boolean;
   onToggleExpanded: () => void;
-
-  /** Action dispatcher — key matches the action config from wizardSteps */
   onAction: (actionKey: string, booking: Booking) => void;
-
-  /** Hide the "Raise a dispute" link (e.g. for staff view) */
   hideDisputeLink?: boolean;
-
-  /** Provider picked "Start work" from the choice panel */
   onStartWork?: (booking: Booking) => void;
-  /** Provider picked "Show progress" */
   onShowProgress?: (booking: Booking) => void;
+  onAddWorkDay?: (booking: Booking) => void;
+  onOpenWorkDay?: (booking: Booking, dayIndex: number) => void;
 }
 
 // ============================================
@@ -56,6 +51,8 @@ export const WizardStep: React.FC<WizardStepProps> = ({
   hideDisputeLink = false,
   onStartWork,
   onShowProgress,
+  onAddWorkDay,
+  onOpenWorkDay,
 }) => {
   const [showWorkChoice, setShowWorkChoice] = useState(false);
 
@@ -64,6 +61,11 @@ export const WizardStep: React.FC<WizardStepProps> = ({
 
   const step = getWizardStep(booking, role);
   const milestone = getMilestoneState(booking.status);
+
+  // Work session for in_progress bookings — powers the substep timeline
+  const activeWorkSession = booking.status === 'in_progress'
+    ? getWorkSessionByBooking(booking.id)
+    : undefined;
 
   // ------------------------------------------
   // WORK-SESSION CHOICE INTERCEPT
@@ -201,6 +203,23 @@ export const WizardStep: React.FC<WizardStepProps> = ({
           </button>
         </div>
       )}
+
+      {/* Substep timeline (Step 13.4) */}
+	{activeWorkSession && (
+  	   <SubstepTimeline
+	     session={activeWorkSession}
+             viewerRole={viewerRole}
+             onAddDay={
+                   onAddWorkDay ? () => onAddWorkDay(booking) : undefined
+            }
+
+             onOpenDay={
+                onOpenWorkDay
+                  ? (_s, idx) => onOpenWorkDay(booking, idx)
+              : undefined
+            }
+          />
+           )}
 
       {/* Passive hint */}
       {step.passive && (

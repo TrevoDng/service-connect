@@ -292,3 +292,146 @@
     align-self: stretch;
   }
 }
+
+// ============================================
+// PROCEED ANYWAY (Step 13.6)
+// ============================================
+
+.proceedBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-sm $spacing-lg;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-full;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+  align-self: center;
+  margin-top: $spacing-xs;
+  
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+    background: rgba(102, 126, 234, 0.05);
+  }
+}
+
+.proceedPanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  padding: $spacing-md;
+  background: rgba(245, 158, 11, 0.06);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: $border-radius-md;
+  margin-top: $spacing-sm;
+  text-align: left;
+}
+
+:global(.dark-theme) {
+  .proceedPanel {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: rgba(245, 158, 11, 0.45);
+  }
+}
+
+.proceedWarning {
+  display: flex;
+  gap: $spacing-sm;
+  align-items: flex-start;
+  
+  svg {
+    color: #d97706;
+    font-size: $font-size-lg;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  strong {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: 2px;
+  }
+  
+  span {
+    display: block;
+    font-size: $font-size-xs;
+    color: var(--text-secondary, $text-secondary);
+    line-height: $line-height-normal;
+  }
+}
+
+.proceedNote {
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-card, #ffffff);
+  color: var(--text-primary, $text-primary);
+  font-family: inherit;
+  font-size: $font-size-sm;
+  resize: vertical;
+  min-height: 60px;
+  outline: none;
+  box-sizing: border-box;
+  
+  &::placeholder {
+    color: var(--text-light, $text-light);
+  }
+  
+  &:focus {
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
+  }
+}
+
+.proceedActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: $spacing-sm;
+  
+  @include mobile {
+    flex-direction: column-reverse;
+    
+    button { width: 100%; }
+  }
+}
+
+.proceedCancel,
+.proceedConfirm {
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-fast;
+}
+
+.proceedCancel {
+  border: 1px solid var(--border-color, $border-color);
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  
+  &:hover {
+    border-color: var(--text-primary, $text-primary);
+    color: var(--text-primary, $text-primary);
+  }
+}
+
+.proceedConfirm {
+  border: none;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: $text-white;
+  font-weight: $font-weight-semibold;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+}

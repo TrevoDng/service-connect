@@ -208,3 +208,109 @@
     box-shadow: var(--shadow-md, $shadow-md);
   }
 }
+
+// ============================================
+// RESUME WORK SESSION BANNER (Step 13.3)
+// ============================================
+
+.resumeSection {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+}
+
+.resumeBanner {
+  display: flex;
+  align-items: center;
+  gap: $spacing-md;
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.08), rgba(217, 119, 6, 0.05));
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: $border-radius-lg;
+  cursor: pointer;
+  text-align: left;
+  transition: all $transition-base;
+  
+  &:hover {
+    border-color: #f59e0b;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+    
+    .resumeArrow {
+      transform: translateX(4px);
+      color: #f59e0b;
+    }
+  }
+  
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+    gap: $spacing-sm;
+  }
+}
+
+:global(.dark-theme) {
+  .resumeBanner {
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.08));
+    border-color: rgba(245, 158, 11, 0.45);
+  }
+}
+
+.resumeIcon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $border-radius-md;
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: $text-white;
+  font-size: $font-size-base;
+}
+
+.resumeBody {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.resumeTitle {
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: var(--text-primary, $text-primary);
+}
+
+.resumeMeta {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+}
+
+.resumeStatus {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  margin-top: 2px;
+}
+
+.resumeReady {
+  color: #059669;
+}
+
+.resumeWaiting {
+  color: #d97706;
+}
+
+:global(.dark-theme) {
+  .resumeReady { color: #34d399; }
+  .resumeWaiting { color: #fbbf24; }
+}
+
+.resumeArrow {
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  flex-shrink: 0;
+  transition: all $transition-fast;
+}

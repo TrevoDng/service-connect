@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
-import type { WorkSession, Booking as BookingModel } from '../../../types';
+import type { WorkSession, Booking as BookingModel, Dispute } from '../../../types';
 import { demoWorkSessions } from '../../../data/demoWorkSessions';
 import { getBookingsForClient, isCurrentRequest, isClosedRequest } from '../../../utils/allBookings';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -24,12 +24,15 @@ import { ClockConfirmCard, ClientWorkSessionCard } from '../../../components/Wor
 import { RequestCard } from '../../../components/Requests';
 import { getUnreadCount } from '../../../data/demoNotifications';
 import { generateId } from '../../../utils/referenceCode';
+import { addLocalDispute, addDisputeMessage } from '../../../utils/localDisputes';
 import { setBookingOverride } from '../../../utils/localBookingOverrides';
 import { faGavel } from '@fortawesome/free-solid-svg-icons';
 import { DisputesView } from '../../../components/Disputes';
 import { getOpenDisputeCountForUser } from '../../../utils/allDisputes';
 import { getLocalWorkSessions } from '../../../utils/localWorkSessions';
 import { updateLocalWorkSession } from '../../../utils/localWorkSessions';
+import { updateGateEvent } from '../../../utils/localWorkSessions';
+import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
 import styles from './ClientDashboard.module.scss';
 
@@ -78,12 +81,18 @@ export const ClientDashboard: React.FC = () => {
   const [reviewRefresh, setReviewRefresh] = useState(0);
 const [bookingRefresh, setBookingRefresh] = useState(0);
 
-// Work sessions waiting for the client to confirm the gate code
+// Sessions waiting for the client to confirm the gate code
 const pendingWorkGates = useMemo(() => {
   const allSessions = getLocalWorkSessions();
-  return allSessions.filter(
-    (s) => s.clientId === DEMO_CLIENT_ID && !s.gateConfirmedByClient
-  );
+  return allSessions.filter((s) => {
+    if (s.clientId !== DEMO_CLIENT_ID) return false;
+    // Already confirmed by the client — nothing to do
+    if (s.gateConfirmedByClient) return false;
+    // Auto-proceeded but not yet acknowledged by the client
+    if (s.gateEvent?.status === 'confirmed_late') return false;
+    if (s.gateEvent?.status === 'contested') return false;
+    return true;
+  });
   // eslint-disable-next-line react-hooks/exhaustive-deps
 }, [bookingRefresh]);
 
@@ -101,6 +110,76 @@ const handleDenyWorkGate = (sessionId: string) => {
     currentReferenceCode: undefined,
     referenceCodeExpiresAt: undefined,
   });
+  setBookingRefresh((t) => t + 1);
+};
+
+const handleRetroactiveConfirm = (sessionId: string) => {
+  // Client accepts it after the fact
+  updateLocalWorkSession(sessionId, {
+    gateConfirmedByClient: true,
+    gateConfirmedAt: new Date().toISOString(),
+  });
+  updateGateEvent(sessionId, {
+    status: 'confirmed_late',
+    resolvedAt: new Date().toISOString(),
+    resolvedByUserId: DEMO_CLIENT_ID,
+    resolvedByDisplayName: 'Client',
+  });
+  setBookingRefresh((t) => t + 1);
+};
+
+const handleRetroactiveDispute = (sessionId: string) => {
+  const now = new Date().toISOString();
+
+  // Mark the gate event as contested
+  updateGateEvent(sessionId, {
+    status: 'contested',
+    resolvedAt: now,
+    resolvedByUserId: DEMO_CLIENT_ID,
+    resolvedByDisplayName: 'Client',
+  });
+
+  // Find the session + booking to build a real dispute record
+  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
+  const booking = session
+    ? allClientBookings.find((b) => b.id === session.bookingId)
+    : undefined;
+
+  if (!session || !booking) {
+    setBookingRefresh((t) => t + 1);
+    return;
+  }
+
+  const dispute: Dispute = {
+    id: generateId(),
+    bookingId: booking.id,
+    requestRef: booking.requestRef,
+    raisedByUserId: booking.clientId,
+    raisedByRole: 'CLIENT',
+    raisedByDisplayName: booking.clientDisplayName,
+    againstUserId: booking.providerId,
+    againstRole: 'PROVIDER',
+    againstDisplayName: booking.providerDisplayName,
+    category: 'no_show',
+    reason:
+      'Provider proceeded with the job without my gate confirmation. See the recorded gate event for details.',
+    photos: [],
+    status: 'open',
+    messages: [],
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  addLocalDispute(dispute);
+
+  addDisputeMessage(dispute.id, {
+    authorId: 'system',
+    authorDisplayName: 'ServiceConnect',
+    authorRole: 'SYSTEM',
+    text: 'Automatically created from a disputed gate confirmation. Our support team will review this and reach out to both parties.',
+    internal: false,
+  });
+
   setBookingRefresh((t) => t + 1);
 };
 
@@ -426,6 +505,120 @@ const handleDisputeFinalPrice = (
   ];
 
   // ------------------------------------------
+// Work gate section (Step 13.3)
+// ------------------------------------------
+const renderWorkGateSection = () => {
+  if (pendingWorkGates.length === 0) return null;
+
+  return (
+    <div className={styles.arrivalBanners}>
+      {pendingWorkGates.map((session) => {
+  const booking = allClientBookings.find(
+    (b) => b.id === session.bookingId
+  );
+  if (!booking) return null;
+
+  const wasAutoProceeded = session.gateEvent?.status === 'auto_proceeded';
+
+  return (
+    <div key={session.id} className={styles.arrivalBanner}>
+      <div className={styles.workGateInner}>
+        <div className={styles.workGateLeft}>
+          <FontAwesomeIcon
+            icon={wasAutoProceeded ? faExclamationTriangle : faKey}
+            className={styles.arrivalBell}
+          />
+          <div>
+            <strong>
+              {wasAutoProceeded
+                ? `${booking.providerDisplayName} started work without your confirmation`
+                : `${booking.providerDisplayName} is at your gate`}
+            </strong>
+            <span className={styles.arrivalText}>
+              {wasAutoProceeded ? (
+                <>
+                  They proceeded on{' '}
+                  <strong>
+                    {session.gateEvent?.resolvedAt
+                      ? new Date(session.gateEvent.resolvedAt).toLocaleString('en-ZA')
+                      : '—'}
+                  </strong>
+                  . You can confirm this was fine, or dispute it.
+                </>
+              ) : (
+                <>
+                  To start work on <strong>{booking.serviceTitle}</strong>.
+                  Confirm only if the code matches.
+                </>
+              )}
+            </span>
+          </div>
+        </div>
+
+        {/* Show the code when not yet resolved */}
+        {!wasAutoProceeded && session.currentReferenceCode && (
+          <div className={styles.workGateCodeBox}>
+            <span className={styles.workGateLabel}>Reference code</span>
+            <span className={styles.workGateCode}>
+              {session.currentReferenceCode}
+            </span>
+          </div>
+        )}
+
+        {/* Note from provider when they auto-proceeded */}
+        {wasAutoProceeded && session.gateEvent?.note && (
+          <div className={styles.workGateNote}>
+            <strong>Note from provider:</strong>
+            <span>{session.gateEvent.note}</span>
+          </div>
+        )}
+
+        <div className={styles.workGateActions}>
+          {wasAutoProceeded ? (
+            <>
+              <button
+                type="button"
+                className={styles.workGateConfirm}
+                onClick={() => handleRetroactiveConfirm(session.id)}
+              >
+                Confirm — this was fine
+              </button>
+              <button
+                type="button"
+                className={styles.workGateDeny}
+                onClick={() => handleRetroactiveDispute(session.id)}
+              >
+                Dispute
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                className={styles.workGateConfirm}
+                onClick={() => handleConfirmWorkGate(session.id)}
+              >
+                Confirm &amp; grant access
+              </button>
+              <button
+                type="button"
+                className={styles.workGateDeny}
+                onClick={() => handleDenyWorkGate(session.id)}
+              >
+                This isn't my provider
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+})}
+    </div>
+  );
+};
+
+  // ------------------------------------------
   // Render content
   // ------------------------------------------
   const renderContent = () => {
@@ -470,64 +663,11 @@ const handleDisputeFinalPrice = (
         {/* Arrival banners (requests tab only) */}
         {isRequests && renderArrivalSection()}
 
-	const renderWorkGateSection = () => {
-  if (pendingWorkGates.length === 0) return null;
-
-  return (
-    <div className={styles.arrivalBanners}>
-      {pendingWorkGates.map((session) => {
-        const booking = allClientBookings.find(
-          (b) => b.id === session.bookingId
-        );
-        if (!booking) return null;
-
-        return (
-          <div key={session.id} className={styles.arrivalBanner}>
-            <div className={styles.workGateInner}>
-              <div className={styles.workGateLeft}>
-                <FontAwesomeIcon icon={faKey} className={styles.arrivalBell} />
-                <div>
-                  <strong>{booking.providerDisplayName} is at your gate</strong>
-                  <span className={styles.arrivalText}>
-                    To start work on <strong>{booking.serviceTitle}</strong>.
-                    Confirm only if the code matches.
-                  </span>
-                </div>
-              </div>
-
-              <div className={styles.workGateCodeBox}>
-                <span className={styles.workGateLabel}>Reference code</span>
-                <span className={styles.workGateCode}>
-                  {session.currentReferenceCode}
-                </span>
-              </div>
-
-              <div className={styles.workGateActions}>
-                <button
-                  type="button"
-                  className={styles.workGateConfirm}
-                  onClick={() => handleConfirmWorkGate(session.id)}
-                >
-                  Confirm &amp; grant access
-                </button>
-                <button
-                  type="button"
-                  className={styles.workGateDeny}
-                  onClick={() => handleDenyWorkGate(session.id)}
-                >
-                  This isn't my provider
-                </button>
-              </div>
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-};
-
         {/* Active work (requests tab only) */}
         {isRequests && renderActiveWorkSection()}
+
+	{/* Work gate banners (requests tab only) */}
+        {isRequests && renderWorkGateSection()}
 
         {/* Requests list */}
         {list.length === 0 ? (

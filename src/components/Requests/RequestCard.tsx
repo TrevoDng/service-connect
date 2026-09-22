@@ -660,6 +660,12 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         'Progress view coming next — you will be able to review the work session read-only.'
       );
     }}
+    onAddWorkDay={() => {
+       navigate(`/provider/bookings/${request.id}/start-work`);
+}}
+   onOpenWorkDay={() => {
+       navigate(`/provider/bookings/${request.id}/start-work`);
+}}
   />
 );
   }
