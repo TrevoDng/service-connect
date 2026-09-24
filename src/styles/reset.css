@@ -25,12 +25,13 @@ body {
   min-height: 100vh;
   width: 100%;
 }
-
+/*
 button {
   font-family: inherit;
   font-size: inherit;
   cursor: pointer;
 }
+*/
 
 a {
   color: inherit;

@@ -418,18 +418,18 @@
 }
 
 .choiceCancel {
-  align-self: flex-start;
-  padding: 0;
+  align-self: flex-start !important;
+  padding: 0 !important;
   border: none;
-  background: transparent;
-  color: var(--text-light, $text-light);
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-  cursor: pointer;
-  transition: color $transition-fast;
+  background: transparent !important;
+  color: var(--text-light, $text-light) !important;
+  font-size: $font-size-xs !important;
+  font-weight: $font-weight-medium !important;
+  cursor: pointer !important;
+  transition: color $transition-fast !important;
   
   &:hover {
-    color: var(--text-primary, $text-primary);
+    color: var(--text-primary, $text-primary) !important;
   }
 }
 

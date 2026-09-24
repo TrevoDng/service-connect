@@ -195,12 +195,28 @@ export const WizardStep: React.FC<WizardStepProps> = ({
           </div>
 
           <button
-            type="button"
-            className={styles.choiceCancel}
-            onClick={() => setShowWorkChoice(false)}
-          >
-            Cancel
-          </button>
+  type="button"
+  onClick={() => setShowWorkChoice(false)}
+  style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: '8px',
+    padding: '12px 24px',
+    borderRadius: '9999px',
+    border: '1px solid #ef476f',
+    background: 'transparent',
+    color: 'var(--text-light, #8a8aaa)',
+    fontSize: '14px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    alignSelf: 'flex-start',
+    margin: 0,
+    transition: 'all 250ms ease',
+  }}
+>
+  Cancel
+</button>
         </div>
       )}
 
