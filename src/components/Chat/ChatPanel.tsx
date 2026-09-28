@@ -1,9 +1,9 @@
+
 // src/components/Chat/ChatPanel.tsx
 
-import React, { useEffect, useRef, useState } from 'react';
-import type { ChatMessage, ChatThread } from '../../types';
-import { getMessagesByThread } from '../../data/demoChat';
-import { generateId } from '../../utils/referenceCode';
+import React, { useEffect, useRef } from 'react';
+import type { ChatThread } from '../../types';
+import { useChatThread } from '../../hooks/useChatThread';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -16,14 +16,43 @@ import { ChatBubble } from './ChatBubble';
 import { ChatComposer } from './ChatComposer';
 import styles from './ChatPanel.module.scss';
 
+// ============================================
+// PROPS
+// ============================================
+
 export interface ChatPanelProps {
   thread: ChatThread | null;
   viewerRole: 'CLIENT' | 'PROVIDER';
-  viewerUserId: string;
+  /**
+   * Effective chat user id for the viewer, or `null` for observer mode.
+   *
+   * NOTE: For backward compatibility with the current MessagesView, we
+   * also accept the legacy string `'observer'` and treat it as null.
+   * Once MessagesView is updated (Step 7), this legacy handling can go.
+   */
+  viewerUserId: string | null;
   observerMode?: boolean;
   onBack?: () => void;
   onBookProvider?: (providerId: string) => void;
 }
+
+// ============================================
+// HELPERS
+// ============================================
+
+/**
+ * Normalise the legacy `'observer'` sentinel to `null` so the hook can
+ * cleanly treat it as "no authenticated viewer".
+ */
+const normaliseViewerId = (raw: string | null): string | null => {
+  if (!raw) return null;
+  if (raw === 'observer') return null;
+  return raw;
+};
+
+// ============================================
+// COMPONENT
+// ============================================
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
   thread,
@@ -33,44 +62,33 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onBack,
   onBookProvider,
 }) => {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const scrollRef = useRef<HTMLDivElement | null>(null);
   const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement | null>(null);
 
-  // Load messages when the thread changes
-  useEffect(() => {
-    if (!thread) {
-      setMessages([]);
-      return;
-    }
-    const loaded = getMessagesByThread(thread.id);
-    setMessages(loaded);
-  }, [thread]);
+  const threadId = thread?.id ?? null;
+  const effectiveViewerId = observerMode ? null : normaliseViewerId(viewerUserId);
 
-  // Auto-scroll to the bottom when messages change
+  // ------------------------------------------
+  // HOOK — live messages + send + auto-mark-read
+  // ------------------------------------------
+  // The hook handles: loading, cross-tab subscription, mark-read on
+  // open, and safe no-ops when threadId or viewerId is missing.
+  const { messages, send } = useChatThread(threadId, effectiveViewerId);
+
+  // ------------------------------------------
+  // AUTO-SCROLL
+  // ------------------------------------------
+  // Jump to the bottom whenever the message list grows or the thread
+  // changes. Keeps the newest message in view.
   useEffect(() => {
     const el = scrollRef.current;
     if (el) {
       el.scrollTop = el.scrollHeight;
     }
-  }, [messages]);
-
-  const handleSend = (text: string) => {
-    if (observerMode) return;
-    if (!thread) return;
-    const newMessage: ChatMessage = {
-      id: generateId(),
-      threadId: thread.id,
-      senderId: viewerUserId,
-      text,
-      sentAt: new Date().toISOString(),
-      status: 'sent',
-    };
-    setMessages((prev) => [...prev, newMessage]);
-  };
+  }, [messages, threadId]);
 
   // ------------------------------------------
-  // Empty state
+  // EMPTY STATE — no thread selected
   // ------------------------------------------
   if (!thread) {
     return (
@@ -83,12 +101,12 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   }
 
   // ------------------------------------------
-  // Resolve the "other" participant
+  // RESOLVE THE "OTHER" PARTICIPANT
   // ------------------------------------------
   const other = viewerRole === 'CLIENT' ? thread.provider : thread.client;
 
   // ------------------------------------------
-  // Render
+  // RENDER
   // ------------------------------------------
   return (
     <div className={styles.panel}>
@@ -120,25 +138,30 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
 
         <div className={styles.headerInfo}>
           <div className={styles.headerName}>
-  {viewerRole === 'CLIENT' ? (
-    <button
-      type="button"
-      className={styles.headerNameLink}
-      onClick={() => navigate(`/providers/${thread.providerId}`)}
-    >
-      {other.displayName}
-    </button>
-  ) : (
-    <span>{other.displayName}</span>
-  )}
-  {viewerRole === 'CLIENT' && other.providerVerified && (
-    <FontAwesomeIcon icon={faCheckCircle} className={styles.verified} />
-  )}
-</div>
+            {viewerRole === 'CLIENT' ? (
+              <button
+                type="button"
+                className={styles.headerNameLink}
+                onClick={() => navigate(`/providers/${thread.providerId}`)}
+              >
+                {other.displayName}
+              </button>
+            ) : (
+              <span>{other.displayName}</span>
+            )}
+            {viewerRole === 'CLIENT' && other.providerVerified && (
+              <FontAwesomeIcon
+                icon={faCheckCircle}
+                className={styles.verified}
+              />
+            )}
+          </div>
 
           {viewerRole === 'CLIENT' && other.providerRating !== undefined && (
             <div className={styles.headerMeta}>
-              <span className={styles.rating}>⭐ {other.providerRating.toFixed(1)}</span>
+              <span className={styles.rating}>
+                ⭐ {other.providerRating.toFixed(1)}
+              </span>
               {other.providerCompletedJobs !== undefined && (
                 <span>· {other.providerCompletedJobs} jobs completed</span>
               )}
@@ -176,28 +199,27 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
               key={msg.id}
               message={msg}
               senderName={
-                msg.senderId === viewerUserId
-                  ? 'You'
-                  : other.displayName
+                msg.senderId === effectiveViewerId ? 'You' : other.displayName
               }
-              isOwn={msg.senderId === viewerUserId}
+              isOwn={msg.senderId === effectiveViewerId}
               senderAvatarGradient={other.avatarGradient}
             />
           ))
         )}
       </div>
 
-      {/* Composer (hidden in observer mode) */}
-{observerMode ? (
-  <div className={styles.readOnlyBanner}>
-    <FontAwesomeIcon icon={faEye} />
-    <span>Read-only — support view</span>
-  </div>
-) : (
-  <ChatComposer onSend={handleSend} />
-)}
+      {/* Composer — hidden in observer mode */}
+      {observerMode ? (
+        <div className={styles.readOnlyBanner}>
+          <FontAwesomeIcon icon={faEye} />
+          <span>Read-only — support view</span>
+        </div>
+      ) : (
+        <ChatComposer onSend={send} />
+      )}
     </div>
   );
 };
 
 export default ChatPanel;
+
