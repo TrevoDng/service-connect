@@ -12,6 +12,7 @@ import {
   buildCustomDemoUser,
 } from '../data/demoUsers';
 import type { DemoUserSeed } from '../data/demoUsers';
+import { clearAllLocalChat } from '../utils/localChat';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUser,
@@ -85,6 +86,26 @@ export const DevLogin: React.FC = () => {
     window.location.href = '/service-connect/';
   };
 
+  const handleClearChat = () => {
+  const confirmed = window.confirm(
+    'Clear all chat threads and messages from this device?\n\n' +
+      'This wipes chat data only — bookings, reviews, notifications, ' +
+      'and your login stay intact.'
+  );
+  if (!confirmed) return;
+
+  clearAllLocalChat();
+  // Also clear the old seed flag so any lingering "already seeded" state goes away
+  try {
+    localStorage.removeItem('serviceconnect-chat-seeded');
+  } catch {
+    /* ignore */
+  }
+
+  // Reload so the UI re-reads storage from scratch
+  window.location.reload();
+};
+
   const handleLogout = async () => {
     await logout();
     navigate('/dev-login');
@@ -103,22 +124,36 @@ export const DevLogin: React.FC = () => {
 
       {/* Current session */}
       {user && (
-        <div className={styles.currentSession}>
-          <div className={styles.sessionInfo}>
-            <span className={styles.sessionLabel}>Currently logged in as</span>
-            <span className={styles.sessionName}>
-              {user.firstName} {user.lastName}
-            </span>
-            <span className={styles.sessionMeta}>
-              {user.email} · {user.role}
-            </span>
-          </div>
-          <button className={styles.logoutBtn} onClick={handleLogout}>
-            <FontAwesomeIcon icon={faSignOutAlt} />
-            Logout
-          </button>
-        </div>
-      )}
+  <div className={styles.currentSession}>
+    <div className={styles.sessionInfo}>
+      <span className={styles.sessionLabel}>Currently logged in as</span>
+      <span className={styles.sessionName}>
+        {user.firstName} {user.lastName}
+      </span>
+      <span className={styles.sessionMeta}>
+        {user.email} · {user.role}
+      </span>
+    </div>
+
+    <div className={styles.sessionActions}>
+      <button
+        type="button"
+        className={styles.clearChatBtn}
+        onClick={handleClearChat}
+      >
+        Clear chat data
+      </button>
+      <button
+        type="button"
+        className={styles.logoutBtn}
+        onClick={handleLogout}
+      >
+        <FontAwesomeIcon icon={faSignOutAlt} />
+        Logout
+      </button>
+    </div>
+  </div>
+)}
 
       {/* Quick login */}
       <section className={styles.section}>

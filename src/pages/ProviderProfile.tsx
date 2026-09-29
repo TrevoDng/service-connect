@@ -8,6 +8,7 @@ import { getProviderRatingSummary, getReviewsForProvider } from '../utils/allRev
 import { getDemoProviderProfile } from '../data/demoProviderProfiles';
 import { demoChatThreads } from '../data/demoChat';
 import { formatDate, formatRelative } from '../utils/formatters';
+import { useStartChat } from '../hooks/useStartChat';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
@@ -36,6 +37,7 @@ const getInitials = (name: string): string => {
 // ============================================
 
 export const ProviderProfile: React.FC = () => {
+  const { startChat, canStartChat } = useStartChat();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -78,6 +80,7 @@ export const ProviderProfile: React.FC = () => {
   const memberSince = profile?.memberSince;
 
   // Message thread id — if the current user (client) has a thread with this provider
+   /*
   const threadWithClient = useMemo(() => {
     if (!user) return null;
     return (
@@ -87,6 +90,7 @@ export const ProviderProfile: React.FC = () => {
       demoChatThreads.find((t) => t.providerId === id && t.clientId === 'c-001') // fallback for demo
     );
   }, [id, user]);
+  */
 
   // ------------------------------------------
   // Render
@@ -188,16 +192,27 @@ export const ProviderProfile: React.FC = () => {
         )}
 
         {/* Message button */}
-        {threadWithClient && (
-          <button
+        {/* Chat button — visible only to logged-in clients */}
+	{canStartChat && providerIdForChat && (
+  	  <button
             type="button"
             className={styles.messageBtn}
-            onClick={() => navigate('/client/dashboard')}
-          >
-            <FontAwesomeIcon icon={faComments} />
-            Message {providerName.split(' ')[0]}
-          </button>
-        )}
+    onClick={() =>
+      startChat({
+        providerId: providerIdForChat,
+        providerDisplayName: providerName,
+        providerAvatarGradient: gradient,
+        providerRating: displayRating ?? undefined,
+        providerCompletedJobs: completedJobs,
+        providerCategories: categories,
+        providerVerified: verified,
+      })
+    }
+  >
+    <FontAwesomeIcon icon={faComments} />
+    Chat with {providerName.split(' ')[0]}
+  </button>
+)}
 
         {/* Reviews */}
         <section className={styles.card}>

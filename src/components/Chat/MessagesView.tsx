@@ -2,7 +2,7 @@
 // src/components/Chat/MessagesView.tsx
 
 import React, { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../account/context/AuthContext';
 import { resolveChatUserId } from '../../utils/chatIdentity';
 import { useChatThreads } from '../../hooks/useChatThreads';
@@ -34,6 +34,8 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
   onBookProvider,
   observerMode = false,
 }) => {
+  const [searchParams] = useSearchParams();
+  const threadIdFromUrl = searchParams.get('thread');
   const navigate = useNavigate();
   const { user } = useAuth();
 
@@ -76,17 +78,34 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Auto-select first thread on desktop, and clean up selection if the
-  // selected thread disappears (e.g. deleted in another tab).
-  useEffect(() => {
-    if (!isMobile && threads.length > 0 && selectedThreadId === null) {
-      setSelectedThreadId(threads[0].id);
-    }
-    if (selectedThreadId && !threads.some((t) => t.id === selectedThreadId)) {
-      setSelectedThreadId(null);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile, threads]);
+  // Auto-select logic, in priority order:
+//   1. ?thread=<id> from the URL (set by the Chat button)
+//   2. First thread on desktop (default behavior)
+//   3. Otherwise: nothing selected
+// Also cleans up when the selected thread no longer exists.
+useEffect(() => {
+  // Priority 1 — URL says which thread to open
+  if (
+    threadIdFromUrl &&
+    threads.some((t) => t.id === threadIdFromUrl) &&
+    selectedThreadId !== threadIdFromUrl
+  ) {
+    setSelectedThreadId(threadIdFromUrl);
+    return;
+  }
+
+  // Priority 2 — desktop auto-select first
+  if (!isMobile && threads.length > 0 && selectedThreadId === null) {
+    setSelectedThreadId(threads[0].id);
+    return;
+  }
+
+  // Cleanup — selected thread no longer exists
+  if (selectedThreadId && !threads.some((t) => t.id === selectedThreadId)) {
+    setSelectedThreadId(null);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [isMobile, threads, threadIdFromUrl]);
 
   const selectedThread =
     threads.find((t) => t.id === selectedThreadId) || null;
@@ -155,15 +174,28 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
 
         <div className={styles.threadListScroll}>
           {threads.length === 0 ? (
-            <div className={styles.emptyList}>
-              <FontAwesomeIcon
-                icon={faComments}
-                className={styles.emptyListIcon}
-              />
-              <p>No conversations yet.</p>
-              <p className={styles.emptyListHint}>{emptyHint}</p>
-            </div>
-          ) : (
+  <div className={styles.emptyList}>
+    <FontAwesomeIcon
+      icon={faComments}
+      className={styles.emptyListIcon}
+    />
+    <p>No conversations yet.</p>
+    <p className={styles.emptyListHint}>{emptyHint}</p>
+
+    {/* Start-a-chat CTA — visible to logged-in clients AND
+        providers. Both parties link to the providers list. */}
+    {viewerUserId && !observerMode && (
+      <button
+        type="button"
+        className={styles.emptyStartChatBtn}
+        onClick={() => navigate('/services')}
+      >
+        <FontAwesomeIcon icon={faComments} />
+        Start a chat
+      </button>
+    )}
+  </div>
+) : (
             threads.map((thread) => (
               <ChatThreadListItem
                 key={thread.id}

@@ -350,3 +350,47 @@
     width: 100%;
   }
 }
+
+// ============================================
+// SESSION ACTIONS (Step 9 — clear chat button)
+// ============================================
+
+.sessionActions {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  flex-shrink: 0;
+
+  @include mobile {
+    width: 100%;
+    flex-direction: column-reverse;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+.clearChatBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  padding: $spacing-sm $spacing-lg;
+  border-radius: $border-radius-full;
+  border: 1px solid var(--border-color, $border-color);
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+    background: rgba(102, 126, 234, 0.05);
+  }
+}
