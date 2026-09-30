@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../styles/context/ThemeContext';
-import { useAuth } from '../account/context/AuthContext';
 import { getProviderRatingSummary, getReviewsForProvider } from '../utils/allReviews';
 import { getDemoProviderProfile } from '../data/demoProviderProfiles';
 import { demoChatThreads } from '../data/demoChat';
@@ -40,7 +39,6 @@ export const ProviderProfile: React.FC = () => {
   const { startChat, canStartChat } = useStartChat();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { theme } = useTheme();
 
   // Try to find the provider in demo chat threads for name + fallback rating
@@ -78,19 +76,6 @@ export const ProviderProfile: React.FC = () => {
   const categories = profile?.categories ?? chatProvider?.providerCategories ?? [];
 
   const memberSince = profile?.memberSince;
-
-  // Message thread id — if the current user (client) has a thread with this provider
-   /*
-  const threadWithClient = useMemo(() => {
-    if (!user) return null;
-    return (
-      demoChatThreads.find(
-        (t) => t.providerId === id && t.clientId === user.id
-      ) ||
-      demoChatThreads.find((t) => t.providerId === id && t.clientId === 'c-001') // fallback for demo
-    );
-  }, [id, user]);
-  */
 
   // ------------------------------------------
   // Render
@@ -193,13 +178,13 @@ export const ProviderProfile: React.FC = () => {
 
         {/* Message button */}
         {/* Chat button — visible only to logged-in clients */}
-	{canStartChat && providerIdForChat && (
+	{canStartChat && id && (
   	  <button
             type="button"
             className={styles.messageBtn}
     onClick={() =>
       startChat({
-        providerId: providerIdForChat,
+        providerId: id,
         providerDisplayName: providerName,
         providerAvatarGradient: gradient,
         providerRating: displayRating ?? undefined,

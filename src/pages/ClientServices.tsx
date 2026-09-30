@@ -5,10 +5,12 @@ import { serviceService } from '../services/service.service';
 import type { Service, ServiceFilterOptions } from '../types/service.types';
 import { ServicesGrid } from '../components/Client/ServicesGrid';
 import { ServicesFilter } from '../components/Client/ServicesFilter';
+import { useStartChat } from '../hooks/useStartChat';
 import styles from './ClientServices.module.scss';
 
 export const ClientServices: React.FC = () => {
   const navigate = useNavigate();
+  const { startChat, canStartChat } = useStartChat();
 
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,8 +68,22 @@ export const ClientServices: React.FC = () => {
   };
 
   const handleHire = (service: Service) => {
-    navigate(`/services/${service.id}`);
-  };
+  navigate(`/services/${service.id}`);
+};
+
+const handleChat = (service: Service) => {
+  // Guard: need a provider id to create or open a thread.
+  // The Chat button is hidden when provider_id is missing, but we
+  // double-check here in case the guard ever drifts.
+  if (!service.provider_id) return;
+
+  startChat({
+    providerId: service.provider_id,
+    providerDisplayName: service.provider_name || 'Provider',
+    providerCategories: service.category ? [service.category] : undefined,
+    providerRating: service.rating,
+  });
+};
 
   return (
     <div className={styles.clientServices}>
@@ -106,6 +122,7 @@ export const ClientServices: React.FC = () => {
             services={services}
             onViewDetails={handleViewDetails}
             onHire={handleHire}
+	    onChat={ canStartChat ? handleChat : undefined }
           />
         </>
       )}

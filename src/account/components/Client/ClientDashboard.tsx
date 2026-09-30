@@ -1,6 +1,6 @@
 // src/account/components/Client/ClientDashboard.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
 import type { WorkSession, Booking as BookingModel, Dispute } from '../../../types';
@@ -63,7 +63,12 @@ export const ClientDashboard: React.FC = () => {
   const { logout } = useAuth();
   const { theme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<ClientTab>('requests');
+  const [searchParams] = useSearchParams();
+  const threadIdFromUrl = searchParams.get('thread');
+
+  const [activeTab, setActiveTab] = useState<ClientTab>(() =>
+    threadIdFromUrl ? 'messages' : 'requests'
+  );
   const [searchQuery, setSearchQuery] = useState('');
 
   // Local work sessions (Step 5b) — mutable for gate confirmation
@@ -80,6 +85,19 @@ export const ClientDashboard: React.FC = () => {
   const [expandedConfirmBookingId, setExpandedConfirmBookingId] = useState<string | null>(null);
   const [reviewRefresh, setReviewRefresh] = useState(0);
 const [bookingRefresh, setBookingRefresh] = useState(0);
+
+// When the URL gains/changes a ?thread= param, switch to Messages.
+  // This covers the case where the dashboard is already mounted and
+  // the user clicks "Chat with X" from a provider profile — the route
+  // changes but the component doesn't remount.
+
+useEffect(() => {
+    if (threadIdFromUrl) {
+      setActiveTab('messages');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadIdFromUrl]);
+
 
 // Sessions waiting for the client to confirm the gate code
 const pendingWorkGates = useMemo(() => {

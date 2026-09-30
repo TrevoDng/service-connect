@@ -8,12 +8,14 @@ interface ServicesGridProps {
   services: Service[];
   onViewDetails: (service: Service) => void;
   onHire: (service: Service) => void;
+  onChat?: (service: Service) => void;
 }
 
 export const ServicesGrid: React.FC<ServicesGridProps> = ({ 
   services, 
   onViewDetails, 
-  onHire 
+  onHire,
+  onChat,
 }) => {
   return (
     <div className={styles.servicesGrid}>
@@ -23,6 +25,7 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({
           service={service}
           onViewDetails={onViewDetails}
           onHire={onHire}
+	  onChat={onChat}
         />
       ))}
     </div>

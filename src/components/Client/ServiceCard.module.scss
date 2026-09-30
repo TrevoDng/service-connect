@@ -264,3 +264,31 @@
     outline-offset: 2px;
   }
 }
+
+// ============================================
+// CHAT BUTTON (Step 10.5)
+// ============================================
+
+.chatBtn {
+  flex: 1;
+  padding: $spacing-sm $spacing-lg;
+  font-size: $font-size-sm;
+  border: 1px solid $primary;
+  background: transparent;
+  color: $primary;
+  border-radius: $border-radius-md;
+  cursor: pointer;
+  transition: all $transition-base;
+  font-weight: $font-weight-medium;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.08);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm, $shadow-sm);
+  }
+
+  @include mobile {
+    padding: $spacing-xs $spacing-md;
+    font-size: $font-size-xs;
+  }
+}

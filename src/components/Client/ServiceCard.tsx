@@ -14,12 +14,14 @@ interface ServiceCardProps {
   service: Service;
   onViewDetails: (service: Service) => void;
   onHire: (service: Service) => void;
+  onChat?: (service: Service) => void;
 }
 
 export const ServiceCard: React.FC<ServiceCardProps> = ({
   service,
   onViewDetails,
   onHire,
+  onChat,
 }) => {
   const handleCardClick = () => {
     onViewDetails(service);
@@ -107,26 +109,41 @@ export const ServiceCard: React.FC<ServiceCardProps> = ({
         )}
 
         {/* Actions */}
-        <div className={styles.serviceActions}>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onViewDetails(service);
-            }}
+	<div className={styles.serviceActions}>
+  	  <button
+	     onClick={(e) => {
+      	     e.stopPropagation();
+             onViewDetails(service);
+             }}
             className={styles.viewDetailsBtn}
           >
-            View Details
+           View Details
           </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onHire(service);
-            }}
-            className={styles.hireBtn}
-          >
-            Contact Expert
-          </button>
-        </div>
+
+  {/* Chat — only shown when the service has a provider attached
+      AND the parent supplies an onChat handler. */}
+  {onChat && service.provider_id && (
+    <button
+      onClick={(e) => {
+        e.stopPropagation();
+        onChat(service);
+      }}
+      className={styles.chatBtn}
+    >
+      Chat
+    </button>
+  )}
+
+  <button
+    onClick={(e) => {
+      e.stopPropagation();
+      onHire(service);
+    }}
+    className={styles.hireBtn}
+  >
+    Contact Expert
+  </button>
+</div>
       </div>
     </div>
   );

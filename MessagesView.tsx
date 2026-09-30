@@ -1,5 +1,5 @@
 
-// src/components/Chat/MessagesView.tsx
+// /MessagesView.tsx
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
