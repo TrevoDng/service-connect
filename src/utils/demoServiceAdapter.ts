@@ -53,12 +53,12 @@ const toService = (d: (typeof demoServices)[number]): Service => {
     rating: d.rating ?? 0,
     location: LOCATION_MAP[d.category] ?? 'South Africa',
     skills: [d.category, d.title.split(' ')[0]],
-    providerId: provider.id,
+    provider_id: provider.id,
     provider_name: provider.name,
     estimatedDuration: 'Varies by job',
     status: 'active',
-    color: d.color,
-  } as unknown as Service;
+    created_at: new Date('2026-01-01T00:00:00.000Z').toISOString(),
+  };
 };
 
 // ============================================
