@@ -1,3 +1,4 @@
+
 // src/components/Notifications/NotificationItem.tsx
 
 import React from 'react';
@@ -18,6 +19,7 @@ import {
   faTruckFast,
   faCircleExclamation,
   faUserShield,
+  faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './NotificationItem.module.scss';
 
@@ -41,6 +43,8 @@ interface IconSpec {
 
 const getIconSpec = (type: NotificationType): IconSpec => {
   switch (type) {
+    case 'booking_submitted':
+      return { icon: faPaperPlane, tone: 'info' };
     case 'booking_requested':
       return { icon: faBell, tone: 'info' };
     case 'booking_accepted':
@@ -133,3 +137,4 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 };
 
 export default NotificationItem;
+

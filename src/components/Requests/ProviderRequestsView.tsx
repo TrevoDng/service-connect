@@ -2,18 +2,22 @@
 
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Booking } from '../../types';
+import type { Booking, Notification } from '../../types';
 import {
   getBookingsForProvider,
   isCurrentRequest,
   isClosedRequest,
   getBookingById,
 } from '../../utils/allBookings';
-//import { getBookingById } from '../../utils/allBookings';
 import { getLocalWorkSessions } from '../../utils/localWorkSessions';
 import { setBookingOverride } from '../../utils/localBookingOverrides';
+import { useNotifications } from '../../account/context/NotificationContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSearch, faHardHat, faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import {
+  faSearch,
+  faHardHat,
+  faArrowRight,
+} from '@fortawesome/free-solid-svg-icons';
 import { RequestCard } from './RequestCard';
 import { generateId } from '../../utils/referenceCode';
 import styles from './ProviderRequestsView.module.scss';
@@ -50,6 +54,7 @@ type Tab = 'current' | 'closed';
 
 export const ProviderRequestsView: React.FC = () => {
   const navigate = useNavigate();
+  const { add } = useNotifications();
   const [activeTab, setActiveTab] = useState<Tab>('current');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTick, setRefreshTick] = useState(0);
@@ -87,31 +92,55 @@ export const ProviderRequestsView: React.FC = () => {
   );
 
   // ------------------------------------------
-// Resumable work sessions (Step 13.3)
-// ------------------------------------------
-// Any local work session where the provider still needs to interact
-// with the gate page (arrive → share code → client confirms → clock in).
-const resumableSessions = useMemo(
-  () =>
-    getLocalWorkSessions().filter((s) => {
-      if (s.providerId !== DEMO_PROVIDER_ID) return false;
-      const b = getBookingById(s.bookingId);
-      if (!b) return false;
-      return b.status === 'price_agreed' || b.status === 'in_progress';
-    }),
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [refreshTick]
-);
+  // Resumable work sessions (Step 13.3)
+  // ------------------------------------------
+  const resumableSessions = useMemo(
+    () =>
+      getLocalWorkSessions().filter((s) => {
+        if (s.providerId !== DEMO_PROVIDER_ID) return false;
+        const b = getBookingById(s.bookingId);
+        if (!b) return false;
+        return b.status === 'price_agreed' || b.status === 'in_progress';
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [refreshTick]
+  );
+
+  // ------------------------------------------
+  // Notification helpers
+  // ------------------------------------------
+  const notifyClient = (notification: Notification) => {
+    add(notification);
+  };
 
   // ------------------------------------------
   // Actions
   // ------------------------------------------
   const handleAccept = (booking: Booking) => {
+    const fee = getConsultationFeeFor(booking.serviceCategory);
+    const now = new Date().toISOString();
+
     setBookingOverride(booking.id, {
       status: 'accepted',
-      consultationFee: getConsultationFeeFor(booking.serviceCategory),
-      updatedAt: new Date().toISOString(),
+      consultationFee: fee,
+      updatedAt: now,
     });
+
+    // Notify the client
+    notifyClient({
+      id: generateId(),
+      userId: booking.clientId,
+      type: 'booking_accepted',
+      priority: 'high',
+      title: 'Request accepted',
+      message: `${booking.providerDisplayName} accepted your request for ${booking.serviceTitle}. Pay the consultation fee of R${fee} to schedule the site visit.`,
+      linkTo: '/client/dashboard',
+      actorId: booking.providerId,
+      actorDisplayName: booking.providerDisplayName,
+      bookingId: booking.id,
+      createdAt: now,
+    });
+
     setRefreshTick((t) => t + 1);
   };
 
@@ -122,19 +151,38 @@ const resumableSessions = useMemo(
     );
     if (reason === null) return; // user cancelled the prompt
 
+    const trimmed =
+      reason.trim() ||
+      'Unable to take this job at the moment. Best of luck finding another provider.';
+    const now = new Date().toISOString();
+
     setBookingOverride(booking.id, {
       status: 'declined',
-      declineReason:
-        reason.trim() ||
-        'Unable to take this job at the moment. Best of luck finding another provider.',
-      updatedAt: new Date().toISOString(),
+      declineReason: trimmed,
+      updatedAt: now,
     });
+
+    // Notify the client
+    notifyClient({
+      id: generateId(),
+      userId: booking.clientId,
+      type: 'booking_declined',
+      priority: 'normal',
+      title: 'Request declined',
+      message: `${booking.providerDisplayName} declined your request for ${booking.serviceTitle}. Reason: ${trimmed}`,
+      linkTo: '/client/dashboard',
+      actorId: booking.providerId,
+      actorDisplayName: booking.providerDisplayName,
+      bookingId: booking.id,
+      createdAt: now,
+    });
+
     setRefreshTick((t) => t + 1);
   };
 
   const handleViewOutcomes = (booking: Booking) => {
-  navigate(`/bookings/${booking.id}/outcomes`);
-};
+    navigate(`/bookings/${booking.id}/outcomes`);
+  };
 
   const handleViewWorkSession = (booking: Booking) => {
     console.log('[7x TODO] Open work session for', booking.id);
@@ -145,120 +193,117 @@ const resumableSessions = useMemo(
   };
 
   const handleProposeFinalPrice = (
-  booking: Booking,
-  amount: number,
-  note: string
-) => {
-  setBookingOverride(booking.id, {
-    status: 'price_proposed',
-    finalPrice: amount,
-    holdFirm: false,
-    pendingCounterParty: 'CLIENT',
-    priceHistory: [
-      ...booking.priceHistory,
-      {
-        stage: 'final_proposed',
-        amount,
-        at: new Date().toISOString(),
-        byUserId: booking.providerId,
-        note: note || undefined,
-      },
-    ],
-    updatedAt: new Date().toISOString(),
-  });
-  setRefreshTick((t) => t + 1);
-};
+    booking: Booking,
+    amount: number,
+    note: string
+  ) => {
+    setBookingOverride(booking.id, {
+      status: 'price_proposed',
+      finalPrice: amount,
+      holdFirm: false,
+      pendingCounterParty: 'CLIENT',
+      priceHistory: [
+        ...booking.priceHistory,
+        {
+          stage: 'final_proposed',
+          amount,
+          at: new Date().toISOString(),
+          byUserId: booking.providerId,
+          note: note || undefined,
+        },
+      ],
+      updatedAt: new Date().toISOString(),
+    });
+    setRefreshTick((t) => t + 1);
+  };
 
-const handleAcceptCounter = (booking: Booking) => {
-  setBookingOverride(booking.id, {
-    status: 'price_agreed',
-    pendingCounterParty: undefined,
-    holdFirm: false,
-    priceHistory: [
-      ...booking.priceHistory,
-      {
-        stage: 'final_agreed',
-        amount: booking.finalPrice ?? 0,
-        at: new Date().toISOString(),
-        byUserId: booking.providerId,
-        note: 'Provider accepted the client counter.',
-      },
-    ],
-    updatedAt: new Date().toISOString(),
-  });
-  setRefreshTick((t) => t + 1);
-};
+  const handleAcceptCounter = (booking: Booking) => {
+    setBookingOverride(booking.id, {
+      status: 'price_agreed',
+      pendingCounterParty: undefined,
+      holdFirm: false,
+      priceHistory: [
+        ...booking.priceHistory,
+        {
+          stage: 'final_agreed',
+          amount: booking.finalPrice ?? 0,
+          at: new Date().toISOString(),
+          byUserId: booking.providerId,
+          note: 'Provider accepted the client counter.',
+        },
+      ],
+      updatedAt: new Date().toISOString(),
+    });
+    setRefreshTick((t) => t + 1);
+  };
 
-const handleHoldFirm = (booking: Booking) => {
-  setBookingOverride(booking.id, {
-    holdFirm: true,
-    pendingCounterParty: 'CLIENT',
-    updatedAt: new Date().toISOString(),
-  });
-  setRefreshTick((t) => t + 1);
-};
+  const handleHoldFirm = (booking: Booking) => {
+    setBookingOverride(booking.id, {
+      holdFirm: true,
+      pendingCounterParty: 'CLIENT',
+      updatedAt: new Date().toISOString(),
+    });
+    setRefreshTick((t) => t + 1);
+  };
 
   const handleStartConsultation = (booking: Booking) => {
-  navigate(`/provider/bookings/${booking.id}/consultation`);
-};
+    navigate(`/provider/bookings/${booking.id}/consultation`);
+  };
 
   // ------------------------------------------
   // Render
   // ------------------------------------------
 
-  // ------------------------------------------
-// Resume work session banner
-// ------------------------------------------
-const renderResumeSection = () => {
-  if (resumableSessions.length === 0) return null;
+  // Resume work session banner
+  const renderResumeSection = () => {
+    if (resumableSessions.length === 0) return null;
 
-  return (
-    <div className={styles.resumeSection}>
-      {resumableSessions.map((session) => {
-        const booking = getBookingById(session.bookingId);
-        if (!booking) return null;
-        const gateConfirmed = session.gateConfirmedByClient === true;
+    return (
+      <div className={styles.resumeSection}>
+        {resumableSessions.map((session) => {
+          const booking = getBookingById(session.bookingId);
+          if (!booking) return null;
+          const gateConfirmed = session.gateConfirmedByClient === true;
 
-        return (
-          <button
-            key={session.id}
-            type="button"
-            className={styles.resumeBanner}
-            onClick={() =>
-              navigate(`/provider/bookings/${booking.id}/start-work`)
-            }
-          >
-            <div className={styles.resumeIcon}>
-              <FontAwesomeIcon icon={faHardHat} />
-            </div>
-            <div className={styles.resumeBody}>
-              <span className={styles.resumeTitle}>
-                Continue work session
-              </span>
-              <span className={styles.resumeMeta}>
-                {booking.serviceTitle} · {booking.clientDisplayName}
-              </span>
-              <span
-                className={`${styles.resumeStatus} ${
-                  gateConfirmed ? styles.resumeReady : styles.resumeWaiting
-                }`}
-              >
-                {gateConfirmed
-                  ? 'Cleared to clock in'
-                  : 'Waiting for client to confirm your code'}
-              </span>
-            </div>
-            <FontAwesomeIcon
-              icon={faArrowRight}
-              className={styles.resumeArrow}
-            />
-          </button>
-        );
-      })}
-    </div>
-  );
-};
-
+          return (
+            <button
+              key={session.id}
+              type="button"
+              className={styles.resumeBanner}
+              onClick={() =>
+                navigate(`/provider/bookings/${booking.id}/start-work`)
+              }
+            >
+              <div className={styles.resumeIcon}>
+                <FontAwesomeIcon icon={faHardHat} />
+              </div>
+              <div className={styles.resumeBody}>
+                <span className={styles.resumeTitle}>
+                  Continue work session
+                </span>
+                <span className={styles.resumeMeta}>
+                  {booking.serviceTitle} · {booking.clientDisplayName}
+                </span>
+                <span
+                  className={`${styles.resumeStatus} ${
+                    gateConfirmed ? styles.resumeReady : styles.resumeWaiting
+                  }`}
+                >
+                  {gateConfirmed
+                    ? 'Cleared to clock in'
+                    : 'Waiting for client to confirm your code'}
+                </span>
+              </div>
+              <FontAwesomeIcon
+                icon={faArrowRight}
+                className={styles.resumeArrow}
+              />
+            </button>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div className={styles.view}>
@@ -284,8 +329,7 @@ const renderResumeSection = () => {
       </div>
 
       {/* Resume work session banner */}
-         {renderResumeSection()}
-
+      {renderResumeSection()}
 
       {/* Tabs */}
       <div className={styles.tabs}>
@@ -318,7 +362,9 @@ const renderResumeSection = () => {
             {activeTab === 'current' ? '📬' : '📁'}
           </span>
           <h3>
-            {activeTab === 'current' ? 'No active requests' : 'No closed requests'}
+            {activeTab === 'current'
+              ? 'No active requests'
+              : 'No closed requests'}
           </h3>
           <p>
             {activeTab === 'current'
@@ -344,13 +390,13 @@ const renderResumeSection = () => {
               onDecline={handleDecline}
               onViewOutcomes={handleViewOutcomes}
               onViewWorkSession={handleViewWorkSession}
-	      onStartConsultation={handleStartConsultation}
-	      onProposeFinalPrice={handleProposeFinalPrice}
+              onStartConsultation={handleStartConsultation}
+              onProposeFinalPrice={handleProposeFinalPrice}
               onAcceptCounter={handleAcceptCounter}
               onHoldFirm={handleHoldFirm}
-	      onReviewSubmitted={() => {
-                 setRefreshTick((t) => t + 1);
-                 setReviewRefresh((t) => t + 1);
+              onReviewSubmitted={() => {
+                setRefreshTick((t) => t + 1);
+                setReviewRefresh((t) => t + 1);
               }}
               onOpen={handleOpen}
             />

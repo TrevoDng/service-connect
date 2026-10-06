@@ -1,3 +1,4 @@
+
 // src/types/notification.types.ts
 
 // ============================================
@@ -10,6 +11,7 @@
 
 export type NotificationType =
   // booking lifecycle
+  | 'booking_submitted'         // client receives a receipt: "your request was sent"
   | 'booking_requested'         // provider receives a new request
   | 'booking_accepted'          // client receives acceptance
   | 'booking_declined'          // client receives decline + reason
@@ -60,3 +62,4 @@ export interface Notification {
   createdAt: string;            // ISO
   readAt?: string;
 }
+

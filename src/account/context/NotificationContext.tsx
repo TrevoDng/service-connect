@@ -1,3 +1,4 @@
+
 // src/account/context/NotificationContext.tsx
 
 import React, {
@@ -6,26 +7,24 @@ import React, {
   useState,
   useMemo,
   useCallback,
+  useEffect,
 } from 'react';
 import type { ReactNode } from 'react';
 import type { Notification } from '../../types';
 import { demoNotifications } from '../../data/demoNotifications';
+import { resolveDemoUserId } from '../../utils/demoIds';
+import {
+  getNotificationsForUser,
+  addLocalNotification,
+  addLocalNotifications,
+  markLocalNotificationRead,
+  markAllLocalNotificationsRead,
+  deleteLocalNotification,
+  clearLocalNotifications,
+  hasSeededForUser,
+  markSeededForUser,
+} from '../../utils/localNotifications';
 import { useAuth } from './AuthContext';
-
-// ============================================
-// DEMO USER MAPPING
-// ============================================
-//
-// Until the backend is wired, we resolve the "current user id" per role
-// against the demo notification data. When the real auth is ready,
-// replace `resolveUserId()` with `user.id`.
-
-const DEMO_IDS: Record<string, string> = {
-  CLIENT: 'c-001',
-  PROVIDER: 'p-001',
-  EMPLOYEE: 'e-001',
-  ADMIN: 'a-001',
-};
 
 // ============================================
 // CONTEXT
@@ -40,8 +39,14 @@ interface NotificationContextValue {
   markAsRead: (id: string) => void;
   /** Mark every notification for the current user as read */
   markAllAsRead: () => void;
-  /** Push a new notification (used by future event handlers) */
+  /** Push a new notification for the current user */
   add: (notification: Notification) => void;
+  /** Push several notifications at once (used when one event fires two) */
+  addMany: (notifications: Notification[]) => void;
+  /** Remove a single notification */
+  remove: (id: string) => void;
+  /** Clear all notifications (wipes local storage) */
+  clearAll: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextValue | undefined>(
@@ -71,32 +76,40 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 }) => {
   const { user } = useAuth();
 
-  // Resolve the demo user id from the role — falls back to CLIENT if
-  // unauthenticated so the UI doesn't crash during development.
-  const currentUserId = useMemo(() => {
-    const role = user?.role ?? 'CLIENT';
-    return DEMO_IDS[role] ?? DEMO_IDS.CLIENT;
-  }, [user?.role]);
-
-  // Seed with demo notifications that belong to the current user.
-  // We deep-clone so mark-as-read mutations don't affect the source.
-  const [notifications, setNotifications] = useState<Notification[]>(() =>
-    demoNotifications
-      .filter((n) => n.userId === currentUserId)
-      .map((n) => ({ ...n }))
+  // Single source of truth for the "current user id" during the demo.
+  const currentUserId = useMemo(
+    () => resolveDemoUserId(user),
+    [user]
   );
 
-  // When the user id changes (role switch in dev), reload the seed.
-  // This is a cheap way to keep things consistent without a backend.
-  React.useEffect(() => {
-    setNotifications(
-      demoNotifications
-        .filter((n) => n.userId === currentUserId)
-        .map((n) => ({ ...n }))
-    );
-  }, [currentUserId]);
+  // Local state mirrors localStorage. We re-read on user change.
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [refreshTick, setRefreshTick] = useState(0);
 
+  // ------------------------------------------
+  // Seed once per user, then read local storage
+  // ------------------------------------------
+  useEffect(() => {
+    // 1. Seed demo notifications for this user if we haven't yet.
+    if (!hasSeededForUser(currentUserId)) {
+      const seedForUser = demoNotifications
+        .filter((n) => n.userId === currentUserId)
+        .map((n) => ({ ...n }));
+      if (seedForUser.length > 0) {
+        addLocalNotifications(seedForUser);
+      }
+      markSeededForUser(currentUserId);
+    }
+
+    // 2. Read local storage (source of truth).
+    setNotifications(getNotificationsForUser(currentUserId));
+  }, [currentUserId, refreshTick]);
+
+  // ------------------------------------------
+  // Actions — each writes through to storage
+  // ------------------------------------------
   const markAsRead = useCallback((id: string) => {
+    markLocalNotificationRead(id);
     setNotifications((prev) =>
       prev.map((n) =>
         n.id === id && !n.readAt
@@ -107,40 +120,85 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
   }, []);
 
   const markAllAsRead = useCallback(() => {
+    markAllLocalNotificationsRead(currentUserId);
     const now = new Date().toISOString();
     setNotifications((prev) =>
       prev.map((n) => (n.readAt ? n : { ...n, readAt: now }))
     );
-  }, []);
+  }, [currentUserId]);
 
   const add = useCallback((notification: Notification) => {
-    setNotifications((prev) => [notification, ...prev]);
-  }, []);
+    addLocalNotification(notification);
+    // Only surface it if it belongs to the current user's feed.
+    if (notification.userId === currentUserId) {
+      setNotifications((prev) =>
+        [notification, ...prev].sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+        )
+      );
+    }
+  }, [currentUserId]);
 
-  // Sort newest first + compute unread count
-  const sorted = useMemo(
-    () =>
-      [...notifications].sort(
-        (a, b) =>
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      ),
-    [notifications]
+  const addMany = useCallback(
+    (list: Notification[]) => {
+      addLocalNotifications(list);
+      const mine = list.filter((n) => n.userId === currentUserId);
+      if (mine.length > 0) {
+        setNotifications((prev) =>
+          [...mine, ...prev].sort(
+            (a, b) =>
+              new Date(b.createdAt).getTime() -
+              new Date(a.createdAt).getTime()
+          )
+        );
+      }
+    },
+    [currentUserId]
   );
 
+  const remove = useCallback((id: string) => {
+    deleteLocalNotification(id);
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
+  }, []);
+
+  const clearAll = useCallback(() => {
+    clearLocalNotifications();
+    setNotifications([]);
+    // Force a re-seed on next mount for this user.
+    setRefreshTick((t) => t + 1);
+  }, []);
+
+  // ------------------------------------------
+  // Derived
+  // ------------------------------------------
   const unreadCount = useMemo(
-    () => sorted.filter((n) => !n.readAt).length,
-    [sorted]
+    () => notifications.filter((n) => !n.readAt).length,
+    [notifications]
   );
 
   const value = useMemo<NotificationContextValue>(
     () => ({
-      notifications: sorted,
+      notifications,
       unreadCount,
       markAsRead,
       markAllAsRead,
       add,
+      addMany,
+      remove,
+      clearAll,
     }),
-    [sorted, unreadCount, markAsRead, markAllAsRead, add]
+    [
+      notifications,
+      unreadCount,
+      markAsRead,
+      markAllAsRead,
+      add,
+      addMany,
+      remove,
+      clearAll,
+    ]
   );
 
   return (
@@ -151,3 +209,4 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 };
 
 export default NotificationProvider;
+

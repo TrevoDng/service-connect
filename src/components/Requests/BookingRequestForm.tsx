@@ -1,9 +1,11 @@
+
 // src/components/Requests/BookingRequestForm.tsx
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Booking, WorkPhoto } from '../../types';
+import type { Booking, WorkPhoto, Notification } from '../../types';
 import { useAuth } from '../../account/context/AuthContext';
+import { useNotifications } from '../../account/context/NotificationContext';
 import { addLocalBooking } from '../../utils/localBookings';
 import { generateId, buildRequestRef } from '../../utils/referenceCode';
 import { formatPrice } from '../../utils/formatters';
@@ -50,6 +52,7 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
 }) => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { addMany } = useNotifications();
 
   const [bookingDate, setBookingDate] = useState('');
   const [suggestedPrice, setSuggestedPrice] = useState('');
@@ -101,9 +104,8 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
       const booking: Booking = {
         id: generateId(),
         requestRef: buildRequestRef(
-          // Rough sequence: demo bookings + local ones + 100 to avoid collision
-          Math.floor(Math.random() * 9000) + 1000,
-          2026
+          // Rough sequence: random 4-digit to avoid collisions in demo.
+          Math.floor(Math.random() * 9000) + 1000
         ),
         clientId,
         clientDisplayName,
@@ -140,6 +142,39 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
 
       addLocalBooking(booking);
 
+      // -------------------------------------------------
+      // Notifications — one to the provider, one to the client
+      // -------------------------------------------------
+      const providerNotification: Notification = {
+        id: generateId(),
+        userId: providerId,
+        type: 'booking_requested',
+        priority: 'high',
+        title: 'New booking request',
+        message: `${clientDisplayName} requested ${serviceTitle}. Suggested price: ${formatPrice(priceNum)}.`,
+        linkTo: '/provider/dashboard',
+        actorId: clientId,
+        actorDisplayName: clientDisplayName,
+        bookingId: booking.id,
+        createdAt: now,
+      };
+
+      const clientNotification: Notification = {
+        id: generateId(),
+        userId: clientId,
+        type: 'booking_submitted',
+        priority: 'normal',
+        title: 'Request sent',
+        message: `Your request for ${serviceTitle} was sent to ${providerDisplayName}. You'll be notified when they respond.`,
+        linkTo: '/client/dashboard',
+        actorId: providerId,
+        actorDisplayName: providerDisplayName,
+        bookingId: booking.id,
+        createdAt: now,
+      };
+
+      addMany([providerNotification, clientNotification]);
+
       if (onSuccess) {
         onSuccess(booking);
       } else {
@@ -147,7 +182,9 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
       }
     } catch (err) {
       console.error('Failed to create booking:', err);
-      setError('Something went wrong while sending your request. Please try again.');
+      setError(
+        'Something went wrong while sending your request. Please try again.'
+      );
     } finally {
       setBusy(false);
     }
@@ -196,10 +233,10 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
         <p className={styles.helper}>
           <FontAwesomeIcon icon={faInfoCircle} />
           <span>
-             This is only a suggestion. The final price will be agreed after{' '}
-          <strong>{providerDisplayName}</strong> evaluates the job on-site.
+            This is only a suggestion. The final price will be agreed after{' '}
+            <strong>{providerDisplayName}</strong> evaluates the job on-site.
           </span>
-</p>
+        </p>
       </div>
 
       {/* Photos */}
@@ -278,3 +315,4 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
 };
 
 export default BookingRequestForm;
+

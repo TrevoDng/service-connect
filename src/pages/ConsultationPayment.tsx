@@ -4,8 +4,10 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
 import { useTheme } from '../styles/context/ThemeContext';
+import { useNotifications } from '../account/context/NotificationContext';
 import { getBookingById } from '../utils/allBookings';
 import { setBookingOverride } from '../utils/localBookingOverrides';
+import { notifyConsultationPaid } from '../utils/notify';
 import { formatDate, formatPrice } from '../utils/formatters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -57,6 +59,7 @@ export const ConsultationPayment: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { theme } = useTheme();
+  const { add } = useNotifications();
 
   const [isPaying, setIsPaying] = useState(false);
 
@@ -109,21 +112,26 @@ export const ConsultationPayment: React.FC = () => {
 
     // Mock payment — no real gateway. This is where Stripe/Payfast will go.
     setTimeout(() => {
+      const paidAt = new Date().toISOString();
+
       setBookingOverride(booking.id, {
         status: 'consultation_paid',
-        consultationPaidAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        consultationPaidAt: paidAt,
+        updatedAt: paidAt,
         priceHistory: [
           ...booking.priceHistory,
           {
             stage: 'consultation',
             amount: booking.consultationFee,
-            at: new Date().toISOString(),
+            at: paidAt,
             byUserId: user?.id || booking.clientId,
             note: 'Consultation fee paid.',
           },
         ],
       });
+
+      // Notify the provider that the fee is paid
+      add(notifyConsultationPaid(booking));
 
       navigate('/client/dashboard');
     }, 800);

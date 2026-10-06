@@ -28,7 +28,7 @@ export const getLocalProviderServices = (): Service[] => {
 export const getLocalProviderServicesByProvider = (
   providerId: string
 ): Service[] => {
-  return getLocalProviderServices().filter((s) => s.providerId === providerId);
+  return getLocalProviderServices().filter((s) => s.provider_id === providerId);
 };
 
 // ============================================

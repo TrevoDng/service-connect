@@ -1,6 +1,7 @@
 // src/services/api.service.ts
 
-const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE_URL =
+  import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
 
 // Helper to get token from storage
 const getToken = (): string | null => {
@@ -15,94 +16,58 @@ const extractData = (response: any) => {
   return response;
 };
 
+// Shared request runner — keeps the four methods DRY
+async function request<T>(
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  endpoint: string,
+  body?: unknown,
+  options?: RequestInit
+): Promise<T> {
+  const token = getToken();
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(options?.headers || {}),
+    },
+    body:
+      body !== undefined && method !== 'GET' && method !== 'DELETE'
+        ? JSON.stringify(body)
+        : undefined,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const errorMessage =
+      data.message || data.error?.message || 'Request failed';
+    throw new Error(errorMessage);
+  }
+
+  return extractData(data) as T;
+}
+
 export const api = {
-  get: async (endpoint: string, options?: RequestInit) => {
-    const token = getToken();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...(options?.headers || {}),
-      },
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      const errorMessage = data.message || data.error?.message || 'Request failed';
-      throw new Error(errorMessage);
-    }
-    
-    return extractData(data);
-  },
+  get: <T = unknown>(endpoint: string, options?: RequestInit): Promise<T> =>
+    request<T>('GET', endpoint, undefined, options),
 
-  post: async (endpoint: string, body?: any, options?: RequestInit) => {
-    const token = getToken();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...(options?.headers || {}),
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      const errorMessage = data.message || data.error?.message || 'Request failed';
-      throw new Error(errorMessage);
-    }
-    
-    return extractData(data);
-  },
+  post: <T = unknown>(
+    endpoint: string,
+    body?: unknown,
+    options?: RequestInit
+  ): Promise<T> => request<T>('POST', endpoint, body, options),
 
-  put: async (endpoint: string, body?: any, options?: RequestInit) => {
-    const token = getToken();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      method: 'PUT',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...(options?.headers || {}),
-      },
-      body: body ? JSON.stringify(body) : undefined,
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      const errorMessage = data.message || data.error?.message || 'Request failed';
-      throw new Error(errorMessage);
-    }
-    
-    return extractData(data);
-  },
+  put: <T = unknown>(
+    endpoint: string,
+    body?: unknown,
+    options?: RequestInit
+  ): Promise<T> => request<T>('PUT', endpoint, body, options),
 
-  delete: async (endpoint: string, options?: RequestInit) => {
-    const token = getToken();
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      ...options,
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...(options?.headers || {}),
-      },
-    });
-    
-    const data = await response.json();
-    
-    if (!response.ok) {
-      const errorMessage = data.message || data.error?.message || 'Request failed';
-      throw new Error(errorMessage);
-    }
-    
-    return extractData(data);
-  },
+  delete: <T = unknown>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> => request<T>('DELETE', endpoint, undefined, options),
 };

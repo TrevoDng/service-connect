@@ -166,7 +166,7 @@ export const ServiceDetails: React.FC = () => {
     			serviceId={service.id}
     			serviceTitle={service.title}
     			serviceCategory={service.category}
-    			providerId={service.providerId || 'p-001'}
+    			providerId={service.provider_id || 'p-001'}
     			providerDisplayName={service.provider_name || 'Provider'}
     			clientId={user ? resolveDemoUserId(user) : 'c-001'}
     			clientDisplayName={clientDisplayName}

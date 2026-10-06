@@ -154,5 +154,5 @@ export const getDemoProviderStats = () => {
 // The provider's own services when offline — for the demo we just show a
 // couple of services they "own".
 export const getDemoProviderServices = (providerId: string): Service[] => {
-  return getDemoServicesAsServices().filter((s) => s.providerId === providerId);
+  return getDemoServicesAsServices().filter((s) => s.provider_id === providerId);
 };
