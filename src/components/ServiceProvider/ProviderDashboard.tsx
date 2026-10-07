@@ -1,6 +1,6 @@
 // src/components/ServiceProvider/ProviderDashboard.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../account/context/AuthContext';
 import { useTheme } from '../../styles/context/ThemeContext';
 import { AddServiceForm } from './AddServiceForm';
@@ -64,8 +64,39 @@ export const ProviderDashboard: React.FC = () => {
   const { logout } = useAuth();
   const { theme } = useTheme();
 
-  const [activeView, setActiveView] = useState<ProviderView>('requests');
-  const [activeTab, setActiveTab] = useState<ServicesTab>('list');
+  const [searchParams, setSearchParams] = useSearchParams();
+const tabFromUrl = searchParams.get('tab');
+const threadIdFromUrl = searchParams.get('thread');
+
+const VALID_PROVIDER_TABS: ProviderView[] = [
+  'requests',
+  'my-services',
+  'work-log',
+  'messages',
+  'support',
+];
+
+ const activeView: ProviderView = VALID_PROVIDER_TABS.includes(
+  tabFromUrl as ProviderView
+)
+  ? (tabFromUrl as ProviderView)
+  : 'requests';
+
+const [activeTab, setActiveTab] = useState<ServicesTab>('list');
+
+// Deep-link: a ?thread= param (from chat notifications) should force
+// the Messages tab, then normalize the URL to include ?tab=messages.
+// Mirrors the same effect in ClientDashboard.
+useEffect(() => {
+  if (threadIdFromUrl && activeView !== 'messages') {
+    setSearchParams(
+      { tab: 'messages', thread: threadIdFromUrl },
+      { replace: true }
+    );
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [threadIdFromUrl]);
+
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
   const [stats, setStats] = useState<ServiceStats>({
@@ -126,8 +157,8 @@ export const ProviderDashboard: React.FC = () => {
     if (tab === 'list') fetchStats();
   };
 
-  const handleSidebarNavigate = (key: string) => {
-    setActiveView(key as ProviderView);
+   const handleSidebarNavigate = (key: string) => {
+    setSearchParams({ tab: key }, { replace: false });
     setSelectedSessionId(null);
   };
 

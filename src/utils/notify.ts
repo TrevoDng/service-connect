@@ -36,7 +36,7 @@ export const notifyConsultationPaid = (
   message: `${booking.clientDisplayName} paid the ${formatPrice(
     booking.consultationFee
   )} consultation fee for ${booking.serviceTitle}. You can now schedule the site visit.`,
-  linkTo: '/provider/dashboard',
+  linkTo: '/provider/dashboard?tab=requests',
   actorId: booking.clientId,
   actorDisplayName: booking.clientDisplayName,
   bookingId: booking.id,
@@ -47,10 +47,15 @@ export const notifyConsultationPaid = (
 // 3B — PROVIDER STARTS CONSULTATION (arrives, generates code)
 //      → CLIENT NOTIFIED WITH THE CODE
 // ============================================
+//
+// `workSessionId` is passed explicitly because the booking's own
+// workSessionId may not be written yet when this fires — the session was
+// just created and the booking override happens on the next line.
 
 export const notifyConsultationStarted = (
   booking: Booking,
-  referenceCode: string
+  referenceCode: string,
+  workSessionId?: string
 ): Notification => ({
   id: generateId(),
   userId: booking.clientId,
@@ -58,11 +63,11 @@ export const notifyConsultationStarted = (
   priority: 'high',
   title: 'Provider at your gate',
   message: `${booking.providerDisplayName} has arrived for the ${booking.serviceTitle} consultation. Reference code: ${referenceCode}. Confirm only if it matches.`,
-  linkTo: '/client/dashboard',
+  linkTo: '/client/dashboard?tab=requests',
   actorId: booking.providerId,
   actorDisplayName: booking.providerDisplayName,
   bookingId: booking.id,
-  workSessionId: booking.workSessionId,
+  workSessionId: workSessionId ?? booking.workSessionId,
   createdAt: nowIso(),
 });
 
@@ -77,7 +82,7 @@ export const notifyGateConfirmed = (booking: Booking): Notification => ({
   priority: 'normal',
   title: 'Client confirmed at the gate',
   message: `${booking.clientDisplayName} confirmed your arrival for ${booking.serviceTitle}. You can proceed.`,
-  linkTo: '/provider/dashboard',
+  linkTo: '/provider/dashboard?tab=requests',
   actorId: booking.clientId,
   actorDisplayName: booking.clientDisplayName,
   bookingId: booking.id,
@@ -98,7 +103,7 @@ export const notifyConsultationCompleted = (
   priority: 'normal',
   title: 'Consultation complete',
   message: `${booking.providerDisplayName} finished the site visit for ${booking.serviceTitle}. Photos and findings are ready for you to review.`,
-  linkTo: '/client/dashboard',
+  linkTo: '/client/dashboard?tab=requests',
   actorId: booking.providerId,
   actorDisplayName: booking.providerDisplayName,
   bookingId: booking.id,
@@ -119,7 +124,7 @@ export const notifyPriceAccepted = (booking: Booking): Notification => ({
   message: `${booking.clientDisplayName} accepted your final price of ${formatPrice(
     booking.finalPrice ?? booking.suggestedPrice
   )} for ${booking.serviceTitle}. You can start the job.`,
-  linkTo: '/provider/dashboard',
+  linkTo: '/provider/dashboard?tab=requests',
   actorId: booking.clientId,
   actorDisplayName: booking.clientDisplayName,
   bookingId: booking.id,
@@ -137,7 +142,7 @@ export const notifyWorkStarted = (booking: Booking): Notification => ({
   priority: 'normal',
   title: 'Work has started',
   message: `${booking.providerDisplayName} has clocked in and started the ${booking.serviceTitle} job.`,
-  linkTo: '/client/dashboard',
+  linkTo: '/client/dashboard?tab=requests',
   actorId: booking.providerId,
   actorDisplayName: booking.providerDisplayName,
   bookingId: booking.id,
