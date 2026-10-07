@@ -63,13 +63,26 @@ export const ClientDashboard: React.FC = () => {
   const { logout } = useAuth();
   const { theme } = useTheme();
 
-  const [searchParams] = useSearchParams();
-  const threadIdFromUrl = searchParams.get('thread');
+  const [searchParams, setSearchParams] = useSearchParams();
+const threadIdFromUrl = searchParams.get('thread');
+const tabFromUrl = searchParams.get('tab');
 
-  const [activeTab, setActiveTab] = useState<ClientTab>(() =>
-    threadIdFromUrl ? 'messages' : 'requests'
-  );
-  const [searchQuery, setSearchQuery] = useState('');
+const VALID_CLIENT_TABS: ClientTab[] = [
+  'requests',
+  'history',
+  'messages',
+  'support',
+];
+
+// Derive active tab from the URL. Missing/invalid → default to 'requests'.
+const activeTab: ClientTab = VALID_CLIENT_TABS.includes(
+  tabFromUrl as ClientTab
+)
+  ? (tabFromUrl as ClientTab)
+  : 'requests';
+
+const [searchQuery, setSearchQuery] = useState('');
+
 
   // Local work sessions (Step 5b) — mutable for gate confirmation
   const [sessions, setSessions] = useState<WorkSession[]>(() =>
@@ -91,9 +104,13 @@ const [bookingRefresh, setBookingRefresh] = useState(0);
   // the user clicks "Chat with X" from a provider profile — the route
   // changes but the component doesn't remount.
 
-useEffect(() => {
-    if (threadIdFromUrl) {
-      setActiveTab('messages');
+  useEffect(() => {
+    if (threadIdFromUrl && activeTab !== 'messages') {
+      // Thread deep-link always lands on Messages.
+      setSearchParams(
+        { tab: 'messages', thread: threadIdFromUrl },
+        { replace: true }
+      );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threadIdFromUrl]);
@@ -225,12 +242,18 @@ const handleRetroactiveDispute = (sessionId: string) => {
   };
 
   const handleSidebarNavigate = (key: string) => {
-    if (key === 'new') {
-      navigate('/services');
-      return;
-    }
-    setActiveTab(key as ClientTab);
-  };
+  if (key === 'new') {
+    navigate('/services');
+    return;
+  }
+  // Write the tab to the URL so notifications / back-button work.
+  // Drop ?thread= when leaving messages.
+  const next: Record<string, string> = { tab: key };
+  if (key === 'messages' && threadIdFromUrl) {
+    next.thread = threadIdFromUrl;
+  }
+  setSearchParams(next, { replace: false });
+};
 
   const handleConfirmArrival = (sessionId: string) => {
 	  

@@ -47,10 +47,15 @@ export const notifyConsultationPaid = (
 // 3B — PROVIDER STARTS CONSULTATION (arrives, generates code)
 //      → CLIENT NOTIFIED WITH THE CODE
 // ============================================
+//
+// `workSessionId` is passed explicitly because the booking's own
+// workSessionId may not be written yet when this fires — the session was
+// just created and the booking override happens on the next line.
 
 export const notifyConsultationStarted = (
   booking: Booking,
-  referenceCode: string
+  referenceCode: string,
+  workSessionId?: string
 ): Notification => ({
   id: generateId(),
   userId: booking.clientId,
@@ -62,7 +67,7 @@ export const notifyConsultationStarted = (
   actorId: booking.providerId,
   actorDisplayName: booking.providerDisplayName,
   bookingId: booking.id,
-  workSessionId: booking.workSessionId,
+  workSessionId: workSessionId ?? booking.workSessionId,
   createdAt: nowIso(),
 });
 

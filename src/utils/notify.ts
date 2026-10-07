@@ -2,27 +2,15 @@
 //
 // Pure notification factories. Each function returns a Notification object
 // ready to be dispatched via `useNotifications().add(...)`.
-//
-// They are intentionally side-effect free: no context, no storage, no
-// dispatching. The caller decides where the notification goes. This keeps
-// copy + icons + link targets consistent across the whole lifecycle, and
-// makes future backend wiring trivial (one place to swap).
-//
-// Naming: notify<Event>(booking, ...extras) → Notification for the RECIPIENT
-// The `actor` is always the party who performed the action.
 
 import type { Booking, Notification } from '../types';
 import { generateId } from './referenceCode';
 import { formatPrice } from './formatters';
 
-// ============================================
-// SHARED HELPERS
-// ============================================
-
 const nowIso = () => new Date().toISOString();
 
 // ============================================
-// 3A — CLIENT PAYS CONSULTATION → PROVIDER NOTIFIED
+// 3A — CLIENT PAYS CONSULTATION → PROVIDER
 // ============================================
 
 export const notifyConsultationPaid = (
@@ -44,13 +32,8 @@ export const notifyConsultationPaid = (
 });
 
 // ============================================
-// 3B — PROVIDER STARTS CONSULTATION (arrives, generates code)
-//      → CLIENT NOTIFIED WITH THE CODE
+// 3B — PROVIDER STARTS CONSULTATION → CLIENT
 // ============================================
-//
-// `workSessionId` is passed explicitly because the booking's own
-// workSessionId may not be written yet when this fires — the session was
-// just created and the booking override happens on the next line.
 
 export const notifyConsultationStarted = (
   booking: Booking,
@@ -72,16 +55,26 @@ export const notifyConsultationStarted = (
 });
 
 // ============================================
-// 3C — CLIENT CONFIRMS GATE CODE → PROVIDER NOTIFIED
+// 3C — CLIENT CONFIRMS GATE CODE → PROVIDER
 // ============================================
+//
+// `retroactive` = the provider already proceeded without confirmation and
+// the client is now approving after the fact.
 
-export const notifyGateConfirmed = (booking: Booking): Notification => ({
+export const notifyGateConfirmed = (
+  booking: Booking,
+  retroactive = false
+): Notification => ({
   id: generateId(),
   userId: booking.providerId,
   type: 'clock_confirmed',
-  priority: 'normal',
-  title: 'Client confirmed at the gate',
-  message: `${booking.clientDisplayName} confirmed your arrival for ${booking.serviceTitle}. You can proceed.`,
+  priority: retroactive ? 'normal' : 'high',
+  title: retroactive
+    ? 'Client approved retroactively'
+    : 'Client confirmed at the gate',
+  message: retroactive
+    ? `${booking.clientDisplayName} confirmed your arrival at ${booking.serviceTitle} after the fact. You're cleared to continue.`
+    : `${booking.clientDisplayName} confirmed your arrival for ${booking.serviceTitle}. You can proceed.`,
   linkTo: '/provider/dashboard?tab=requests',
   actorId: booking.clientId,
   actorDisplayName: booking.clientDisplayName,
@@ -91,7 +84,26 @@ export const notifyGateConfirmed = (booking: Booking): Notification => ({
 });
 
 // ============================================
-// 3D — PROVIDER COMPLETES CONSULTATION → CLIENT NOTIFIED
+// 3C (deny) — CLIENT DID NOT RECOGNISE CODE → PROVIDER
+// ============================================
+
+export const notifyGateDenied = (booking: Booking): Notification => ({
+  id: generateId(),
+  userId: booking.providerId,
+  type: 'clock_confirmed',
+  priority: 'high',
+  title: 'Client did not confirm your code',
+  message: `${booking.clientDisplayName} did not recognise your reference code for ${booking.serviceTitle}. Do not proceed without contacting them.`,
+  linkTo: '/provider/dashboard?tab=requests',
+  actorId: booking.clientId,
+  actorDisplayName: booking.clientDisplayName,
+  bookingId: booking.id,
+  workSessionId: booking.workSessionId,
+  createdAt: nowIso(),
+});
+
+// ============================================
+// 3D — PROVIDER COMPLETES CONSULTATION → CLIENT
 // ============================================
 
 export const notifyConsultationCompleted = (
@@ -112,7 +124,7 @@ export const notifyConsultationCompleted = (
 });
 
 // ============================================
-// 3E — CLIENT ACCEPTS FINAL PRICE → PROVIDER NOTIFIED
+// 3E — CLIENT ACCEPTS FINAL PRICE → PROVIDER
 // ============================================
 
 export const notifyPriceAccepted = (booking: Booking): Notification => ({
@@ -132,7 +144,7 @@ export const notifyPriceAccepted = (booking: Booking): Notification => ({
 });
 
 // ============================================
-// 3F — PROVIDER BEGINS THE JOB → CLIENT NOTIFIED
+// 3F — PROVIDER BEGINS THE JOB → CLIENT
 // ============================================
 
 export const notifyWorkStarted = (booking: Booking): Notification => ({

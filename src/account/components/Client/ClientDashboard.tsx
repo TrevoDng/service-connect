@@ -2,7 +2,12 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useNotifications } from '../../context/NotificationContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
+import {
+  notifyGateConfirmed,
+  notifyGateDenied,
+} from '../../../utils/notify';
 import type { WorkSession, Booking as BookingModel, Dispute } from '../../../types';
 import { demoWorkSessions } from '../../../data/demoWorkSessions';
 import { getBookingsForClient, isCurrentRequest, isClosedRequest } from '../../../utils/allBookings';
@@ -61,6 +66,7 @@ type ClientTab = 'requests' | 'history' | 'messages' | 'support';
 export const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const { add } = useNotifications();
   const { theme } = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -132,23 +138,38 @@ const pendingWorkGates = useMemo(() => {
 }, [bookingRefresh]);
 
 
-const handleConfirmWorkGate = (sessionId: string) => {
+ const handleConfirmWorkGate = (sessionId: string) => {
   updateLocalWorkSession(sessionId, {
     gateConfirmedByClient: true,
     gateConfirmedAt: new Date().toISOString(),
   });
+
+  // Notify the provider
+  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
+  const booking = session
+    ? allClientBookings.find((b) => b.id === session.bookingId)
+    : undefined;
+  if (booking) add(notifyGateConfirmed(booking));
+
   setBookingRefresh((t) => t + 1);
 };
 
-const handleDenyWorkGate = (sessionId: string) => {
+ const handleDenyWorkGate = (sessionId: string) => {
   updateLocalWorkSession(sessionId, {
     currentReferenceCode: undefined,
     referenceCodeExpiresAt: undefined,
   });
+
+  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
+  const booking = session
+    ? allClientBookings.find((b) => b.id === session.bookingId)
+    : undefined;
+  if (booking) add(notifyGateDenied(booking));
+
   setBookingRefresh((t) => t + 1);
 };
 
-const handleRetroactiveConfirm = (sessionId: string) => {
+ const handleRetroactiveConfirm = (sessionId: string) => {
   // Client accepts it after the fact
   updateLocalWorkSession(sessionId, {
     gateConfirmedByClient: true,
@@ -160,6 +181,13 @@ const handleRetroactiveConfirm = (sessionId: string) => {
     resolvedByUserId: DEMO_CLIENT_ID,
     resolvedByDisplayName: 'Client',
   });
+
+  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
+  const booking = session
+    ? allClientBookings.find((b) => b.id === session.bookingId)
+    : undefined;
+  if (booking) add(notifyGateConfirmed(booking, true));
+
   setBookingRefresh((t) => t + 1);
 };
 
@@ -256,50 +284,81 @@ const handleRetroactiveDispute = (sessionId: string) => {
 };
 
   const handleConfirmArrival = (sessionId: string) => {
-	  
-    setSessions((prev) =>
-      prev.map((s) => {
-        if (s.id !== sessionId) return s;
-        return {
-          ...s,
-          status: 'confirmed',
-          updatedAt: new Date().toISOString(),
-          clockEvents: s.clockEvents.map((e, idx, arr) => {
-            if (e.type === 'in' && idx === arr.length - 1) {
-              return { ...e, confirmedByClient: true };
-            }
-            return e;
-          }),
-        };
-      })
-    );
-    
-    // Force re-read of bookings so the wizard auto-advances
+  const now = new Date().toISOString();
 
-    setExpandedConfirmBookingId(null);
-    setBookingRefresh((t) => t + 1);
-  };
+  // 1. Update local component state (drives the arrivedSessions UI)
+  setSessions((prev) =>
+    prev.map((s) => {
+      if (s.id !== sessionId) return s;
+      return {
+        ...s,
+        status: 'confirmed',
+        updatedAt: now,
+        gateConfirmedByClient: true,
+        gateConfirmedAt: now,
+        clockEvents: s.clockEvents.map((e, idx, arr) => {
+          if (e.type === 'in' && idx === arr.length - 1) {
+            return { ...e, confirmedByClient: true };
+          }
+          return e;
+        }),
+      };
+    })
+  );
 
-  const handleDenyArrival = (sessionId: string) => {
-   
-	  setSessions((prev) =>
-      prev.map((s) =>
-        s.id === sessionId
-          ? {
-              ...s,
-              currentReferenceCode: undefined,
-              referenceCodeExpiresAt: undefined,
-              updatedAt: new Date().toISOString(),
-            }
-          : s
-      )
-    );
-    
-    // Force re-read of bookings so the wizard auto-advances
+  // 2. Persist to localStorage so WorkSessionGate / provider sees it
+  updateLocalWorkSession(sessionId, {
+    gateConfirmedByClient: true,
+    gateConfirmedAt: now,
+    status: 'confirmed',
+    updatedAt: now,
+  });
 
-    setExpandedConfirmBookingId(null);
-    setBookingRefresh((t) => t + 1);
-  };
+  // 3. Notify the provider
+  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
+  const booking = session
+    ? allClientBookings.find((b) => b.id === session.bookingId)
+    : undefined;
+  if (booking) add(notifyGateConfirmed(booking));
+
+  setExpandedConfirmBookingId(null);
+  setBookingRefresh((t) => t + 1);
+};
+
+const handleDenyArrival = (sessionId: string) => {
+  const now = new Date().toISOString();
+
+  // 1. Local state
+  setSessions((prev) =>
+    prev.map((s) =>
+      s.id === sessionId
+        ? {
+            ...s,
+            currentReferenceCode: undefined,
+            referenceCodeExpiresAt: undefined,
+            updatedAt: now,
+          }
+        : s
+    )
+  );
+
+  // 2. Persist to localStorage
+  updateLocalWorkSession(sessionId, {
+    currentReferenceCode: undefined,
+    referenceCodeExpiresAt: undefined,
+    updatedAt: now,
+  });
+
+  // 3. Notify the provider
+  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
+  const booking = session
+    ? allClientBookings.find((b) => b.id === session.bookingId)
+    : undefined;
+  if (booking) add(notifyGateDenied(booking));
+
+  setExpandedConfirmBookingId(null);
+  setBookingRefresh((t) => t + 1);
+};
 
   // ------------------------------------------
   // RequestCard callbacks (stubs wired in 7e / 7h)
