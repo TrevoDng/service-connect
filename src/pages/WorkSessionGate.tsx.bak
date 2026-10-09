@@ -155,7 +155,7 @@ export const WorkSessionGate: React.FC = () => {
 // Work session mutators
 // ------------------------------------------
 const handleClockIn = (sessionId: string) => {
-  if (!session) return;
+  if (!session || !booking) return;
   updateLocalWorkSession(sessionId, {
     status: 'in_progress',
     currentReferenceCode: undefined,
@@ -163,14 +163,22 @@ const handleClockIn = (sessionId: string) => {
     clockEvents: [
       ...session.clockEvents,
       {
-        id: generateId(),
-        type: 'in',
-        at: new Date().toISOString(),
-        confirmedByClient: true,
-      },
+  	id: generateId(),
+	type: 'in',
+  	at: new Date().toISOString(),
+  	confirmedByClient: session.gateConfirmedByClient === true,
+	},
     ],
     updatedAt: new Date().toISOString(),
   });
+
+  // Flip the booking to in_progress so the guided view + substep
+  // timeline render for both parties.
+  setBookingOverride(booking.id, {
+    status: 'in_progress',
+    updatedAt: new Date().toISOString(),
+  });
+
   setTick((t) => t + 1);
 };
 
@@ -426,6 +434,7 @@ const handleDeleteFinalPhoto = (sessionId: string, photoId: string) => {
     onClockOut={handleClockOut}
     onMarkComplete={handleMarkComplete}
     workReady
+    mode="work"
     onAddBeforePhotos={handleAddBeforePhotos}
     onDeleteBeforePhoto={handleDeleteBeforePhoto}
     onSaveProgressStage={handleSaveProgressStage}

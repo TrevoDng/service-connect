@@ -19,7 +19,10 @@ import {
   generateId,
 } from '../utils/referenceCode';
 import { formatTime } from '../utils/formatters';
-import { notifyConsultationStarted } from '../utils/notify';
+import {
+  notifyConsultationStarted,
+  notifyWorkStarted,
+} from '../utils/notify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
@@ -156,6 +159,8 @@ export const WorkSessionGate: React.FC = () => {
 // ------------------------------------------
 const handleClockIn = (sessionId: string) => {
   if (!session || !booking) return;
+  const now = new Date().toISOString();
+
   updateLocalWorkSession(sessionId, {
     status: 'in_progress',
     currentReferenceCode: undefined,
@@ -163,21 +168,35 @@ const handleClockIn = (sessionId: string) => {
     clockEvents: [
       ...session.clockEvents,
       {
-  	id: generateId(),
-	type: 'in',
-  	at: new Date().toISOString(),
-  	confirmedByClient: session.gateConfirmedByClient === true,
-	},
+        id: generateId(),
+        type: 'in',
+        at: now,
+        confirmedByClient: session.gateConfirmedByClient === true,
+      },
     ],
-    updatedAt: new Date().toISOString(),
+    updatedAt: now,
   });
 
   // Flip the booking to in_progress so the guided view + substep
   // timeline render for both parties.
   setBookingOverride(booking.id, {
     status: 'in_progress',
-    updatedAt: new Date().toISOString(),
+    updatedAt: now,
   });
+
+  // Notify the client that work has begun.
+  // Only fire on the *first* clock-in of the day; subsequent days of
+  // the same job shouldn't spam the client with "work started" again.
+  const isFirstClockIn = session.clockEvents.filter((e) => e.type === 'in').length === 0;
+  if (isFirstClockIn) {
+    add(
+      notifyWorkStarted({
+        ...booking,
+        status: 'in_progress',
+        workSessionId: session.id,
+      })
+    );
+  }
 
   setTick((t) => t + 1);
 };
