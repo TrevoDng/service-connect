@@ -57,9 +57,6 @@ export const notifyConsultationStarted = (
 // ============================================
 // 3C — CLIENT CONFIRMS GATE CODE → PROVIDER
 // ============================================
-//
-// `retroactive` = the provider already proceeded without confirmation and
-// the client is now approving after the fact.
 
 export const notifyGateConfirmed = (
   booking: Booking,
@@ -82,10 +79,6 @@ export const notifyGateConfirmed = (
   workSessionId: booking.workSessionId,
   createdAt: nowIso(),
 });
-
-// ============================================
-// 3C (deny) — CLIENT DID NOT RECOGNISE CODE → PROVIDER
-// ============================================
 
 export const notifyGateDenied = (booking: Booking): Notification => ({
   id: generateId(),
@@ -120,6 +113,83 @@ export const notifyConsultationCompleted = (
   actorDisplayName: booking.providerDisplayName,
   bookingId: booking.id,
   workSessionId: booking.workSessionId,
+  createdAt: nowIso(),
+});
+
+// ============================================
+// PRICE NEGOTIATION CHAIN
+// ============================================
+
+// Provider proposes a final price → client
+export const notifyPriceProposed = (
+  booking: Booking,
+  amount: number
+): Notification => ({
+  id: generateId(),
+  userId: booking.clientId,
+  type: 'price_proposed',
+  priority: 'high',
+  title: 'Final price proposed',
+  message: `${booking.providerDisplayName} proposed a final price of ${formatPrice(
+    amount
+  )} for ${booking.serviceTitle}. Review and respond.`,
+  linkTo: '/client/dashboard?tab=requests',
+  actorId: booking.providerId,
+  actorDisplayName: booking.providerDisplayName,
+  bookingId: booking.id,
+  createdAt: nowIso(),
+});
+
+// Client counters → provider
+export const notifyPriceCountered = (
+  booking: Booking,
+  amount: number
+): Notification => ({
+  id: generateId(),
+  userId: booking.providerId,
+  type: 'price_proposed',
+  priority: 'high',
+  title: 'Client countered your price',
+  message: `${booking.clientDisplayName} countered with ${formatPrice(
+    amount
+  )} for ${booking.serviceTitle}. Accept their counter or hold firm.`,
+  linkTo: '/provider/dashboard?tab=requests',
+  actorId: booking.clientId,
+  actorDisplayName: booking.clientDisplayName,
+  bookingId: booking.id,
+  createdAt: nowIso(),
+});
+
+// Provider accepts the client counter → client
+// (Client's counter was written to booking.finalPrice, so we read it back.)
+export const notifyCounterAccepted = (booking: Booking): Notification => ({
+  id: generateId(),
+  userId: booking.clientId,
+  type: 'price_agreed',
+  priority: 'high',
+  title: 'Your counter was accepted',
+  message: `${booking.providerDisplayName} accepted your counter of ${formatPrice(
+    booking.finalPrice ?? 0
+  )} for ${booking.serviceTitle}. They'll start soon.`,
+  linkTo: '/client/dashboard?tab=requests',
+  actorId: booking.providerId,
+  actorDisplayName: booking.providerDisplayName,
+  bookingId: booking.id,
+  createdAt: nowIso(),
+});
+
+// Provider holds firm after a counter → client
+export const notifyHoldFirm = (booking: Booking): Notification => ({
+  id: generateId(),
+  userId: booking.clientId,
+  type: 'price_proposed',
+  priority: 'high',
+  title: 'Provider held firm on their price',
+  message: `${booking.providerDisplayName} kept their original price for ${booking.serviceTitle}. Accept it or escalate to support.`,
+  linkTo: '/client/dashboard?tab=requests',
+  actorId: booking.providerId,
+  actorDisplayName: booking.providerDisplayName,
+  bookingId: booking.id,
   createdAt: nowIso(),
 });
 

@@ -26,6 +26,7 @@ export interface WorkSessionPanelProps {
   onClockOut: (sessionId: string) => void;
   onMarkComplete?: (sessionId: string) => void;
   workReady?: boolean;
+  mode?: 'arrival' | 'work';
 
   // Photo callbacks — all receive the full updated array
   onAddBeforePhotos?: (sessionId: string, photos: WorkPhoto[]) => void;
@@ -47,6 +48,7 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
   onClockOut,
   onMarkComplete,
   workReady = true,
+  mode = 'arrival',
   onAddBeforePhotos,
   onDeleteBeforePhoto,
   onSaveProgressStage,
@@ -148,7 +150,8 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
   	onClockIn={onClockIn}
   	onClockOut={onClockOut}
   	onMarkComplete={onMarkComplete}
-  	workReady={workReady && session.gateConfirmedByClient === true}
+  	workReady={workReady}
+	mode={mode}
        />
 
       {/* ---------------- PHOTO SECTIONS ---------------- */}

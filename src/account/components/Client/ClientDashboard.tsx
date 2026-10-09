@@ -7,6 +7,8 @@ import { useTheme } from '../../../styles/context/ThemeContext';
 import {
   notifyGateConfirmed,
   notifyGateDenied,
+  notifyPriceAccepted,
+  notifyPriceCountered,
 } from '../../../utils/notify';
 import type { WorkSession, Booking as BookingModel, Dispute } from '../../../types';
 import { demoWorkSessions } from '../../../data/demoWorkSessions';
@@ -368,7 +370,7 @@ const handleDenyArrival = (sessionId: string) => {
 };
 
   
-  const handleAcceptFinalPrice = (booking: BookingModel) => {
+    const handleAcceptFinalPrice = (booking: BookingModel) => {
   setBookingOverride(booking.id, {
     status: 'price_agreed',
     pendingCounterParty: undefined,
@@ -385,7 +387,18 @@ const handleDenyArrival = (sessionId: string) => {
     ],
     updatedAt: new Date().toISOString(),
   });
-  // Force re-read of bookings
+
+  // Notify the provider that the price was accepted.
+  // Note: use the freshly-updated shape so `finalPrice` reads correctly.
+  add(
+    notifyPriceAccepted({
+      ...booking,
+      status: 'price_agreed',
+      pendingCounterParty: undefined,
+      holdFirm: false,
+    })
+  );
+
   // Force re-read of bookings so the wizard auto-advances
     setSessions((prev) => [...prev]);
     setBookingRefresh((t) => t + 1);
@@ -396,6 +409,8 @@ const handleCounterFinalPrice = (
   amount: number,
   note: string
 ) => {
+  const now = new Date().toISOString();
+
   setBookingOverride(booking.id, {
     finalPrice: amount,
     holdFirm: false,
@@ -405,13 +420,22 @@ const handleCounterFinalPrice = (
       {
         stage: 'final_proposed',
         amount,
-        at: new Date().toISOString(),
+        at: now,
         byUserId: booking.clientId,
         note: note ? `Client counter: ${note}` : 'Client counter.',
       },
     ],
-    updatedAt: new Date().toISOString(),
+    updatedAt: now,
   });
+
+  // Notify the provider that the client countered
+  add(
+    notifyPriceCountered(
+      { ...booking, pendingCounterParty: 'PROVIDER' },
+      amount
+    )
+  );
+
   setSessions((prev) => [...prev]);
   // Force re-read of bookings so the wizard auto-advances
     setBookingRefresh((t) => t + 1);

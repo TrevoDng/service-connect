@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
+import { useNotifications } from '../account/context/NotificationContext';
 import { useTheme } from '../styles/context/ThemeContext';
 import { getBookingById } from '../utils/allBookings';
 import { setBookingOverride } from '../utils/localBookingOverrides';
@@ -18,6 +19,7 @@ import {
   generateId,
 } from '../utils/referenceCode';
 import { formatTime } from '../utils/formatters';
+import { notifyConsultationStarted } from '../utils/notify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
@@ -42,6 +44,7 @@ export const WorkSessionGate: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { add } = useNotifications();
   const { theme } = useTheme();
 
   const [tick, setTick] = useState(0);
@@ -122,6 +125,9 @@ export const WorkSessionGate: React.FC = () => {
       workSessionId: newSession.id,
       updatedAt: now,
     });
+
+    // Notify the client that the provider has arrived, with the code.
+  add(notifyConsultationStarted(booking, code, newSession.id));
 
     setTick((t) => t + 1);
   };

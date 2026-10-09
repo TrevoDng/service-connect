@@ -12,6 +12,11 @@ import {
 import { getLocalWorkSessions } from '../../utils/localWorkSessions';
 import { setBookingOverride } from '../../utils/localBookingOverrides';
 import { useNotifications } from '../../account/context/NotificationContext';
+import {
+  notifyPriceProposed,
+  notifyCounterAccepted,
+  notifyHoldFirm,
+} from '../../utils/notify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faSearch,
@@ -193,58 +198,88 @@ export const ProviderRequestsView: React.FC = () => {
   };
 
   const handleProposeFinalPrice = (
-    booking: Booking,
-    amount: number,
-    note: string
-  ) => {
-    setBookingOverride(booking.id, {
-      status: 'price_proposed',
-      finalPrice: amount,
-      holdFirm: false,
-      pendingCounterParty: 'CLIENT',
-      priceHistory: [
-        ...booking.priceHistory,
-        {
-          stage: 'final_proposed',
-          amount,
-          at: new Date().toISOString(),
-          byUserId: booking.providerId,
-          note: note || undefined,
-        },
-      ],
-      updatedAt: new Date().toISOString(),
-    });
-    setRefreshTick((t) => t + 1);
-  };
+  booking: Booking,
+  amount: number,
+  note: string
+) => {
+  const now = new Date().toISOString();
+
+  setBookingOverride(booking.id, {
+    status: 'price_proposed',
+    finalPrice: amount,
+    holdFirm: false,
+    pendingCounterParty: 'CLIENT',
+    priceHistory: [
+      ...booking.priceHistory,
+      {
+        stage: 'final_proposed',
+        amount,
+        at: now,
+        byUserId: booking.providerId,
+        note: note || undefined,
+      },
+    ],
+    updatedAt: now,
+  });
+
+  // Notify the client that a final price is proposed
+  add(
+    notifyPriceProposed(
+      { ...booking, status: 'price_proposed', finalPrice: amount },
+      amount
+    )
+  );
+
+  setRefreshTick((t) => t + 1);
+};
 
   const handleAcceptCounter = (booking: Booking) => {
-    setBookingOverride(booking.id, {
+  const now = new Date().toISOString();
+
+  setBookingOverride(booking.id, {
+    status: 'price_agreed',
+    pendingCounterParty: undefined,
+    holdFirm: false,
+    priceHistory: [
+      ...booking.priceHistory,
+      {
+        stage: 'final_agreed',
+        amount: booking.finalPrice ?? 0,
+        at: now,
+        byUserId: booking.providerId,
+        note: 'Provider accepted the client counter.',
+      },
+    ],
+    updatedAt: now,
+  });
+
+  // Notify the client that their counter was accepted
+  add(
+    notifyCounterAccepted({
+      ...booking,
       status: 'price_agreed',
       pendingCounterParty: undefined,
       holdFirm: false,
-      priceHistory: [
-        ...booking.priceHistory,
-        {
-          stage: 'final_agreed',
-          amount: booking.finalPrice ?? 0,
-          at: new Date().toISOString(),
-          byUserId: booking.providerId,
-          note: 'Provider accepted the client counter.',
-        },
-      ],
-      updatedAt: new Date().toISOString(),
-    });
-    setRefreshTick((t) => t + 1);
-  };
+    })
+  );
+
+  setRefreshTick((t) => t + 1);
+};
 
   const handleHoldFirm = (booking: Booking) => {
-    setBookingOverride(booking.id, {
-      holdFirm: true,
-      pendingCounterParty: 'CLIENT',
-      updatedAt: new Date().toISOString(),
-    });
-    setRefreshTick((t) => t + 1);
-  };
+  const now = new Date().toISOString();
+
+  setBookingOverride(booking.id, {
+    holdFirm: true,
+    pendingCounterParty: 'CLIENT',
+    updatedAt: now,
+  });
+
+  // Notify the client that the provider held firm
+  add(notifyHoldFirm({ ...booking, holdFirm: true }));
+
+  setRefreshTick((t) => t + 1);
+};
 
   const handleStartConsultation = (booking: Booking) => {
     navigate(`/provider/bookings/${booking.id}/consultation`);

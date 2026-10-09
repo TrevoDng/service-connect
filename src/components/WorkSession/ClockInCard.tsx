@@ -20,6 +20,7 @@ export interface ClockInCardProps {
   onClockOut: (sessionId: string) => void;
   onMarkComplete?: (sessionId: string) => void;
   workReady?: boolean;
+  mode?: 'arrival' | 'work';
 }
 
 const getStatusLabel = (status: WorkSession['status']): string => {
@@ -58,12 +59,28 @@ export const ClockInCard: React.FC<ClockInCardProps> = ({
   onClockOut,
   onMarkComplete,
   workReady = true,
+  mode = 'arrival',
 }) => {
   const lastClockEvent = session.clockEvents[session.clockEvents.length - 1];
-  const hasActiveCode =
-    !!session.currentReferenceCode && session.status !== 'completed';
-  const isClockedIn = hasActiveCode && lastClockEvent?.type === 'in';
-  const isCompleted = session.status === 'completed';
+const hasActiveCode =
+  !!session.currentReferenceCode && session.status !== 'completed';
+const isCompleted = session.status === 'completed';
+const isWorkMode = mode === 'work';
+
+// "Clocked in" means different things per mode:
+//  - arrival mode: an 'in' event was recorded and the code is still live.
+//  - work mode:    the session has transitioned to in_progress.
+// "Clocked in" is always driven by the most recent clock event,
+// in both modes. Session status alone can't tell us if we're
+// currently in or out (it stays 'in_progress' through the whole
+// work phase, even between days).
+const isClockedIn =
+  !isCompleted && lastClockEvent?.type === 'in';
+
+// Whether the "Clock In" / "Start Work" button should be visible.
+const showClockInBtn = isWorkMode
+  ? !isClockedIn && !isCompleted
+  : !hasActiveCode && !isCompleted;
 
   // Only show the last 5 clock events in the timeline (compact)
   const recentEvents = session.clockEvents.slice(-5).reverse();
@@ -148,18 +165,18 @@ export const ClockInCard: React.FC<ClockInCardProps> = ({
 
       {/* Actions */}
       <div className={styles.actions}>
-        {!hasActiveCode && !isCompleted && (
-          <button
-            type="button"
-            className={styles.clockInBtn}
-            onClick={() => onClockIn(session.id)}
-            disabled={!workReady}
-            title={!workReady ? 'Waiting for the client to confirm your arrival code' : undefined}
-          >
-            <FontAwesomeIcon icon={faPlay} />
-            Clock In
-          </button>
-        )}
+        {showClockInBtn && (
+  <button
+    type="button"
+    className={styles.clockInBtn}
+    onClick={() => onClockIn(session.id)}
+    disabled={!workReady}
+    title={!workReady ? 'Waiting for the client to confirm your arrival code' : undefined}
+  >
+    <FontAwesomeIcon icon={faPlay} />
+    {isWorkMode ? 'Start Work' : 'Clock In'}
+  </button>
+)}
 
         {isClockedIn && !isCompleted && (
           <button

@@ -3,6 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
+import { useNotifications } from '../account/context/NotificationContext';
 import { useTheme } from '../styles/context/ThemeContext';
 import { getBookingById } from '../utils/allBookings';
 import { setBookingOverride } from '../utils/localBookingOverrides';
@@ -26,6 +27,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { PhotoUploadButton } from '../components/WorkSession';
 import { CountdownTimer } from '../components/WorkSession';
+import { notifyConsultationCompleted } from '../utils/notify';
 import styles from './ConsultationUpload.module.scss';
 
 const MAX_PHOTOS = 5;
@@ -39,6 +41,7 @@ export const ConsultationUpload: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { add } = useNotifications();
   const { theme } = useTheme();
 
   const [notes, setNotes] = useState('');
@@ -135,15 +138,26 @@ export const ConsultationUpload: React.FC = () => {
     setIsSubmitting(true);
 
     setTimeout(() => {
-      setBookingOverride(booking.id, {
-        status: 'evaluated',
-        siteVisited: true,
-        consultationPhotos: photos,
-        consultationNotes: notes.trim(),
-        updatedAt: new Date().toISOString(),
-      });
-      navigate('/provider/dashboard');
-    }, 600);
+  setBookingOverride(booking.id, {
+    status: 'evaluated',
+    siteVisited: true,
+    consultationPhotos: photos,
+    consultationNotes: notes.trim(),
+    updatedAt: new Date().toISOString(),
+  });
+
+  // Notify the client that findings are ready to review.
+  add(
+    notifyConsultationCompleted({
+      ...booking,
+      status: 'evaluated',
+      siteVisited: true,
+    })
+  );
+
+  navigate('/provider/dashboard');
+}, 600);
+
   };
 
   const handleCancel = () => {
