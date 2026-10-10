@@ -320,10 +320,16 @@ export const notifyDisputeReply = (
   }
 
   // A party replied → notify the other party
-  if (replier.userId === dispute.raisedByUserId) {
+    // A party replied → notify the other party.
+  //
+  // We compare by ROLE, not userId: the demo auth IDs (demo-client-1)
+  // don't line up with demo data IDs (c-001), so userId comparison
+  // silently no-ops. Roles are unique per dispute (one CLIENT, one
+  // PROVIDER), so role comparison is reliable.
+  if (replier.role === dispute.raisedByRole) {
     return [build(dispute.againstUserId, dispute.againstRole)];
   }
-  if (replier.userId === dispute.againstUserId) {
+  if (replier.role === dispute.againstRole) {
     return [build(dispute.raisedByUserId, dispute.raisedByRole)];
   }
 

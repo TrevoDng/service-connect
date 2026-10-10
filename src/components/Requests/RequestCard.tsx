@@ -47,7 +47,11 @@ import { addLocalReview, setProviderReply } from '../../utils/localReviews';
 import { getDisputeByBooking } from '../../utils/allDisputes';
 import { addLocalDispute, addDisputeMessage } from '../../utils/localDisputes';
 import { generateId } from '../../utils/referenceCode';
-import { notifyDisputeRaised } from '../../utils/notify';
+import {
+  notifyDisputeRaised,
+  notifyReviewSubmitted,
+  notifyReviewReplied,
+} from '../../utils/notify';
 import styles from './RequestCard.module.scss';
 
 // ============================================
@@ -255,17 +259,25 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       createdAt: new Date().toISOString(),
     };
     addLocalReview(review);
+   
+    // Notify the provider
+  add(notifyReviewSubmitted(request, review));
     setShowReviewPanel(false);
     if (onReviewSubmitted) onReviewSubmitted();
   };
 
   const handleSubmitReply = () => {
-    if (!existingReview || !reviewReplyText.trim()) return;
-    setProviderReply(existingReview.id, reviewReplyText.trim());
-    setReviewReplyOpen(false);
-    setReviewReplyText('');
-    if (onReviewSubmitted) onReviewSubmitted();
-  };
+  if (!existingReview || !reviewReplyText.trim()) return;
+
+  setProviderReply(existingReview.id, reviewReplyText.trim());
+
+  // Notify the client that the provider replied
+  add(notifyReviewReplied(request, existingReview));
+
+  setReviewReplyOpen(false);
+  setReviewReplyText('');
+  if (onReviewSubmitted) onReviewSubmitted();
+};
 
   const handleRaiseDispute = (form: RaiseDisputeFormData) => {
     const now = new Date().toISOString();

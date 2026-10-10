@@ -3,7 +3,7 @@
 // Pure notification factories. Each function returns a Notification object
 // ready to be dispatched via `useNotifications().add(...)`.
 
-import type { Booking, Notification, Dispute } from '../types';
+import type { Booking, Notification, Dispute, Review } from '../types';
 import { DISPUTE_CATEGORY_LABELS } from '../types';
 import { generateId } from './referenceCode';
 import { formatPrice } from './formatters';
@@ -336,3 +336,52 @@ export const notifyDisputeReply = (
   // Replier isn't a recognised party — bail silently
   return [];
 };
+
+// ============================================
+// REVIEWS
+// ============================================
+
+export const notifyReviewSubmitted = (
+  booking: Booking,
+  review: Review
+): Notification => {
+  const stars = '⭐'.repeat(Math.max(1, Math.min(5, Math.round(review.rating))));
+  const snippet = review.comment
+    ? review.comment.length > 90
+      ? review.comment.slice(0, 87).trimEnd() + '…'
+      : review.comment
+    : null;
+
+  return {
+    id: generateId(),
+    userId: booking.providerId,
+    type: 'review_submitted',
+    priority: 'normal',
+    title: `New ${review.rating}-star review ${stars}`,
+    message: snippet
+      ? `${review.clientDisplayName} reviewed ${booking.serviceTitle}: "${snippet}"`
+      : `${review.clientDisplayName} left a ${review.rating}-star review for ${booking.serviceTitle}.`,
+    linkTo: '/provider/dashboard?tab=requests',
+    actorId: booking.clientId,
+    actorDisplayName: booking.clientDisplayName,
+    bookingId: booking.id,
+    createdAt: nowIso(),
+  };
+};
+
+export const notifyReviewReplied = (
+  booking: Booking,
+  review: Review
+): Notification => ({
+  id: generateId(),
+  userId: booking.clientId,
+  type: 'review_replied',
+  priority: 'normal',
+  title: 'Provider replied to your review',
+  message: `${booking.providerDisplayName} replied to your review of ${booking.serviceTitle}.`,
+  linkTo: '/client/dashboard?tab=history',
+  actorId: booking.providerId,
+  actorDisplayName: booking.providerDisplayName,
+  bookingId: booking.id,
+  createdAt: nowIso(),
+});

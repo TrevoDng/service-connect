@@ -22,6 +22,8 @@ export type NotificationType =
   | 'price_disputed'            // both sides + admins receive dispute alert
   | 'dispute_raised'
   | 'dispute_message'
+  | 'review_submitted'          // provider receives a new review
+| 'review_replied'            // client receives a reply to their review
 
   // work session
   | 'clock_in'                  // client receives reference code
