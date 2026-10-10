@@ -7,6 +7,7 @@ import {
   DISPUTE_RESOLUTION_LABELS,
 } from '../../types';
 import { useAuth } from '../../account/context/AuthContext';
+import { useNotifications } from '../../account/context/NotificationContext';
 import { getBookingById } from '../../utils/allBookings';
 import { setBookingOverride } from '../../utils/localBookingOverrides';
 import {
@@ -14,6 +15,7 @@ import {
   setDisputeStatus,
   resolveDispute,
 } from '../../utils/localDisputes';
+import { notifyDisputeReply } from '../../utils/notify';
 import {
   formatDate,
   formatDateTime,
@@ -68,6 +70,19 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
   canResolve = true,
 }) => {
   const { user } = useAuth();
+  const { addMany } = useNotifications();
+
+// Derive the author's real role from the logged-in user.
+// Previously every non-admin was hardcoded to EMPLOYEE, which is
+// why CLIENT/PROVIDER replies were mislabelled in the thread.
+  const currentRole: 'CLIENT' | 'PROVIDER' | 'EMPLOYEE' | 'ADMIN' =
+  user?.role === 'ADMIN'
+    ? 'ADMIN'
+    : user?.role === 'EMPLOYEE'
+    ? 'EMPLOYEE'
+    : user?.role === 'PROVIDER'
+    ? 'PROVIDER'
+    : 'CLIENT';
 
   const [messageText, setMessageText] = useState('');
   const [internalNote, setInternalNote] = useState(false);
@@ -87,29 +102,48 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
   // Actions
   // ------------------------------------------
   const handleSendMessage = () => {
-    if (!messageText.trim() || !user) return;
+  if (!messageText.trim() || !user) return;
 
-    addDisputeMessage(dispute.id, {
-      authorId: user.id,
-      authorDisplayName: `${user.firstName} ${user.lastName}`.trim() || user.email,
-      authorRole: user.role === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE',
-      text: messageText.trim(),
-      internal: internalNote,
-    });
+  const trimmed = messageText.trim();
+  const displayName =
+    `${user.firstName} ${user.lastName}`.trim() || user.email;
 
-    setMessageText('');
-    onChanged();
-  };
+  addDisputeMessage(dispute.id, {
+    authorId: user.id,
+    authorDisplayName: displayName,
+    authorRole: currentRole,
+    text: trimmed,
+    internal: internalNote,
+  });
+
+  // Only notify on public messages — internal notes are staff-only.
+  if (!internalNote && booking) {
+    const notifications = notifyDisputeReply(
+      booking,
+      dispute,
+      {
+        userId: user.id,
+        displayName,
+        role: currentRole,
+      },
+      trimmed
+    );
+    if (notifications.length > 0) addMany(notifications);
+  }
+
+  setMessageText('');
+  onChanged();
+};
 
   const handleRequestInfo = () => {
     setDisputeStatus(dispute.id, 'awaiting_info');
     if (user) {
       addDisputeMessage(dispute.id, {
-        authorId: user.id,
-        authorDisplayName: `${user.firstName} ${user.lastName}`.trim() || user.email,
-        authorRole: user.role === 'ADMIN' ? 'ADMIN' : 'EMPLOYEE',
-        text: 'We need more information to continue. Please respond to this thread with any details or evidence you think is relevant.',
-        internal: false,
+	      authorId: user.id,
+	      authorDisplayName: `${user.firstName} ${user.lastName}`.trim() || user.email,
+	      authorRole: currentRole,
+	      text: 'We need more information to continue. Please respond to this thread with any details or evidence you think is relevant.',
+	      internal: false,
       });
     }
     onChanged();
@@ -270,10 +304,12 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         </h2>
 
         <div className={styles.thread}>
-          {dispute.messages.length === 0 ? (
-            <p className={styles.threadEmpty}>No messages yet.</p>
-          ) : (
-            dispute.messages.map((m) => (
+  {dispute.messages.filter((m) => !m.internal || canResolve).length === 0 ? (
+    <p className={styles.threadEmpty}>No messages yet.</p>
+  ) : (
+    dispute.messages
+      .filter((m) => !m.internal || canResolve)
+      .map((m) => (
               <div
                 key={m.id}
                 className={`${styles.message} ${

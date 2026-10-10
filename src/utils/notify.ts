@@ -3,7 +3,8 @@
 // Pure notification factories. Each function returns a Notification object
 // ready to be dispatched via `useNotifications().add(...)`.
 
-import type { Booking, Notification } from '../types';
+import type { Booking, Notification, Dispute } from '../types';
+import { DISPUTE_CATEGORY_LABELS } from '../types';
 import { generateId } from './referenceCode';
 import { formatPrice } from './formatters';
 
@@ -120,7 +121,6 @@ export const notifyConsultationCompleted = (
 // PRICE NEGOTIATION CHAIN
 // ============================================
 
-// Provider proposes a final price → client
 export const notifyPriceProposed = (
   booking: Booking,
   amount: number
@@ -140,7 +140,6 @@ export const notifyPriceProposed = (
   createdAt: nowIso(),
 });
 
-// Client counters → provider
 export const notifyPriceCountered = (
   booking: Booking,
   amount: number
@@ -160,8 +159,6 @@ export const notifyPriceCountered = (
   createdAt: nowIso(),
 });
 
-// Provider accepts the client counter → client
-// (Client's counter was written to booking.finalPrice, so we read it back.)
 export const notifyCounterAccepted = (booking: Booking): Notification => ({
   id: generateId(),
   userId: booking.clientId,
@@ -178,7 +175,6 @@ export const notifyCounterAccepted = (booking: Booking): Notification => ({
   createdAt: nowIso(),
 });
 
-// Provider holds firm after a counter → client
 export const notifyHoldFirm = (booking: Booking): Notification => ({
   id: generateId(),
   userId: booking.clientId,
@@ -231,3 +227,112 @@ export const notifyWorkStarted = (booking: Booking): Notification => ({
   workSessionId: booking.workSessionId,
   createdAt: nowIso(),
 });
+
+// ============================================
+// DISPUTES — EITHER PARTY → COUNTERPARTY
+// ============================================
+//
+// The recipient is whoever the dispute was raised against.
+// The actor is whoever raised it. Direction is derived from the
+// dispute record itself, so the same helper works both ways.
+
+export const notifyDisputeRaised = (
+  booking: Booking,
+  dispute: Dispute
+): Notification => {
+  const categoryLabel = DISPUTE_CATEGORY_LABELS[dispute.category];
+  const raiserLabel = dispute.raisedByRole === 'CLIENT' ? 'Client' : 'Provider';
+
+  return {
+    id: generateId(),
+    userId: dispute.againstUserId,
+    type: 'dispute_raised',
+    priority: 'high',
+    title: `${raiserLabel} raised a dispute`,
+    message: `${dispute.raisedByDisplayName} raised a dispute about ${categoryLabel.toLowerCase()} on ${booking.serviceTitle}. Support will review and coordinate.`,
+    linkTo:
+      dispute.againstRole === 'CLIENT'
+        ? '/client/dashboard?tab=support'
+        : '/provider/dashboard?tab=support',
+    actorId: dispute.raisedByUserId,
+    actorDisplayName: dispute.raisedByDisplayName,
+    bookingId: booking.id,
+    createdAt: nowIso(),
+  };
+};
+
+  // ============================================
+// DISPUTE THREAD REPLIES
+// ============================================
+//
+// Returns 0, 1, or 2 notifications depending on who replied:
+//   - A party replies → notify the other party (1)
+//   - Staff replies   → notify BOTH parties (2)
+//
+// Uses `addMany` at the call site so a single call can fan out.
+
+export const notifyDisputeReply = (
+  booking: Booking,
+  dispute: Dispute,
+  replier: {
+    userId: string;
+    displayName: string;
+    role: 'CLIENT' | 'PROVIDER' | 'EMPLOYEE' | 'ADMIN';
+  },
+  messageText: string
+): Notification[] => {
+  const now = nowIso();
+  const snippet =
+    messageText.length > 90
+      ? messageText.slice(0, 87).trimEnd() + '…'
+      : messageText;
+
+  const isStaff = replier.role === 'EMPLOYEE' || replier.role === 'ADMIN';
+
+  const build = (
+    recipientUserId: string,
+    recipientRole: 'CLIENT' | 'PROVIDER'
+  ): Notification => ({
+    id: generateId(),
+    userId: recipientUserId,
+    type: 'dispute_message',
+    priority: isStaff ? 'high' : 'normal',
+    title: isStaff ? 'Support replied to your dispute' : 'New reply on your dispute',
+    message: isStaff
+      ? `ServiceConnect support replied on the dispute for ${booking.serviceTitle}: "${snippet}"`
+      : `${replier.displayName} replied on the dispute for ${booking.serviceTitle}: "${snippet}"`,
+    linkTo:
+      recipientRole === 'CLIENT'
+        ? '/client/dashboard?tab=support'
+        : '/provider/dashboard?tab=support',
+    actorId: replier.userId,
+    actorDisplayName: replier.displayName,
+    bookingId: booking.id,
+    createdAt: now,
+  });
+
+  // Staff → both parties
+  if (isStaff) {
+    return [
+      build(dispute.raisedByUserId, dispute.raisedByRole),
+      build(dispute.againstUserId, dispute.againstRole),
+    ];
+  }
+
+  // A party replied → notify the other party
+    // A party replied → notify the other party.
+  //
+  // We compare by ROLE, not userId: the demo auth IDs (demo-client-1)
+  // don't line up with demo data IDs (c-001), so userId comparison
+  // silently no-ops. Roles are unique per dispute (one CLIENT, one
+  // PROVIDER), so role comparison is reliable.
+  if (replier.role === dispute.raisedByRole) {
+    return [build(dispute.againstUserId, dispute.againstRole)];
+  }
+  if (replier.role === dispute.againstRole) {
+    return [build(dispute.raisedByUserId, dispute.raisedByRole)];
+  }
+
+  // Replier isn't a recognised party — bail silently
+  return [];
+};

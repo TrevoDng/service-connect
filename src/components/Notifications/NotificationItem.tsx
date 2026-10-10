@@ -19,6 +19,7 @@ import {
   faTruckFast,
   faCircleExclamation,
   faUserShield,
+  faGavel,
   faPaperPlane,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './NotificationItem.module.scss';
@@ -60,6 +61,10 @@ const getIconSpec = (type: NotificationType): IconSpec => {
       return { icon: faDollarSign, tone: 'info' };
     case 'price_disputed':
       return { icon: faCircleExclamation, tone: 'danger' };
+    case 'dispute_raised':
+      return { icon: faGavel, tone: 'danger' };
+    case 'dispute_message':
+      return { icon: faCommentDots, tone: 'chat' };
     case 'clock_in':
       return { icon: faKey, tone: 'warning' };
     case 'clock_confirmed':

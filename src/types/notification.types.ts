@@ -20,6 +20,8 @@ export type NotificationType =
   | 'price_proposed'            // client receives final price
   | 'price_agreed'              // provider receives agreement
   | 'price_disputed'            // both sides + admins receive dispute alert
+  | 'dispute_raised'
+  | 'dispute_message'
 
   // work session
   | 'clock_in'                  // client receives reference code

@@ -11,6 +11,7 @@ import type {
   RaiseDisputeFormData,
 } from '../../types';
 import { WizardStep } from './WizardStep';
+import { useNotifications } from '../../account/context/NotificationContext';
 import {
   canAcceptRequest,
   canPayConsultation,
@@ -46,6 +47,7 @@ import { addLocalReview, setProviderReply } from '../../utils/localReviews';
 import { getDisputeByBooking } from '../../utils/allDisputes';
 import { addLocalDispute, addDisputeMessage } from '../../utils/localDisputes';
 import { generateId } from '../../utils/referenceCode';
+import { notifyDisputeRaised } from '../../utils/notify';
 import styles from './RequestCard.module.scss';
 
 // ============================================
@@ -195,6 +197,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   const [showFullDetails, setShowFullDetails] = useState(false);
 
   const navigate = useNavigate();
+  const { add } = useNotifications();
 
   // ------------------------------------------
   // DERIVED DATA
@@ -305,6 +308,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       text: `Dispute raised by ${raisedByDisplayName}. A support agent will review this and respond shortly.`,
       internal: false,
     });
+
+    add(notifyDisputeRaised(request, dispute));
 
     // Shrink back to wizard + notify parent
     setShowRaiseDisputePanel(false);
