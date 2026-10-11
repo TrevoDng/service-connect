@@ -127,3 +127,44 @@
   box-shadow: 0 0 0 2px var(--bg-card, #ffffff);
   transition: box-shadow $transition-base;
 }
+
+// ============================================
+// DELETE AFFORDANCE
+// ============================================
+
+.deleteBtn {
+  position: absolute;
+  top: 50%;
+  right: $spacing-sm;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: $border-radius-full;
+  background: rgba(239, 68, 68, 0.12);
+  color: $error;
+  font-size: 0.7rem;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: $error;
+    color: $text-white;
+  }
+}
+
+// Reveal on hover (desktop) or on long-press (mobile via state)
+.item:hover .deleteBtn,
+.revealed .deleteBtn {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.revealed {
+  background: var(--bg-primary, #f8f9fa);
+}
