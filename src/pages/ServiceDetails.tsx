@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
-import { resolveUserId } from '../utils/resolveUserId';
+import { resolveUserId } from '../account/utils/resolveUserId';
 import { serviceService } from '../services/service.service';
 import type { Service } from '../types/service.types';
 import { BookingRequestForm } from '../components/Requests';
