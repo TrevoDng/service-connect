@@ -84,7 +84,7 @@ export const DEMO_TOKEN = 'demo-token';
 
 // Helper to build a custom demo user from the register form.
 // Custom registrations keep a unique generated id — they aren't in the
-// demo dataset, and their actions route through resolveDemoUserId()
+// demo dataset, and their actions route through resolveUserId()
 // when they need to touch seeded data.
 export const buildCustomDemoUser = (opts: {
   firstName: string;

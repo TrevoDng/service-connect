@@ -12,7 +12,7 @@ import React, {
 import type { ReactNode } from 'react';
 import type { Notification } from '../../types';
 import { demoNotifications } from '../../data/demoNotifications';
-import { resolveDemoUserId } from '../../utils/demoIds';
+import { resolveUserId } from '../utils/resolveUserId';
 import {
   getNotificationsForUser,
   addLocalNotification,
@@ -78,7 +78,7 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({
 
   // Single source of truth for the "current user id" during the demo.
   const currentUserId = useMemo(
-    () => resolveDemoUserId(user),
+    () => resolveUserId(user),
     [user]
   );
 

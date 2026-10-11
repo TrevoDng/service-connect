@@ -5,6 +5,7 @@ import { useNotifications } from '../../account/context/NotificationContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBell, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NotificationItem } from './NotificationItem';
+import ConfirmModal from '../../account/components/common/ConfirmModal';
 import styles from './NotificationsDropdown.module.scss';
 
 export interface NotificationsDropdownProps {
@@ -28,19 +29,21 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   } = useNotifications();
 
   // Which item (if any) is currently showing its delete affordance.
-  const [revealedId, setRevealedId] = useState<string | null>(null);
+const [revealedId, setRevealedId] = useState<string | null>(null);
 
-  const visible = notifications.slice(0, maxItems);
+// Confirmation modal for "Clear all"
+const [confirmClearOpen, setConfirmClearOpen] = useState(false);
 
-  const handleClearAll = () => {
-    if (
-      window.confirm(
-        'Clear all notifications? This cannot be undone.'
-      )
-    ) {
-      clearAll();
-    }
-  };
+const visible = notifications.slice(0, maxItems);
+
+const handleClearAll = () => {
+  setConfirmClearOpen(true);
+};
+
+const handleConfirmClear = () => {
+  clearAll();
+  setConfirmClearOpen(false);
+};
 
   return (
     <div
@@ -119,12 +122,24 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
         )}
       </div>
 
-      {/* Footer */}
+            {/* Footer */}
       {notifications.length > maxItems && (
         <div className={styles.footer}>
           <span>Showing {maxItems} of {notifications.length}</span>
         </div>
       )}
+
+      {/* Clear-all confirmation */}
+      <ConfirmModal
+        isOpen={confirmClearOpen}
+        title="Clear all notifications?"
+        message="This removes every notification from this device. Bookings, bookings, reviews, and disputes are unaffected — only the bell feed is cleared. This cannot be undone."
+        confirmText="Clear all"
+        cancelText="Cancel"
+        confirmVariant="danger"
+        onConfirm={handleConfirmClear}
+        onCancel={() => setConfirmClearOpen(false)}
+      />
     </div>
   );
 };
