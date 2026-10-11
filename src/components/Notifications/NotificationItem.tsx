@@ -1,7 +1,6 @@
-
 // src/components/Notifications/NotificationItem.tsx
 
-import React from 'react';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Notification, NotificationType } from '../../types';
 import { formatRelative } from '../../utils/formatters';
@@ -19,11 +18,15 @@ import {
   faTruckFast,
   faCircleExclamation,
   faUserShield,
+  faPaperPlane,
   faGavel,
   faStar,
-  faPaperPlane,
+  faTimes,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './NotificationItem.module.scss';
+
+// How long the user must hold before the delete affordance appears (ms)
+const LONG_PRESS_MS = 500;
 
 export interface NotificationItemProps {
   notification: Notification;
@@ -32,6 +35,15 @@ export interface NotificationItemProps {
   onNavigate?: (notification: Notification) => void;
   /** Close the dropdown after selecting */
   onSelect?: () => void;
+
+  /** Whether the delete affordance is visible on this row */
+  revealed?: boolean;
+  /** Called when a long-press reveals the affordance */
+  onReveal?: () => void;
+  /** Called when the reveal should be hidden */
+  onHide?: () => void;
+  /** Called when the delete button is pressed */
+  onDelete?: () => void;
 }
 
 // ============================================
@@ -94,31 +106,87 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   onRead,
   onNavigate,
   onSelect,
+  revealed = false,
+  onReveal,
+  onHide,
+  onDelete,
 }) => {
   const navigate = useNavigate();
   const spec = getIconSpec(notification.type);
   const isUnread = !notification.readAt;
 
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const longPressTriggered = useRef(false);
+
+  const startLongPress = () => {
+    longPressTriggered.current = false;
+    if (!onReveal) return;
+    if (longPressTimer.current) clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      onReveal();
+    }, LONG_PRESS_MS);
+  };
+
+  const cancelLongPress = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
   const handleClick = () => {
-    // Mark as read first
+    // Long-press was the intent — don't navigate.
+    if (longPressTriggered.current) {
+      longPressTriggered.current = false;
+      return;
+    }
+
+    // If the delete affordance is visible, a plain click dismisses it.
+    if (revealed && onHide) {
+      onHide();
+      return;
+    }
+
     if (isUnread) onRead(notification.id);
 
-    // Custom handler takes priority
     if (onNavigate) {
       onNavigate(notification);
     } else if (notification.linkTo) {
       navigate(notification.linkTo);
     }
 
-    // Close dropdown
     if (onSelect) onSelect();
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      handleClick();
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onDelete) onDelete();
+  };
+
   return (
-    <button
-      type="button"
-      className={`${styles.item} ${isUnread ? styles.unread : ''}`}
+    <div
+      className={`${styles.item} ${isUnread ? styles.unread : ''} ${
+        revealed ? styles.revealed : ''
+      }`}
+      role="button"
+      tabIndex={0}
       onClick={handleClick}
+      onKeyDown={handleKeyDown}
+      onMouseDown={startLongPress}
+      onMouseUp={cancelLongPress}
+      onMouseLeave={cancelLongPress}
+      onTouchStart={startLongPress}
+      onTouchEnd={cancelLongPress}
+      onTouchMove={cancelLongPress}
     >
       <div className={`${styles.icon} ${styles[spec.tone]}`}>
         <FontAwesomeIcon icon={spec.icon} />
@@ -141,10 +209,23 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
         )}
       </div>
 
-      {isUnread && <span className={styles.dot} aria-label="Unread" />}
-    </button>
+      {isUnread && !revealed && (
+        <span className={styles.dot} aria-label="Unread" />
+      )}
+
+      {onDelete && (
+        <button
+          type="button"
+          className={styles.deleteBtn}
+          onClick={handleDelete}
+          aria-label="Delete notification"
+          title="Delete"
+        >
+          <FontAwesomeIcon icon={faTimes} />
+        </button>
+      )}
+    </div>
   );
 };
 
 export default NotificationItem;
-

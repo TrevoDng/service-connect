@@ -195,3 +195,34 @@
   background: var(--bg-primary, #f8f9fa);
   transition: all $transition-base;
 }
+
+// ============================================
+// HEADER ACTIONS (Clear all)
+// ============================================
+
+.headerActions {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  flex-shrink: 0;
+}
+
+.clearAllBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  background: transparent;
+  color: var(--text-light, $text-light);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  border-radius: $border-radius-sm;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: $error;
+  }
+}

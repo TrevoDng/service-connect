@@ -2,6 +2,10 @@
 //
 // DEV ONLY — seeded demo accounts used by the /dev-login page.
 // These are never sent to the backend. Remove this file when going to production.
+//
+// IDs intentionally match the demo data IDs used across bookings, work
+// sessions, chat, disputes, reviews, and notifications (c-001, p-001,
+// e-001, a-001) so that `user.id` comparisons work without bridging.
 
 import type { User } from '../account/types/user';
 
@@ -26,7 +30,7 @@ export const DEMO_USERS: DemoUserSeed[] = [
     role: 'CLIENT',
     user: {
       ...baseFields,
-      id: 'demo-client-1',
+      id: 'c-001',
       firstName: 'John',
       lastName: 'Doe',
       email: 'john@example.com',
@@ -38,7 +42,7 @@ export const DEMO_USERS: DemoUserSeed[] = [
     role: 'PROVIDER',
     user: {
       ...baseFields,
-      id: 'demo-provider-1',
+      id: 'p-001',
       firstName: 'Tom',
       lastName: 'Brown',
       email: 'tom@example.com',
@@ -50,7 +54,7 @@ export const DEMO_USERS: DemoUserSeed[] = [
     role: 'EMPLOYEE',
     user: {
       ...baseFields,
-      id: 'demo-employee-1',
+      id: 'e-001',
       firstName: 'Emma',
       lastName: 'White',
       email: 'emma@example.com',
@@ -62,7 +66,7 @@ export const DEMO_USERS: DemoUserSeed[] = [
     role: 'ADMIN',
     user: {
       ...baseFields,
-      id: 'demo-admin-1',
+      id: 'a-001',
       firstName: 'Alice',
       lastName: 'Admin',
       email: 'alice@example.com',
@@ -78,7 +82,10 @@ export const getDemoUserByRole = (
 // A demo token that the patched AuthContext recognises as "trust the stored user"
 export const DEMO_TOKEN = 'demo-token';
 
-// Helper to build a custom demo user from the register form
+// Helper to build a custom demo user from the register form.
+// Custom registrations keep a unique generated id — they aren't in the
+// demo dataset, and their actions route through resolveDemoUserId()
+// when they need to touch seeded data.
 export const buildCustomDemoUser = (opts: {
   firstName: string;
   lastName: string;

@@ -1,9 +1,9 @@
 // src/components/Notifications/NotificationsDropdown.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useNotifications } from '../../account/context/NotificationContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faBell, faCheck, faTrash } from '@fortawesome/free-solid-svg-icons';
 import { NotificationItem } from './NotificationItem';
 import styles from './NotificationsDropdown.module.scss';
 
@@ -18,10 +18,29 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
   onClose,
   maxItems = 12,
 }) => {
-  const { notifications, unreadCount, markAsRead, markAllAsRead } =
-    useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    remove,
+    clearAll,
+  } = useNotifications();
+
+  // Which item (if any) is currently showing its delete affordance.
+  const [revealedId, setRevealedId] = useState<string | null>(null);
 
   const visible = notifications.slice(0, maxItems);
+
+  const handleClearAll = () => {
+    if (
+      window.confirm(
+        'Clear all notifications? This cannot be undone.'
+      )
+    ) {
+      clearAll();
+    }
+  };
 
   return (
     <div
@@ -39,16 +58,31 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
           )}
         </div>
 
-        {unreadCount > 0 && (
-          <button
-            type="button"
-            className={styles.markAllBtn}
-            onClick={markAllAsRead}
-          >
-            <FontAwesomeIcon icon={faCheck} />
-            Mark all as read
-          </button>
-        )}
+        <div className={styles.headerActions}>
+          {unreadCount > 0 && (
+            <button
+              type="button"
+              className={styles.markAllBtn}
+              onClick={markAllAsRead}
+              title="Mark all as read"
+            >
+              <FontAwesomeIcon icon={faCheck} />
+              Mark all
+            </button>
+          )}
+
+          {notifications.length > 0 && (
+            <button
+              type="button"
+              className={styles.clearAllBtn}
+              onClick={handleClearAll}
+              title="Clear all notifications"
+              aria-label="Clear all notifications"
+            >
+              <FontAwesomeIcon icon={faTrash} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Body */}
@@ -69,6 +103,15 @@ export const NotificationsDropdown: React.FC<NotificationsDropdownProps> = ({
                   notification={n}
                   onRead={markAsRead}
                   onSelect={onClose}
+                  revealed={revealedId === n.id}
+                  onReveal={() => setRevealedId(n.id)}
+                  onHide={() =>
+                    setRevealedId((cur) => (cur === n.id ? null : cur))
+                  }
+                  onDelete={() => {
+                    remove(n.id);
+                    setRevealedId((cur) => (cur === n.id ? null : cur));
+                  }}
                 />
               </li>
             ))}
