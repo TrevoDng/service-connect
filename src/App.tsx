@@ -27,11 +27,8 @@ import ConsultationPayment from './pages/ConsultationPayment';
 import ConsultationOutcomes from './pages/ConsultationOutcomes';
 import ProviderProfile from './pages/ProviderProfile';
 import WorkSessionGate from './pages/WorkSessionGate';
-import { library } from '@fortawesome/fontawesome-svg-core';
-import { fas } from '@fortawesome/free-solid-svg-icons';
-
-library.add(fas);
-
+//import { library } from '@fortawesome/fontawesome-svg-core';
+//import { fas } from '@fortawesome/free-solid-svg-icons';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isAuthenticated, isLoading } = useAuth();
   if (isLoading) {
