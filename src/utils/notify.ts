@@ -385,3 +385,44 @@ export const notifyReviewReplied = (
   bookingId: booking.id,
   createdAt: nowIso(),
 });
+
+// ============================================
+// CHAT MESSAGES
+// ============================================
+//
+// Fires once per received chat message. Caller is responsible for the
+// suppression logic (recipient currently viewing the thread, observer
+// mode, self-send).
+
+export const notifyChatMessage = (
+  params: {
+    threadId: string;
+    recipientId: string;
+    recipientRole: 'CLIENT' | 'PROVIDER';
+    senderId: string;
+    senderDisplayName: string;
+    text: string;
+  }
+): Notification => {
+  const snippet =
+    params.text.length > 80
+      ? params.text.slice(0, 77).trimEnd() + '…'
+      : params.text;
+
+  return {
+    id: generateId(),
+    userId: params.recipientId,
+    type: 'chat_message',
+    priority: 'normal',
+    title: `New message from ${params.senderDisplayName}`,
+    message: snippet,
+    linkTo:
+      params.recipientRole === 'CLIENT'
+        ? `/client/dashboard?tab=messages&thread=${params.threadId}`
+        : `/provider/dashboard?tab=messages&thread=${params.threadId}`,
+    actorId: params.senderId,
+    actorDisplayName: params.senderDisplayName,
+    threadId: params.threadId,
+    createdAt: nowIso(),
+  };
+};

@@ -1,9 +1,16 @@
 
 // src/components/Chat/ChatPanel.tsx
 
-import React, { useEffect, useRef } from 'react';
-import type { ChatThread } from '../../types';
+import React, { useCallback, useEffect, useRef } from 'react';
+import type { ChatThread, ChatMessage } from '../../types';
 import { useChatThread } from '../../hooks/useChatThread';
+import { useNotifications } from '../../account/context/NotificationContext';
+import {
+  setActiveThread,
+  clearActiveThread,
+  isThreadActiveForUser,
+} from '../../utils/activeThreadTracker';
+import { notifyChatMessage } from '../../utils/notify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -63,17 +70,71 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   onBookProvider,
 }) => {
   const navigate = useNavigate();
-  const scrollRef = useRef<HTMLDivElement | null>(null);
+const scrollRef = useRef<HTMLDivElement | null>(null);
+const { add } = useNotifications();
 
-  const threadId = thread?.id ?? null;
-  const effectiveViewerId = observerMode ? null : normaliseViewerId(viewerUserId);
+const threadId = thread?.id ?? null;
+const effectiveViewerId = observerMode ? null : normaliseViewerId(viewerUserId);
 
-  // ------------------------------------------
-  // HOOK — live messages + send + auto-mark-read
-  // ------------------------------------------
-  // The hook handles: loading, cross-tab subscription, mark-read on
-  // open, and safe no-ops when threadId or viewerId is missing.
-  const { messages, send } = useChatThread(threadId, effectiveViewerId);
+// ------------------------------------------
+// NOTIFY ON SEND
+// ------------------------------------------
+// Fires after the message is written. Resolves the recipient, checks
+// whether they currently have the thread open, and dispatches a
+// notification if not. Never fires for observer-mode viewers.
+const handleSent = useCallback(
+  (sentThread: ChatThread, message: ChatMessage) => {
+    if (observerMode) return;
+    if (!effectiveViewerId) return;
+
+    const senderIsClient = sentThread.clientId === effectiveViewerId;
+    const senderIsProvider = sentThread.providerId === effectiveViewerId;
+    if (!senderIsClient && !senderIsProvider) return;
+
+    const recipientId = senderIsClient
+      ? sentThread.providerId
+      : sentThread.clientId;
+    const recipientRole = senderIsClient ? 'PROVIDER' : 'CLIENT';
+
+    // Suppress if the recipient is currently viewing this thread.
+    if (isThreadActiveForUser(recipientId, sentThread.id)) return;
+
+    const senderDisplayName = senderIsClient
+      ? sentThread.client.displayName
+      : sentThread.provider.displayName;
+
+    add(
+      notifyChatMessage({
+        threadId: sentThread.id,
+        recipientId,
+        recipientRole,
+        senderId: effectiveViewerId,
+        senderDisplayName,
+        text: message.text,
+      })
+    );
+  },
+  [observerMode, effectiveViewerId, add]
+);
+
+// ------------------------------------------
+// HOOK — live messages + send + auto-mark-read
+// ------------------------------------------
+const { messages, send } = useChatThread(threadId, effectiveViewerId, {
+  onSent: handleSent,
+});
+
+// ------------------------------------------
+// ACTIVE THREAD REGISTRATION
+// ------------------------------------------
+// Tell the tracker which thread this viewer currently has open, so
+// other tabs / components can suppress notifications for it. Never
+// registers in observer mode.
+useEffect(() => {
+  if (!effectiveViewerId || !threadId) return;
+  setActiveThread(effectiveViewerId, threadId);
+  return () => clearActiveThread(effectiveViewerId);
+}, [effectiveViewerId, threadId]);
 
   // ------------------------------------------
   // AUTO-SCROLL
