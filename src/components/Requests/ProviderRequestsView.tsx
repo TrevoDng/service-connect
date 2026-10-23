@@ -241,90 +241,44 @@ export const ProviderRequestsView: React.FC = () => {
     console.log('[7x TODO] Open request detail for', booking.id);
   };
 
-  const handleProposeFinalPrice = (
-  booking: Booking,
-  amount: number,
-  note: string
-) => {
-  const now = new Date().toISOString();
+  const handleProposeFinalPrice = async (
+    booking: Booking,
+    amount: number,
+    note: string
+  ) => {
+    try {
+      await bookingService.proposePrice(booking.id, amount, note);
+      add(
+        notifyPriceProposed(
+          { ...booking, status: 'price_proposed', finalPrice: amount },
+          amount
+        )
+      );
+    } catch (err) {
+      console.warn('[propose-price] backend failed', err);
+    }
+    setRefreshTick((t) => t + 1);
+  };
 
-  setBookingOverride(booking.id, {
-    status: 'price_proposed',
-    finalPrice: amount,
-    holdFirm: false,
-    pendingCounterParty: 'CLIENT',
-    priceHistory: [
-      ...booking.priceHistory,
-      {
-        stage: 'final_proposed',
-        amount,
-        at: now,
-        byUserId: booking.providerId,
-        note: note || undefined,
-      },
-    ],
-    updatedAt: now,
-  });
+    const handleAcceptCounter = async (booking: Booking) => {
+    try {
+      await bookingService.acceptCounter(booking.id);
+      add(notifyCounterAccepted({ ...booking, status: 'price_agreed' }));
+    } catch (err) {
+      console.warn('[accept-counter] backend failed', err);
+    }
+    setRefreshTick((t) => t + 1);
+  };
 
-  // Notify the client that a final price is proposed
-  add(
-    notifyPriceProposed(
-      { ...booking, status: 'price_proposed', finalPrice: amount },
-      amount
-    )
-  );
-
-  setRefreshTick((t) => t + 1);
-};
-
-  const handleAcceptCounter = (booking: Booking) => {
-  const now = new Date().toISOString();
-
-  setBookingOverride(booking.id, {
-    status: 'price_agreed',
-    pendingCounterParty: undefined,
-    holdFirm: false,
-    priceHistory: [
-      ...booking.priceHistory,
-      {
-        stage: 'final_agreed',
-        amount: booking.finalPrice ?? 0,
-        at: now,
-        byUserId: booking.providerId,
-        note: 'Provider accepted the client counter.',
-      },
-    ],
-    updatedAt: now,
-  });
-
-  // Notify the client that their counter was accepted
-  add(
-    notifyCounterAccepted({
-      ...booking,
-      status: 'price_agreed',
-      pendingCounterParty: undefined,
-      holdFirm: false,
-    })
-  );
-
-  setRefreshTick((t) => t + 1);
-};
-
-  const handleHoldFirm = (booking: Booking) => {
-  const now = new Date().toISOString();
-
-  setBookingOverride(booking.id, {
-    holdFirm: true,
-    pendingCounterParty: 'CLIENT',
-    updatedAt: now,
-  });
-
-  // Notify the client that the provider held firm
-  add(notifyHoldFirm({ ...booking, holdFirm: true }));
-
-  setRefreshTick((t) => t + 1);
-};
-
+    const handleHoldFirm = async (booking: Booking) => {
+    try {
+      await bookingService.holdFirm(booking.id);
+      add(notifyHoldFirm({ ...booking, holdFirm: true }));
+    } catch (err) {
+      console.warn('[hold-firm] backend failed', err);
+    }
+    setRefreshTick((t) => t + 1);
+  };
   const handleStartConsultation = (booking: Booking) => {
     navigate(`/provider/bookings/${booking.id}/consultation`);
   };

@@ -327,6 +327,170 @@ export const bookingService = {
       }
     );
   },
+
+    proposePrice: async (
+    bookingId: string,
+    amount: number,
+    note: string
+  ): Promise<Booking> => {
+    return withFallback(
+      'proposePrice',
+      () =>
+        api
+          .patch<{ booking: Booking }>(
+            `/provider/bookings/${bookingId}/propose-price`,
+            { amount, note }
+          )
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        const now = new Date().toISOString();
+        setBookingOverride(bookingId, {
+          status: 'price_proposed',
+          finalPrice: amount,
+          pendingCounterParty: 'CLIENT',
+          holdFirm: false,
+          priceHistory: [
+            ...(b.priceHistory ?? []),
+            {
+              stage: 'final_proposed',
+              amount,
+              at: now,
+              byUserId: b.providerId,
+              note: note || undefined,
+            },
+          ],
+          updatedAt: now,
+        });
+        return { ...b, status: 'price_proposed' as const, finalPrice: amount };
+      }
+    );
+  },
+
+  acceptCounter: async (bookingId: string): Promise<Booking> => {
+    return withFallback(
+      'acceptCounter',
+      () =>
+        api
+          .patch<{ booking: Booking }>(
+            `/provider/bookings/${bookingId}/accept-counter`
+          )
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          status: 'price_agreed',
+          pendingCounterParty: undefined,
+          holdFirm: false,
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, status: 'price_agreed' as const };
+      }
+    );
+  },
+
+  holdFirm: async (bookingId: string): Promise<Booking> => {
+    return withFallback(
+      'holdFirm',
+      () =>
+        api
+          .patch<{ booking: Booking }>(
+            `/provider/bookings/${bookingId}/hold-firm`
+          )
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          holdFirm: true,
+          pendingCounterParty: 'CLIENT',
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, holdFirm: true };
+      }
+    );
+  },
+
+    acceptFinalPrice: async (bookingId: string): Promise<Booking> => {
+    return withFallback(
+      'acceptFinalPrice',
+      () =>
+        api
+          .patch<{ booking: Booking }>(`/bookings/${bookingId}/accept-price`)
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          status: 'price_agreed',
+          pendingCounterParty: undefined,
+          holdFirm: false,
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, status: 'price_agreed' as const };
+      }
+    );
+  },
+
+  counterPrice: async (
+    bookingId: string,
+    amount: number,
+    note: string
+  ): Promise<Booking> => {
+    return withFallback(
+      'counterPrice',
+      () =>
+        api
+          .patch<{ booking: Booking }>(`/bookings/${bookingId}/counter-price`, {
+            amount,
+            note,
+          })
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          finalPrice: amount,
+          holdFirm: false,
+          pendingCounterParty: 'PROVIDER',
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, finalPrice: amount, pendingCounterParty: 'PROVIDER' as const };
+      }
+    );
+  },
+
+  disputePrice: async (
+    bookingId: string,
+    reason: string
+  ): Promise<Booking> => {
+    // Dispute is available on both client and provider routes — we'll call
+    // the client endpoint here; booking.service is shared, so for provider
+    // calls add a second wrapper (providerDisputePrice) if needed.
+    return withFallback(
+      'disputePrice',
+      () =>
+        api
+          .patch<{ booking: Booking }>(`/bookings/${bookingId}/dispute-price`, {
+            reason,
+          })
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          status: 'price_disputed',
+          declineReason: reason,
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, status: 'price_disputed' as const };
+      }
+    );
+  },
 };
+
+
 
 export default bookingService;

@@ -389,101 +389,41 @@ const handleDenyArrival = (sessionId: string) => {
 };
 
   
-    const handleAcceptFinalPrice = (booking: BookingModel) => {
-  setBookingOverride(booking.id, {
-    status: 'price_agreed',
-    pendingCounterParty: undefined,
-    holdFirm: false,
-    priceHistory: [
-      ...booking.priceHistory,
-      {
-        stage: 'final_agreed',
-        amount: booking.finalPrice ?? 0,
-        at: new Date().toISOString(),
-        byUserId: booking.clientId,
-        note: 'Client accepted the final price.',
-      },
-    ],
-    updatedAt: new Date().toISOString(),
-  });
-
-  // Notify the provider that the price was accepted.
-  // Note: use the freshly-updated shape so `finalPrice` reads correctly.
-  add(
-    notifyPriceAccepted({
-      ...booking,
-      status: 'price_agreed',
-      pendingCounterParty: undefined,
-      holdFirm: false,
-    })
-  );
-
-  // Force re-read of bookings so the wizard auto-advances
-    setSessions((prev) => [...prev]);
+      const handleAcceptFinalPrice = async (booking: BookingModel) => {
+    try {
+      await bookingService.acceptFinalPrice(booking.id);
+      add(notifyPriceAccepted({ ...booking, status: 'price_agreed' }));
+    } catch (err) {
+      console.warn('[accept-price] backend failed', err);
+    }
     setBookingRefresh((t) => t + 1);
-};
+  };
 
-const handleCounterFinalPrice = (
-  booking: BookingModel,
-  amount: number,
-  note: string
-) => {
-  const now = new Date().toISOString();
-
-  setBookingOverride(booking.id, {
-    finalPrice: amount,
-    holdFirm: false,
-    pendingCounterParty: 'PROVIDER',
-    priceHistory: [
-      ...booking.priceHistory,
-      {
-        stage: 'final_proposed',
-        amount,
-        at: now,
-        byUserId: booking.clientId,
-        note: note ? `Client counter: ${note}` : 'Client counter.',
-      },
-    ],
-    updatedAt: now,
-  });
-
-  // Notify the provider that the client countered
-  add(
-    notifyPriceCountered(
-      { ...booking, pendingCounterParty: 'PROVIDER' },
-      amount
-    )
-  );
-
-  setSessions((prev) => [...prev]);
-  // Force re-read of bookings so the wizard auto-advances
+  const handleCounterFinalPrice = async (
+    booking: BookingModel,
+    amount: number,
+    note: string
+  ) => {
+    try {
+      await bookingService.counterPrice(booking.id, amount, note);
+      add(notifyPriceCountered({ ...booking, pendingCounterParty: 'PROVIDER' }, amount));
+    } catch (err) {
+      console.warn('[counter-price] backend failed', err);
+    }
     setBookingRefresh((t) => t + 1);
-};
+  };
 
-const handleDisputeFinalPrice = (
-  booking: BookingModel,
-  reason: string
-) => {
-  setBookingOverride(booking.id, {
-    status: 'price_disputed',
-    pendingCounterParty: undefined,
-    declineReason: undefined,
-    updatedAt: new Date().toISOString(),
-    priceHistory: [
-      ...booking.priceHistory,
-      {
-        stage: 'final_proposed',
-        amount: booking.finalPrice ?? booking.suggestedPrice,
-        at: new Date().toISOString(),
-        byUserId: booking.clientId,
-        note: `Disputed: ${reason}`,
-      },
-    ],
-  });
-  setSessions((prev) => [...prev]);
-  // Force re-read of bookings so the wizard auto-advances
+  const handleDisputeFinalPrice = async (
+    booking: BookingModel,
+    reason: string
+  ) => {
+    try {
+      await bookingService.disputePrice(booking.id, reason);
+    } catch (err) {
+      console.warn('[dispute-price] backend failed', err);
+    }
     setBookingRefresh((t) => t + 1);
-};
+  };
   
 
   const handleViewOutcomes = (booking: BookingModel) => {
