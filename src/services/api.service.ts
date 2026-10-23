@@ -1,7 +1,7 @@
 // src/services/api.service.ts
 
 const API_BASE_URL =
-  import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
+  import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 // Helper to get token from storage
 const getToken = (): string | null => {
@@ -18,7 +18,7 @@ const extractData = (response: any) => {
 
 // Shared request runner — keeps the four methods DRY
 async function request<T>(
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  method: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH',
   endpoint: string,
   body?: unknown,
   options?: RequestInit
@@ -65,6 +65,12 @@ export const api = {
     body?: unknown,
     options?: RequestInit
   ): Promise<T> => request<T>('PUT', endpoint, body, options),
+
+  patch: <T = unknown>(
+    endpoint: string,
+    body?: unknown,
+    options?: RequestInit
+  ): Promise<T> => request<T>('PATCH', endpoint, body, options),
 
   delete: <T = unknown>(
     endpoint: string,

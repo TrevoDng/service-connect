@@ -1,5 +1,7 @@
 // src/account/components/Auth/admin/AdminLogin.tsx
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getUrl } from '../../../../services/getUrl';
 import { useAuth } from '../../../context/AuthContext';
 import type { LoginCredentials } from '../../../types/user';
 import styles from './AdminLogin.module.scss';
@@ -13,16 +15,17 @@ const AdminLogin: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      if (user.role === 'ADMIN') {
-        window.location.href = '/admin/dashboard';
-      } else {
-        setError('This account does not have admin privileges. Please use an admin account.');
-      }
+  if (isAuthenticated && user) {
+    if (user.role === 'ADMIN') {
+      navigate(getUrl('/admin-dashboard')[0]);
+    } else {
+      setError('This account does not have admin privileges. Please use an admin account.');
     }
-  }, [isAuthenticated, user]);
+  }
+}, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -123,9 +126,9 @@ const AdminLogin: React.FC = () => {
         </form>
 
         <div className={styles.adminLoginFooter}>
-          <a href="/login">Customer Login</a>
+          <Link to={getUrl('/login')[0]}>Customer Login</Link>
           <span className={styles.separator}>•</span>
-          <a href="/login/employee">Employee Login</a>
+          <Link to={getUrl('/login/employee')[0]}>Employee Login</Link>
         </div>
       </div>
     </div>

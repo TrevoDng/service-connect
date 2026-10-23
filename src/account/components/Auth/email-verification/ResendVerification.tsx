@@ -1,9 +1,10 @@
 // src/account/components/Auth/email-verification/ResendVerification.tsx
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './ResendVerification.module.scss';
+import { getUrl } from '../../../../services/getUrl';
 
-const API_BASE = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 const ResendVerification: React.FC = () => {
   const navigate = useNavigate();
@@ -157,7 +158,7 @@ const ResendVerification: React.FC = () => {
                 </button>
               </p>
               <p className={styles.resendHelp}>
-                <a href="/register">Don't have an account? Register</a>
+                <Link to={getUrl('/register')[0]}>Don't have an account? Register</Link>
               </p>
             </div>
           </form>

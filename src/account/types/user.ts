@@ -31,6 +31,10 @@ export interface RegisterData {
   phone?: string;
   rememberMe?: boolean;
   secretCode?: string; // If provided, server registers as employee
+  role?: 'CLIENT' | 'PROVIDER'; // For client/provider self-registration
+  serviceType?: string;          // PROVIDER only
+  companyName?: string;          // PROVIDER only
+  registrationNumber?: string;   // PROVIDER only
 }
 
 export interface EmployeeRegisterData {

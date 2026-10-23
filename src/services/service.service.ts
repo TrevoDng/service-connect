@@ -61,7 +61,7 @@ export const serviceService = {
   getProviderServices: async (): Promise<Service[]> => {
     return withFallback(
       'getProviderServices',
-      () => api.get<Service[]>('/provider/services'),
+      () => api.get<{ services: Service[] }>('/provider/services').then((r) => r.services),
       () => {
         // Merge demo provider services with any local ones (offline-created)
         const demo = getDemoProviderServices('p-001');
@@ -94,11 +94,11 @@ export const serviceService = {
     return withFallback(
       'createService',
       () =>
-        api.post<Service>('/services', {
-          ...data,
-          price: parseFloat(data.price) || 0,
-          status: 'active',
-        }),
+        api.post<{ service: Service }>('/services', {
+        ...data,
+        price: parseFloat(data.price) || 0,
+        status: 'active',
+        }).then((r) => r.service),
       () => addLocalProviderService(data, 'p-001')
     );
   },
@@ -180,7 +180,7 @@ export const serviceService = {
 
     return withFallback(
       'getServices',
-      () => api.get<Service[]>(url),
+      () => api.get<{ services: Service[] }>(url).then((r) => r.services),
       () => filterDemoServices(filters)
     );
   },
@@ -189,7 +189,7 @@ export const serviceService = {
   getServiceById: async (serviceId: string): Promise<Service> => {
     return withFallback(
       'getServiceById',
-      () => api.get<Service>(`/services/${serviceId}`),
+      () => api.get<{ service: Service }>(`/services/${serviceId}`).then((r) => r.service),
       () => {
         const found = getDemoServiceById(serviceId);
         if (!found) {

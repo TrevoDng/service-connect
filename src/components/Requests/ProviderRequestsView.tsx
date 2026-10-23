@@ -1,6 +1,6 @@
 // src/components/Requests/ProviderRequestsView.tsx
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Booking, Notification } from '../../types';
 import {
@@ -25,13 +25,15 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { RequestCard } from './RequestCard';
 import { generateId } from '../../utils/referenceCode';
+import { bookingService } from '../../services/booking.service';
+import { useAuth } from '../../account/context/AuthContext';
 import styles from './ProviderRequestsView.module.scss';
 
 // ============================================
 // CONFIG
 // ============================================
 
-const DEMO_PROVIDER_ID = 'p-001';
+//const DEMO_PROVIDER_ID = 'p-001';
 
 // Default consultation fee per service category (ZAR)
 const CONSULTATION_FEE_BY_CATEGORY: Record<string, number> = {
@@ -64,16 +66,30 @@ export const ProviderRequestsView: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTick, setRefreshTick] = useState(0);
   const [reviewRefresh, setReviewRefresh] = useState(0);
+    const { user } = useAuth();
+  const providerId = user?.id || '';
 
   // ------------------------------------------
   // Load provider bookings (with overrides applied)
   // ------------------------------------------
-  const providerBookings = useMemo(
-    () => getBookingsForProvider(DEMO_PROVIDER_ID),
-    // refreshTick forces re-read after accept/decline
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [refreshTick]
-  );
+    // Backend-driven bookings (Phase 1)
+  const [providerBookings, setProviderBookings] = useState<Booking[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoadingBookings(true);
+      const data = await bookingService.getProviderBookings(providerId);
+      if (!cancelled) {
+        setProviderBookings(data);
+        setLoadingBookings(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [providerId, refreshTick]);
 
   const currentRequests = providerBookings.filter(isCurrentRequest);
   const closedRequests = providerBookings.filter(isClosedRequest);
@@ -102,7 +118,7 @@ export const ProviderRequestsView: React.FC = () => {
   const resumableSessions = useMemo(
     () =>
       getLocalWorkSessions().filter((s) => {
-        if (s.providerId !== DEMO_PROVIDER_ID) return false;
+        if (s.providerId !== providerId) return false;
         const b = getBookingById(s.bookingId);
         if (!b) return false;
         return b.status === 'price_agreed' || b.status === 'in_progress';
@@ -121,15 +137,29 @@ export const ProviderRequestsView: React.FC = () => {
   // ------------------------------------------
   // Actions
   // ------------------------------------------
-  const handleAccept = (booking: Booking) => {
+    const handleAccept = async (booking: Booking) => {
     const fee = getConsultationFeeFor(booking.serviceCategory);
     const now = new Date().toISOString();
 
-    setBookingOverride(booking.id, {
-      status: 'accepted',
-      consultationFee: fee,
-      updatedAt: now,
-    });
+    try {
+      await bookingService.acceptBooking(booking.id, fee);
+    } catch (err) {
+      console.warn('[accept] backend failed, using local override', err);
+      setBookingOverride(booking.id, {
+        status: 'accepted',
+        consultationFee: fee,
+        updatedAt: now,
+      });
+    }
+
+    // Optimistic update so the UI doesn't flicker while the effect refetches
+    setProviderBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? { ...b, status: 'accepted' as const, consultationFee: fee, updatedAt: now }
+          : b
+      )
+    );
 
     // Notify the client
     notifyClient({
@@ -149,7 +179,7 @@ export const ProviderRequestsView: React.FC = () => {
     setRefreshTick((t) => t + 1);
   };
 
-  const handleDecline = (booking: Booking) => {
+    const handleDecline = async (booking: Booking) => {
     const reason = window.prompt(
       `Why are you declining "${booking.serviceTitle}"? (the client will see this)`,
       ''
@@ -161,11 +191,25 @@ export const ProviderRequestsView: React.FC = () => {
       'Unable to take this job at the moment. Best of luck finding another provider.';
     const now = new Date().toISOString();
 
-    setBookingOverride(booking.id, {
-      status: 'declined',
-      declineReason: trimmed,
-      updatedAt: now,
-    });
+    try {
+      await bookingService.declineBooking(booking.id, trimmed);
+    } catch (err) {
+      console.warn('[decline] backend failed, using local override', err);
+      setBookingOverride(booking.id, {
+        status: 'declined',
+        declineReason: trimmed,
+        updatedAt: now,
+      });
+    }
+
+    // Optimistic update
+    setProviderBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? { ...b, status: 'declined' as const, declineReason: trimmed, updatedAt: now }
+          : b
+      )
+    );
 
     // Notify the client
     notifyClient({

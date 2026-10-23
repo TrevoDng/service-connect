@@ -1,5 +1,7 @@
 // src/account/components/Auth/employee/EmployeeRegister.tsx
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { getUrl } from '../../../../services/getUrl';
 import { useAuth } from '../../../context/AuthContext';
 import type { RegisterData } from '../../../types/user';
 import styles from './EmployeeRegister.module.scss';
@@ -26,7 +28,7 @@ const EmployeeRegister: React.FC = () => {
     message: string;
   } | null>(null);
 
-  const API_BASE = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
   const validateCode = async () => {
     if (!code.trim()) {
@@ -222,9 +224,9 @@ const EmployeeRegister: React.FC = () => {
             </div>
             
             <div className={styles.registerActions}>
-              <a href="/login/employee" className={styles.registerButtonLink}>
+              <Link to={getUrl('/login/employee')[0]} className={styles.registerButtonLink}>
                 Go to Employee Login
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -434,8 +436,8 @@ const EmployeeRegister: React.FC = () => {
 
               <div className={styles.registerTerms}>
                 By creating an account, you agree to our{' '}
-                <a href="/terms">Terms of Service</a> and{' '}
-                <a href="/privacy">Privacy Policy</a>.
+                <Link to={getUrl('/terms')[0]}>Terms of Service</Link> and{' '}
+                <Link to={getUrl('/privacy')[0]}>Privacy Policy</Link>.
               </div>
 
               <button
@@ -450,11 +452,11 @@ const EmployeeRegister: React.FC = () => {
 
           <div className={styles.registerFooter}>
             Already have an account?{' '}
-            <a href="/login/employee">Sign in as Employee</a>
+            <Link to={getUrl('/login/employee')[0]}>Sign in as Employee</Link>
           </div>
-          
+
           <div className={styles.registerFooter}>
-            <a href="/login">Sign in as Customer</a>
+            <Link to={getUrl('/login')[0]}>Sign in as Customer</Link>
           </div>
         </div>
       </div>

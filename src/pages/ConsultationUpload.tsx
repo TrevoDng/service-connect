@@ -6,7 +6,6 @@ import { useAuth } from '../account/context/AuthContext';
 import { useNotifications } from '../account/context/NotificationContext';
 import { useTheme } from '../styles/context/ThemeContext';
 import { getBookingById } from '../utils/allBookings';
-import { setBookingOverride } from '../utils/localBookingOverrides';
 import {
   generateClockInCode,
   clockInCodeExpiry,
@@ -29,13 +28,10 @@ import { PhotoUploadButton } from '../components/WorkSession';
 import { CountdownTimer } from '../components/WorkSession';
 import { notifyConsultationCompleted } from '../utils/notify';
 import styles from './ConsultationUpload.module.scss';
+import { bookingService } from '../services/booking.service';
+import type { Booking } from '../types';
 
 const MAX_PHOTOS = 5;
-const DEMO_PROVIDER_ID = 'p-001';
-
-// ============================================
-// COMPONENT
-// ============================================
 
 export const ConsultationUpload: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,16 +47,33 @@ export const ConsultationUpload: React.FC = () => {
 
   // Read booking fresh — we re-read after clock actions so the UI is current
   const [tick, setTick] = useState(0);
-  const booking = useMemo(
-    () => (id ? getBookingById(id) : undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id, tick]
-  );
+  const [booking, setBooking] = useState<Booking | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!id) {
+        setLoading(false);
+        return;
+      }
+      setLoading(true);
+      const data = await bookingService.getProviderBookingById(id);
+      if (!cancelled) {
+        setBooking(data);
+        setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, tick]);
 
   // ------------------------------------------
   // Guards
   // ------------------------------------------
   useEffect(() => {
+    if (loading) return;
     if (!user) {
       navigate('/login');
       return;
@@ -79,7 +92,7 @@ export const ConsultationUpload: React.FC = () => {
       return;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking, user]);
+  }, [booking, user, loading]);
 
   // ------------------------------------------
   // Derived state
@@ -97,28 +110,26 @@ export const ConsultationUpload: React.FC = () => {
   // ------------------------------------------
   // Actions
   // ------------------------------------------
-  const handleClockIn = () => {
-    if (!booking) return;
-    const code = generateClockInCode();
-    setBookingOverride(booking.id, {
-      consultationClockIn: new Date().toISOString(),
-      consultationClockOut: undefined,
-      consultationReferenceCode: code,
-      consultationReferenceExpiresAt: clockInCodeExpiry(),
-      updatedAt: new Date().toISOString(),
-    });
-    setTick((t) => t + 1);
+    const handleClockIn = async () => {
+      if (!booking) return;
+      const code = generateClockInCode();
+      const expiresAt = clockInCodeExpiry();
+      try {
+        await bookingService.clockInConsultation(booking.id, code, expiresAt);
+      } catch (err) {
+        console.warn('[clock-in] backend failed, using local override', err);
+      }
+      setTick((t) => t + 1);
   };
 
-  const handleClockOut = () => {
-    if (!booking) return;
-    setBookingOverride(booking.id, {
-      consultationClockOut: new Date().toISOString(),
-      consultationReferenceCode: undefined,
-      consultationReferenceExpiresAt: undefined,
-      updatedAt: new Date().toISOString(),
-    });
-    setTick((t) => t + 1);
+    const handleClockOut = async () => {
+      if (!booking) return;
+      try {
+        await bookingService.clockOutConsultation(booking.id);
+      } catch (err) {
+        console.warn('[clock-out] backend failed, using local override', err);
+      }
+      setTick((t) => t + 1);
   };
 
   const handlePhotoUpload = (urls: string[]) => {
@@ -130,34 +141,34 @@ export const ConsultationUpload: React.FC = () => {
     setPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!booking || !canSubmit) return;
 
     setError(null);
     setIsSubmitting(true);
 
-    setTimeout(() => {
-  setBookingOverride(booking.id, {
-    status: 'evaluated',
-    siteVisited: true,
-    consultationPhotos: photos,
-    consultationNotes: notes.trim(),
-    updatedAt: new Date().toISOString(),
-  });
+    try {
+      await bookingService.submitConsultation(
+        booking.id,
+        notes.trim(),
+        photos
+      );
 
-  // Notify the client that findings are ready to review.
-  add(
-    notifyConsultationCompleted({
-      ...booking,
-      status: 'evaluated',
-      siteVisited: true,
-    })
-  );
+      add(
+        notifyConsultationCompleted({
+          ...booking,
+          status: 'evaluated',
+          siteVisited: true,
+        })
+      );
 
-  navigate('/provider/dashboard');
-}, 600);
-
+      navigate('/provider/dashboard');
+    } catch (err: any) {
+      console.error('Failed to submit consultation:', err);
+      setError(err?.message || 'Failed to submit. Please try again.');
+      setIsSubmitting(false);
+    }
   };
 
   const handleCancel = () => {
@@ -167,6 +178,10 @@ export const ConsultationUpload: React.FC = () => {
   // ------------------------------------------
   // Guards — nothing until booking is ready
   // ------------------------------------------
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading…</div>;
+  }
+
   if (!booking || booking.status !== 'consultation_paid') {
     return null;
   }

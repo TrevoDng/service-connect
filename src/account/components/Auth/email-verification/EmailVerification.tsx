@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import styles from './EmailVerification.module.scss';
 
-const API_BASE = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3001/api';
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 const EmailVerification: React.FC = () => {
   const [searchParams] = useSearchParams();

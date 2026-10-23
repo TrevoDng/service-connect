@@ -1,5 +1,7 @@
 // src/account/components/Auth/employee/EmployeeLogin.tsx
 import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { getUrl } from '../../../../services/getUrl';
 import { useAuth } from '../../../context/AuthContext';
 import type { LoginCredentials } from '../../../types/user';
 import styles from './EmployeeLogin.module.scss';
@@ -13,20 +15,23 @@ const EmployeeLogin: React.FC = () => {
   });
   const [error, setError] = useState('');
   const [showPendingMessage, setShowPendingMessage] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated && user) {
-      if (user.role === 'EMPLOYEE') {
-        if (user.status === 'active') {
-          window.location.href = '/employee/dashboard';
-        }
-      } else if (user.role === 'ADMIN') {
-        window.location.href = '/admin/dashboard';
-      } else if (user.role === 'CLIENT') {
-        window.location.href = '/account';
+  if (isAuthenticated && user) {
+    if (user.role === 'EMPLOYEE') {
+      if (user.status === 'active') {
+        navigate(getUrl('/employee-dashboard')[0]);
       }
+    } else if (user.role === 'ADMIN') {
+      navigate(getUrl('/admin-dashboard')[0]);
+    } else if (user.role === 'CLIENT') {
+      navigate(getUrl('/account')[0]);
+    } else if (user.role === 'PROVIDER') {
+      navigate(getUrl('/provider/dashboard')[0]);
     }
-  }, [isAuthenticated, user]);
+  }
+}, [isAuthenticated, user, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -163,9 +168,9 @@ const EmployeeLogin: React.FC = () => {
               />
               <span>Remember me</span>
             </label>
-            <a href="/forgot-password" className={styles.employeeLoginForgot}>
+            <Link to={getUrl('/forgot-password')[0]} className={styles.employeeLoginForgot}>
               Forgot password?
-            </a>
+            </Link>
           </div>
 
           {/* Submit Button */}
@@ -202,22 +207,22 @@ const EmployeeLogin: React.FC = () => {
         {/* Footer Links */}
         <div className={styles.employeeLoginFooter}>
           <div className={styles.footerLinks}>
-            <a href="/register/employee" className={styles.footerLink}>
+            <Link to={getUrl('/register/employee')[0]} className={styles.footerLink}>
               Register as Employee
-            </a>
+            </Link>
             <span className={styles.separator}>•</span>
-            <a href="/login" className={styles.footerLink}>
-              Customer Login
-            </a>
+            <Link to={getUrl('/login')[0]} className={styles.footerLink}>
+  Customer Login
+</Link>
             <span className={styles.separator}>•</span>
-            <a href="/login/admin" className={styles.footerLink}>
+            <Link to={getUrl('/login/admin')[0]} className={styles.footerLink}>
               Admin Login
-            </a>
+            </Link>
           </div>
           <div className={styles.footerHelp}>
-            <a href="/help/employee" className={styles.helpLink}>
+            <Link to={getUrl('/help/employee')[0]} className={styles.helpLink}>
               Need help? Contact HR
-            </a>
+            </Link>
           </div>
         </div>
       </div>

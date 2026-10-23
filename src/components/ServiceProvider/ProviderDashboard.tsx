@@ -46,7 +46,7 @@ const PROVIDER_HOVER_BG = 'rgba(245, 158, 11, 0.08)';
 const PROVIDER_ACTIVE_BG = 'rgba(245, 158, 11, 0.12)';
 const PROVIDER_ROLE_BG = 'rgba(245, 158, 11, 0.1)';
 
-const DEMO_PROVIDER_ID = 'p-001';
+//const DEMO_PROVIDER_ID = 'p-001';
 
 // ============================================
 // TYPES
@@ -61,7 +61,7 @@ type ServicesTab = 'list' | 'add';
 
 export const ProviderDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { theme } = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -117,6 +117,8 @@ useEffect(() => {
     }))
   );
 
+  const providerId = user?.id || '';
+
   useEffect(() => {
     fetchStats();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -136,12 +138,12 @@ useEffect(() => {
   // ------------------------------------------
   // Sidebar badge counts
   // ------------------------------------------
-  const unreadMessages = getUnreadCount(DEMO_PROVIDER_ID);
+  const unreadMessages = getUnreadCount(providerId);
   const activeRequestCount = useMemo(
-    () => getBookingsForProvider(DEMO_PROVIDER_ID).filter(isCurrentRequest).length,
+    () => getBookingsForProvider(providerId).filter(isCurrentRequest).length,
     // Recomputed each render of the dashboard — cheap enough for demo
     // and reflects any overrides written from the Requests view.
-    []
+    [providerId, sessions]
   );
 
   // ------------------------------------------
@@ -299,7 +301,7 @@ useEffect(() => {
       icon: faHardHat,
       badge:
         sessions.filter(
-          (s) => s.providerId === DEMO_PROVIDER_ID && s.status !== 'completed'
+          (s) => s.providerId === providerId && s.status !== 'completed'
         ).length || undefined,
     },
     {
@@ -312,7 +314,7 @@ useEffect(() => {
   key: 'support',
   label: 'Support',
   icon: faGavel,
-  badge: getOpenDisputeCountForUser('p-001') || undefined,
+  badge: getOpenDisputeCountForUser(providerId) || undefined,
 },
   ];
 
@@ -404,7 +406,7 @@ useEffect(() => {
           <WorkSessionPanel
             session={selectedSession}
             booking={selectedBooking}
-            providerId={DEMO_PROVIDER_ID}
+            providerId={providerId}
             onBack={() => setSelectedSessionId(null)}
             onClockIn={handleClockIn}
             onClockOut={handleClockOut}
@@ -422,7 +424,7 @@ useEffect(() => {
     }
 
     const providerSessions = sessions
-      .filter((s) => s.providerId === DEMO_PROVIDER_ID)
+      .filter((s) => s.providerId === providerId)
       .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
 
     return (

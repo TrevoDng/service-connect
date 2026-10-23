@@ -3,7 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import type { User, LoginCredentials, RegisterData } from '../types/user';
 
-const API_BASE_URL = import.meta.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/api';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
 
 interface AuthContextType {
   user: User | null;
@@ -342,13 +342,29 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         confirmPassword: data.confirmPassword,
         rememberMe: data.rememberMe || false,
       };
-      
+
       if (data.phone) {
         payload.phone = data.phone;
       }
-      
+
       if (data.secretCode) {
         payload.secretCode = data.secretCode;
+      }
+
+      if (data.role) {
+        payload.role = data.role;
+      }
+
+      if (data.serviceType) {
+        payload.serviceType = data.serviceType;
+      }
+
+      if (data.companyName) {
+        payload.companyName = data.companyName;
+      }
+
+      if (data.registrationNumber) {
+        payload.registrationNumber = data.registrationNumber;
       }
 
       const response = await fetch(`${API_BASE_URL}/auth/register`, {

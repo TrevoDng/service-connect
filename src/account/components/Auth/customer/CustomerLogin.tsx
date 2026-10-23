@@ -43,6 +43,8 @@ const CustomerLogin: React.FC = () => {
         navigate(getUrl('/admin-dashboard', 'ADMIN')[0]);
       } else if (user.role === 'EMPLOYEE') {
         navigate(getUrl('/employee-dashboard', 'EMPLOYEE')[0]);
+      } else if (user.role === 'PROVIDER') {
+        navigate(getUrl('/provider/dashboard')[0]);
       } else {
         navigate(getUrl('/services')[0]);
       }

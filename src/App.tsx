@@ -23,10 +23,12 @@ import { ThemeProvider, useTheme } from './styles/context/ThemeContext';
 import { ClientDashboard } from './account/components/Client/ClientDashboard';
 import ConsultationUpload from './pages/ConsultationUpload';
 import DevLogin from './pages/DevLogin';
+import ServiceProviderRegister from './account/components/Auth/provider/ServiceProviderRegister';
 import ConsultationPayment from './pages/ConsultationPayment';
 import ConsultationOutcomes from './pages/ConsultationOutcomes';
 import ProviderProfile from './pages/ProviderProfile';
 import WorkSessionGate from './pages/WorkSessionGate';
+import AdminLogin from './account/components/Auth/admin/AdminLogin';
 //import { library } from '@fortawesome/fontawesome-svg-core';
 //import { fas } from '@fortawesome/free-solid-svg-icons';
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -42,9 +44,23 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAuth();
-  return isAuthenticated ? <Navigate to="/services" /> : <>{children}</>;
+  const { isAuthenticated, user, isLoading } = useAuth();
+  if (isLoading) return null;
+  if (!isAuthenticated) return <>{children}</>;
+
+  // Already logged in — send each role to its own landing page
+  if (user?.role === 'ADMIN') return <Navigate to="/admin-dashboard" />;
+  if (user?.role === 'EMPLOYEE') return <Navigate to="/employee-dashboard" />;
+  if (user?.role === 'PROVIDER') return <Navigate to="/provider/dashboard" />;
+  if (user?.role === 'CLIENT') return <Navigate to="/services" />;
+
+  return <Navigate to="/services" />;
 };
+
+// const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+//   const { isAuthenticated } = useAuth();
+//   return isAuthenticated ? <Navigate to="/services" /> : <>{children}</>;
+// };
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -70,9 +86,11 @@ const AppContent: React.FC = () => {
           {/* Auth Routes */}
           <Route path="/login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
-          <Route path="/service-provider-register" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
-	  <Route path="/providers/:id" element={<ProviderProfile />} />
+          <Route path="/service-provider-register" element={<ServiceProviderRegister />} />
+          <Route path="/register/employee" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
+	        <Route path="/providers/:id" element={<ProviderProfile />} />
           <Route path="/login/employee" element={<PublicRoute><EmployeeLogin /></PublicRoute>} />
+          <Route path="/login/admin" element={<PublicRoute><AdminLogin /></PublicRoute>} />
 
           {/* DEV ONLY — remove before production */}
           <Route path="/dev-login" element={<DevLogin />} />

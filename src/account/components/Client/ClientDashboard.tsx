@@ -42,6 +42,7 @@ import { updateGateEvent } from '../../../utils/localWorkSessions';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
 import styles from './ClientDashboard.module.scss';
+import { bookingService } from '../../../services/booking.service';
 
 // ============================================
 // THEME CONSTANTS
@@ -53,7 +54,7 @@ const CLIENT_HOVER_BG = 'rgba(102, 126, 234, 0.08)';
 const CLIENT_ACTIVE_BG = 'rgba(102, 126, 234, 0.12)';
 const CLIENT_ROLE_BG = 'rgba(102, 126, 234, 0.1)';
 
-const DEMO_CLIENT_ID = 'c-001';
+//const DEMO_CLIENT_ID = 'c-001';
 
 // ============================================
 // TYPES
@@ -67,9 +68,10 @@ type ClientTab = 'requests' | 'history' | 'messages' | 'support';
 
 export const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
   const { add } = useNotifications();
   const { theme } = useTheme();
+  const { user, logout } = useAuth();
+  const clientId = user?.id || '';
 
   const [searchParams, setSearchParams] = useSearchParams();
 const threadIdFromUrl = searchParams.get('thread');
@@ -128,7 +130,7 @@ const [bookingRefresh, setBookingRefresh] = useState(0);
 const pendingWorkGates = useMemo(() => {
   const allSessions = getLocalWorkSessions();
   return allSessions.filter((s) => {
-    if (s.clientId !== DEMO_CLIENT_ID) return false;
+    if (s.clientId !== clientId) return false;
     // Already confirmed by the client — nothing to do
     if (s.gateConfirmedByClient) return false;
     // Auto-proceeded but not yet acknowledged by the client
@@ -137,7 +139,7 @@ const pendingWorkGates = useMemo(() => {
     return true;
   });
   // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [bookingRefresh]);
+}, [bookingRefresh, clientId]);
 
 
  const handleConfirmWorkGate = (sessionId: string) => {
@@ -180,7 +182,7 @@ const pendingWorkGates = useMemo(() => {
   updateGateEvent(sessionId, {
     status: 'confirmed_late',
     resolvedAt: new Date().toISOString(),
-    resolvedByUserId: DEMO_CLIENT_ID,
+    resolvedByUserId: clientId,
     resolvedByDisplayName: 'Client',
   });
 
@@ -200,7 +202,7 @@ const handleRetroactiveDispute = (sessionId: string) => {
   updateGateEvent(sessionId, {
     status: 'contested',
     resolvedAt: now,
-    resolvedByUserId: DEMO_CLIENT_ID,
+    resolvedByUserId: clientId,
     resolvedByDisplayName: 'Client',
   });
 
@@ -251,17 +253,34 @@ const handleRetroactiveDispute = (sessionId: string) => {
   // ------------------------------------------
   // Bookings from the merged store
   // ------------------------------------------
-  const allClientBookings = useMemo(
-  () => getBookingsForClient(DEMO_CLIENT_ID),
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [reviewRefresh, bookingRefresh, activeTab]
-);
+  const [allClientBookings, setAllClientBookings] = useState<BookingModel[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!clientId) {
+        setAllClientBookings([]);
+        setLoadingBookings(false);
+        return;
+      }
+      setLoadingBookings(true);
+      const data = await bookingService.getMyBookings(clientId);
+      if (!cancelled) {
+        setAllClientBookings(data);
+        setLoadingBookings(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [clientId, reviewRefresh, bookingRefresh, activeTab]);
 
   // ------------------------------------------
   // Sidebar counts
   // ------------------------------------------
   const currentCount = allClientBookings.filter(isCurrentRequest).length;
-  const unreadMessages = getUnreadCount(DEMO_CLIENT_ID);
+  const unreadMessages = getUnreadCount(clientId);
 
   // ------------------------------------------
   // Actions
@@ -624,7 +643,7 @@ const handleDisputeFinalPrice = (
   key: 'support',
   label: 'Support',
   icon: faGavel,
-  badge: getOpenDisputeCountForUser('c-001') || undefined,
+  badge: getOpenDisputeCountForUser(clientId) || undefined,
 },
   ];
 

@@ -1,7 +1,8 @@
 // src/account/components/Auth/RoleSelector.tsx
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import styles from './RoleSelector.module.scss';
+import { getUrl } from '../../../services/getUrl';
 
 const RoleSelector: React.FC = () => {
   const navigate = useNavigate();
@@ -66,7 +67,7 @@ const RoleSelector: React.FC = () => {
         </div>
 
         <div className={styles.roleSelectorFooter}>
-          <p>Don't have an account? <a href="/register">Register as Customer</a></p>
+          <p>Don't have an account? <Link to={getUrl('/register')[0]}>Register as Customer</Link></p>
           <p className={styles.textSm}>
             Employees: Contact your administrator for registration code
           </p>

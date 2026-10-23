@@ -22,6 +22,8 @@ import {
   faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './ConsultationPayment.module.scss';
+import { bookingService } from '../services/booking.service';
+import type { Booking } from '../types';
 
 // ============================================
 // BENEFITS — the four points clients should understand
@@ -64,8 +66,27 @@ export const ConsultationPayment: React.FC = () => {
   const [isPaying, setIsPaying] = useState(false);
 
   // Read booking fresh from the merged store
-  const booking = useMemo(() => (id ? getBookingById(id) : undefined), [id]);
+  const [booking, setBooking] = useState<Booking | undefined>(undefined);
+const [loading, setLoading] = useState(true);
 
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    const data = await bookingService.getClientBookingById(id);
+    if (!cancelled) {
+      setBooking(data);
+      setLoading(false);
+    }
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, [id]);
   // ------------------------------------------
   // Guards
   // ------------------------------------------
@@ -79,6 +100,10 @@ export const ConsultationPayment: React.FC = () => {
     // Not a client
     if (user.role !== 'CLIENT') {
       navigate('/');
+      return;
+    }
+
+    if (loading) {
       return;
     }
 
@@ -105,36 +130,27 @@ export const ConsultationPayment: React.FC = () => {
   // ------------------------------------------
   // Action
   // ------------------------------------------
-  const handlePay = () => {
+    const handlePay = async () => {
     if (!booking) return;
 
     setIsPaying(true);
 
-    // Mock payment — no real gateway. This is where Stripe/Payfast will go.
-    setTimeout(() => {
-      const paidAt = new Date().toISOString();
-
-      setBookingOverride(booking.id, {
-        status: 'consultation_paid',
-        consultationPaidAt: paidAt,
-        updatedAt: paidAt,
-        priceHistory: [
-          ...booking.priceHistory,
-          {
-            stage: 'consultation',
-            amount: booking.consultationFee,
-            at: paidAt,
-            byUserId: user?.id || booking.clientId,
-            note: 'Consultation fee paid.',
-          },
-        ],
-      });
+    try {
+      // Backend is authoritative; UI waits ~800ms like a payment processor would.
+      const backendCall = bookingService.payConsultation(booking.id);
+      const delay = new Promise<void>((resolve) => setTimeout(resolve, 800));
+      await Promise.all([backendCall, delay]);
 
       // Notify the provider that the fee is paid
       add(notifyConsultationPaid(booking));
 
       navigate('/client/dashboard');
-    }, 800);
+    } catch (err) {
+      console.error('Failed to pay consultation fee:', err);
+      setIsPaying(false);
+      // Optional: show error to user — currently no error state in UI,
+      // so we just log and let them retry.
+    }
   };
 
   const handleCancel = () => {
@@ -144,6 +160,10 @@ export const ConsultationPayment: React.FC = () => {
   // ------------------------------------------
   // Render — nothing to show until guards settle
   // ------------------------------------------
+  if (loading) {
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading…</div>;
+  }
+
   if (!booking || booking.status !== 'accepted') {
     return null;
   }

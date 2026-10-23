@@ -6,9 +6,9 @@ import { useNavigate } from 'react-router-dom';
 import type { Booking, WorkPhoto, Notification } from '../../types';
 import { useAuth } from '../../account/context/AuthContext';
 import { useNotifications } from '../../account/context/NotificationContext';
-import { addLocalBooking } from '../../utils/localBookings';
-import { generateId, buildRequestRef } from '../../utils/referenceCode';
+import { generateId } from '../../utils/referenceCode';
 import { formatPrice } from '../../utils/formatters';
+import { bookingService } from '../../services/booking.service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendarAlt,
@@ -83,7 +83,7 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
   // ------------------------------------------
   // Submit
   // ------------------------------------------
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -100,15 +100,8 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
 
     setBusy(true);
     try {
-      const now = new Date().toISOString();
-      const booking: Booking = {
-        id: generateId(),
-        requestRef: buildRequestRef(
-          // Rough sequence: random 4-digit to avoid collisions in demo.
-          Math.floor(Math.random() * 9000) + 1000
-        ),
-        clientId,
-        clientDisplayName,
+            // Backend is authoritative for id + requestRef; frontend supplies the rest.
+      const created = await bookingService.createBooking({
         providerId,
         providerDisplayName,
         serviceTitle,
@@ -116,31 +109,12 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
         description: notes.trim() || `Request for ${serviceTitle}`,
         requestPhotos: photos.map((p) => p.url),
         requestedDate: new Date(bookingDate).toISOString(),
-        createdAt: now,
-        updatedAt: now,
-        status: 'requested',
         suggestedPrice: priceNum,
-        consultationFee: 0,
-        priceHistory: [
-          {
-            stage: 'suggested',
-            amount: priceNum,
-            at: now,
-            byUserId: clientId,
-            note: 'Client-suggested price — not binding.',
-          },
-        ],
-        siteVisited: false,
-        clientSharedFields: {
-          displayName: true,
-          phone: false,
-          address: false,
-          gateCode: false,
-          specialInstructions: false,
-        },
-      };
+        clientDisplayName,
+      });
 
-      addLocalBooking(booking);
+      const booking: Booking = created;
+      const now = booking.createdAt;
 
       // -------------------------------------------------
       // Notifications — one to the provider, one to the client
