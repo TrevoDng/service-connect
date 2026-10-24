@@ -88,6 +88,10 @@ export interface Booking {
   pendingCounterParty?: 'CLIENT' | 'PROVIDER';
   /** Provider holds firm on the original amount after a client counter. */
   holdFirm?: boolean;
+    /** How many counters the client has used (0-3) */
+  clientCounterCount?: number;
+  /** How many counters the provider has used (0-3) */
+  providerCounterCount?: number;
 
   // consultation findings
   siteVisited: boolean;

@@ -241,11 +241,29 @@ export const ProviderRequestsView: React.FC = () => {
     console.log('[7x TODO] Open request detail for', booking.id);
   };
 
-  const handleProposeFinalPrice = async (
+    const handleProposeFinalPrice = async (
     booking: Booking,
     amount: number,
     note: string
   ) => {
+    const now = new Date().toISOString();
+
+    // Optimistic update — reflects change immediately
+    setProviderBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              status: 'price_proposed' as const,
+              finalPrice: amount,
+              pendingCounterParty: 'CLIENT' as const,
+              holdFirm: false,
+              updatedAt: now,
+            }
+          : b
+      )
+    );
+
     try {
       await bookingService.proposePrice(booking.id, amount, note);
       add(
@@ -260,7 +278,23 @@ export const ProviderRequestsView: React.FC = () => {
     setRefreshTick((t) => t + 1);
   };
 
-    const handleAcceptCounter = async (booking: Booking) => {
+      const handleAcceptCounter = async (booking: Booking) => {
+    const now = new Date().toISOString();
+
+    setProviderBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              status: 'price_agreed' as const,
+              pendingCounterParty: undefined,
+              holdFirm: false,
+              updatedAt: now,
+            }
+          : b
+      )
+    );
+
     try {
       await bookingService.acceptCounter(booking.id);
       add(notifyCounterAccepted({ ...booking, status: 'price_agreed' }));
@@ -270,15 +304,31 @@ export const ProviderRequestsView: React.FC = () => {
     setRefreshTick((t) => t + 1);
   };
 
-    const handleHoldFirm = async (booking: Booking) => {
+  const handleHoldFirm = async (booking: Booking) => {
+    const now = new Date().toISOString();
+
+    setProviderBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              holdFirm: true,
+              pendingCounterParty: 'CLIENT' as const,
+              updatedAt: now,
+            }
+          : b
+      )
+    );
+
     try {
-      await bookingService.holdFirm(booking.id);
+      await bookingService.providerHoldFirm(booking.id);
       add(notifyHoldFirm({ ...booking, holdFirm: true }));
     } catch (err) {
-      console.warn('[hold-firm] backend failed', err);
+      console.warn('[provider-hold-firm] backend failed', err);
     }
     setRefreshTick((t) => t + 1);
   };
+
   const handleStartConsultation = (booking: Booking) => {
     navigate(`/provider/bookings/${booking.id}/consultation`);
   };

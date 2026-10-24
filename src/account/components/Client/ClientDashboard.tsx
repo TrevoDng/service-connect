@@ -389,7 +389,23 @@ const handleDenyArrival = (sessionId: string) => {
 };
 
   
-      const handleAcceptFinalPrice = async (booking: BookingModel) => {
+    const handleAcceptFinalPrice = async (booking: BookingModel) => {
+    const now = new Date().toISOString();
+
+    setAllClientBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              status: 'price_agreed' as const,
+              pendingCounterParty: undefined,
+              holdFirm: false,
+              updatedAt: now,
+            }
+          : b
+      )
+    );
+
     try {
       await bookingService.acceptFinalPrice(booking.id);
       add(notifyPriceAccepted({ ...booking, status: 'price_agreed' }));
@@ -404,23 +420,89 @@ const handleDenyArrival = (sessionId: string) => {
     amount: number,
     note: string
   ) => {
+    const now = new Date().toISOString();
+
+    setAllClientBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              finalPrice: amount,
+              pendingCounterParty: 'PROVIDER' as const,
+              holdFirm: false,
+              updatedAt: now,
+            }
+          : b
+      )
+    );
+
     try {
       await bookingService.counterPrice(booking.id, amount, note);
-      add(notifyPriceCountered({ ...booking, pendingCounterParty: 'PROVIDER' }, amount));
+      add(
+        notifyPriceCountered(
+          { ...booking, pendingCounterParty: 'PROVIDER' },
+          amount
+        )
+      );
     } catch (err) {
       console.warn('[counter-price] backend failed', err);
     }
     setBookingRefresh((t) => t + 1);
   };
 
-  const handleDisputeFinalPrice = async (
+    const handleDisputeFinalPrice = async (
     booking: BookingModel,
     reason: string
   ) => {
+    const now = new Date().toISOString();
+
+    setAllClientBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              status: 'price_disputed' as const,
+              pendingCounterParty: undefined,
+              holdFirm: false,
+              updatedAt: now,
+            }
+          : b
+      )
+    );
+
     try {
       await bookingService.disputePrice(booking.id, reason);
     } catch (err) {
       console.warn('[dispute-price] backend failed', err);
+    }
+    setBookingRefresh((t) => t + 1);
+  };
+
+    const handleClientHoldFirm = async (booking: BookingModel) => {
+    const now = new Date().toISOString();
+    const lastClientProposal = booking.priceHistory
+      ?.filter((h) => h.byUserId === booking.clientId)
+      ?.slice(-1)[0];
+    const firmAmount = lastClientProposal?.amount ?? booking.finalPrice ?? 0;
+
+    setAllClientBookings((prev) =>
+      prev.map((b) =>
+        b.id === booking.id
+          ? {
+              ...b,
+              pendingCounterParty: 'PROVIDER' as const,
+              holdFirm: true,
+              finalPrice: firmAmount,
+              updatedAt: now,
+            }
+          : b
+      )
+    );
+
+    try {
+      await bookingService.holdFirm(booking.id);
+    } catch (err) {
+      console.warn('[client-hold-firm] backend failed', err);
     }
     setBookingRefresh((t) => t + 1);
   };
@@ -780,6 +862,7 @@ const renderWorkGateSection = () => {
                 viewerRole="CLIENT"
                 onPayConsultation={handlePayConsultation}
                 onAcceptFinalPrice={handleAcceptFinalPrice}
+                onHoldFirm={handleClientHoldFirm}
                 onCounterFinalPrice={handleCounterFinalPrice}
                 onDisputeFinalPrice={handleDisputeFinalPrice}
                 onViewOutcomes={handleViewOutcomes}

@@ -391,9 +391,9 @@ export const bookingService = {
     );
   },
 
-  holdFirm: async (bookingId: string): Promise<Booking> => {
+  providerHoldFirm: async (bookingId: string): Promise<Booking> => {
     return withFallback(
-      'holdFirm',
+      'providerHoldFirm',
       () =>
         api
           .patch<{ booking: Booking }>(
@@ -409,6 +409,27 @@ export const bookingService = {
           updatedAt: new Date().toISOString(),
         });
         return { ...b, holdFirm: true };
+      }
+    );
+  },
+
+    /** Hold firm on the client side (client's last proposal) */
+  clientHoldFirm: async (bookingId: string): Promise<Booking> => {
+    return withFallback(
+      'clientHoldFirm',
+      () =>
+        api
+          .patch<{ booking: Booking }>(`/bookings/${bookingId}/hold-firm`)
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          holdFirm: true,
+          pendingCounterParty: 'PROVIDER',
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, holdFirm: true, pendingCounterParty: 'PROVIDER' as const };
       }
     );
   },

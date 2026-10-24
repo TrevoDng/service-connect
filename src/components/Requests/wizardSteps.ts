@@ -197,25 +197,26 @@ export const getWizardStep = (
             },
           };
 
-    // -----------------------------------------
-    // PRICE PROPOSED (negotiation)
+        // -----------------------------------------
+    // PRICE PROPOSED (multi-round negotiation)
     // -----------------------------------------
     case 'price_proposed': {
       const turn = booking.pendingCounterParty;
       const heldFirm = booking.holdFirm === true;
+      const clientCountersLeft = 3 - (booking.clientCounterCount ?? 0);
+      const providerCountersLeft = 3 - (booking.providerCounterCount ?? 0);
+      const currentPrice = formatPrice(booking.finalPrice ?? 0);
 
       if (isClient) {
-        if (heldFirm) {
+        if (heldFirm && turn === 'CLIENT') {
           return {
             icon: faHandshake,
-            title: 'Provider held firm',
-            body: `${shortName} is holding on ${formatPrice(
-              booking.finalPrice ?? 0
-            )}. Accept their original price or escalate to support.`,
+            title: 'Provider is holding firm',
+            body: `${shortName} is firm on ${currentPrice}. Accept or dispute — no more counters.`,
             passive: false,
             primaryAction: {
               key: 'accept-price',
-              label: 'Accept original price',
+              label: `Accept ${currentPrice}`,
               variant: 'primary',
             },
             secondaryAction: {
@@ -226,60 +227,86 @@ export const getWizardStep = (
           };
         }
         if (turn === 'CLIENT') {
+          const canCounter = clientCountersLeft > 0;
           return {
             icon: faHandshake,
             title: 'Final price proposed',
-            body: `${shortName} proposed ${formatPrice(
-              booking.finalPrice ?? 0
-            )}. Accept, counter, or dispute.`,
+            body: `${shortName} proposed ${currentPrice}. Accept, counter${canCounter ? ` (${clientCountersLeft} left)` : ' — none left'}, hold firm, or dispute.`,
             passive: false,
             primaryAction: {
               key: 'accept-price',
-              label: 'Accept price',
+              label: `Accept ${currentPrice}`,
               variant: 'primary',
             },
-            secondaryAction: {
-              key: 'counter-price',
-              label: 'Counter',
-              variant: 'secondary',
-            },
+            secondaryAction: canCounter
+              ? {
+                  key: 'counter-price',
+                  label: `Counter (${clientCountersLeft} left)`,
+                  variant: 'secondary',
+                }
+              : {
+                  key: 'dispute-price',
+                  label: 'Dispute',
+                  variant: 'danger',
+                },
           };
         }
         return {
           icon: faClock,
           title: 'Waiting for provider',
-          body: `${shortName} is reviewing your counter.`,
+          body: `${shortName} is reviewing your counter of ${currentPrice}.`,
           passive: true,
         };
       }
 
       // Provider view
-      if (turn === 'PROVIDER') {
+      if (heldFirm && turn === 'PROVIDER') {
         return {
           icon: faHandshake,
-          title: 'Client countered',
-          body: `${shortName} proposed ${formatPrice(
-            booking.finalPrice ?? 0
-          )}. Accept their counter or hold firm on your original price.`,
+          title: 'Client is holding firm',
+          body: `${shortName} is firm on ${currentPrice}. Accept or dispute — no more counters.`,
           passive: false,
           primaryAction: {
             key: 'accept-counter',
-            label: 'Accept counter',
+            label: `Accept ${currentPrice}`,
             variant: 'primary',
           },
           secondaryAction: {
-            key: 'hold-firm',
-            label: 'Hold firm',
-            variant: 'secondary',
+            key: 'dispute-price',
+            label: 'Dispute',
+            variant: 'danger',
           },
+        };
+      }
+      if (turn === 'PROVIDER') {
+        const canCounter = providerCountersLeft > 0;
+        return {
+          icon: faHandshake,
+          title: 'Client countered',
+          body: `${shortName} proposed ${currentPrice}. Accept, propose a new price${canCounter ? ` (${providerCountersLeft} left)` : ' — none left'}, hold firm, or dispute.`,
+          passive: false,
+          primaryAction: {
+            key: 'accept-counter',
+            label: `Accept ${currentPrice}`,
+            variant: 'primary',
+          },
+          secondaryAction: canCounter
+            ? {
+                key: 'propose-new-price',
+                label: `Propose new (${providerCountersLeft} left)`,
+                variant: 'secondary',
+              }
+            : {
+                key: 'dispute-price',
+                label: 'Dispute',
+                variant: 'danger',
+              },
         };
       }
       return {
         icon: faClock,
         title: 'Waiting for client',
-        body: `You proposed ${formatPrice(
-          booking.finalPrice ?? 0
-        )}. Awaiting ${shortName}'s response.`,
+        body: `You proposed ${currentPrice}. Awaiting ${shortName}'s response.`,
         passive: true,
       };
     }

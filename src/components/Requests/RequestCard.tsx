@@ -234,12 +234,26 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   const providerCanAcceptCounter =
     viewerRole === 'PROVIDER' && turn === 'PROVIDER' && !!onAcceptCounter;
 
+      const clientHasProposed = request.priceHistory?.some(
+    (h) => h.byUserId === request.clientId && h.stage === 'final_proposed'
+  );
+
+  const providerHasProposed = request.priceHistory?.some(
+    (h) => h.byUserId === request.providerId && h.stage === 'final_proposed'
+  );
+
   const providerCanHoldFirm =
-    viewerRole === 'PROVIDER' && turn === 'PROVIDER' && !!onHoldFirm;
+    viewerRole === 'PROVIDER' &&
+    turn === 'PROVIDER' &&
+    !request.holdFirm &&
+    providerHasProposed &&
+    !!onHoldFirm;
 
-  const clientSeesHoldFirm =
-    viewerRole === 'CLIENT' && turn === 'CLIENT' && request.holdFirm === true;
-
+  const clientCanHoldFirm =
+    viewerRole === 'CLIENT' &&
+    turn === 'CLIENT' &&
+    !request.holdFirm &&
+    clientHasProposed;
   // ------------------------------------------
   // HANDLERS
   // ------------------------------------------
@@ -368,6 +382,10 @@ export const RequestCard: React.FC<RequestCardProps> = ({
 
       // --- Panel-opening actions (need full card expanded first) ---
       case 'propose-price':
+        setShowFullDetails(true);
+        setShowProposePanel(true);
+        break;
+      case 'propose-new-price':
         setShowFullDetails(true);
         setShowProposePanel(true);
         break;
@@ -542,8 +560,12 @@ export const RequestCard: React.FC<RequestCardProps> = ({
       );
     }
 
-    // -------- CLIENT: accept held-firm / dispute --------
-    if (clientSeesHoldFirm) {
+        // -------- CLIENT: hold firm active → only Accept / Dispute --------
+    if (
+      viewerRole === 'CLIENT' &&
+      turn === 'CLIENT' &&
+      request.holdFirm === true
+    ) {
       if (onAcceptFinalPrice) {
         actions.push(
           <button
@@ -553,7 +575,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
             onClick={() => onAcceptFinalPrice(request)}
           >
             <FontAwesomeIcon icon={faHandshake} />
-            Accept original price
+            Accept {formatPrice(request.finalPrice ?? 0)}
           </button>
         );
       }
@@ -570,6 +592,23 @@ export const RequestCard: React.FC<RequestCardProps> = ({
           </button>
         );
       }
+    }
+
+    // -------- CLIENT: can hold firm (only on their own turn, not yet held) --------
+    if (clientCanHoldFirm && !showCounterPanel) {
+      actions.push(
+        <button
+          key="hold-firm-client"
+          type="button"
+          className={styles.secondaryBtn}
+          onClick={() => {
+            if (onHoldFirm) onHoldFirm(request);
+          }}
+        >
+          <FontAwesomeIcon icon={faLock} />
+          Hold firm at {formatPrice(request.finalPrice ?? 0)}
+        </button>
+      );
     }
 
     // -------- CLIENT: leave review --------
@@ -1023,7 +1062,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
         {showProposePanel && onProposeFinalPrice && (
           <FinalPricePanel
             mode="propose"
-            initialAmount={request.suggestedPrice}
+            initialAmount={request.finalPrice ?? request.suggestedPrice}
             onSave={(amount, note) => {
               onProposeFinalPrice(request, amount, note);
               setShowProposePanel(false);
