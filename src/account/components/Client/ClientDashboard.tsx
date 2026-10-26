@@ -1,5 +1,5 @@
 // src/account/components/Client/ClientDashboard.tsx
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useNotifications } from '../../context/NotificationContext';
@@ -95,15 +95,7 @@ const [searchQuery, setSearchQuery] = useState('');
 
 
   // Local work sessions (Step 5b) — mutable for gate confirmation
-  const [sessions, setSessions] = useState<WorkSession[]>(() =>
-    demoWorkSessions.map((s) => ({
-      ...s,
-      clockEvents: [...s.clockEvents],
-      beforePhotos: [...s.beforePhotos],
-      progressStages: s.progressStages.map((st) => ({ ...st, photos: [...st.photos] })),
-      finalPhotos: [...s.finalPhotos],
-    }))
-  );
+  const [sessions, setSessions] = useState<WorkSession[]>([]);
 
   const [expandedConfirmBookingId, setExpandedConfirmBookingId] = useState<string | null>(null);
   const [reviewRefresh, setReviewRefresh] = useState(0);
@@ -128,95 +120,70 @@ const [bookingRefresh, setBookingRefresh] = useState(0);
 
 // Sessions waiting for the client to confirm the gate code
 const pendingWorkGates = useMemo(() => {
-  const allSessions = getLocalWorkSessions();
-  return allSessions.filter((s) => {
+  return sessions.filter((s) => {
     if (s.clientId !== clientId) return false;
-    // Already confirmed by the client — nothing to do
     if (s.gateConfirmedByClient) return false;
-    // Auto-proceeded but not yet acknowledged by the client
     if (s.gateEvent?.status === 'confirmed_late') return false;
     if (s.gateEvent?.status === 'contested') return false;
     return true;
   });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [bookingRefresh, clientId]);
+}, [sessions, clientId]);
 
 
- const handleConfirmWorkGate = (sessionId: string) => {
-  updateLocalWorkSession(sessionId, {
-    gateConfirmedByClient: true,
-    gateConfirmedAt: new Date().toISOString(),
-  });
-
-  // Notify the provider
-  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
-  const booking = session
-    ? allClientBookings.find((b) => b.id === session.bookingId)
-    : undefined;
-  if (booking) add(notifyGateConfirmed(booking));
-
-  setBookingRefresh((t) => t + 1);
-};
-
- const handleDenyWorkGate = (sessionId: string) => {
-  updateLocalWorkSession(sessionId, {
-    currentReferenceCode: undefined,
-    referenceCodeExpiresAt: undefined,
-  });
-
-  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
-  const booking = session
-    ? allClientBookings.find((b) => b.id === session.bookingId)
-    : undefined;
-  if (booking) add(notifyGateDenied(booking));
-
-  setBookingRefresh((t) => t + 1);
-};
-
- const handleRetroactiveConfirm = (sessionId: string) => {
-  // Client accepts it after the fact
-  updateLocalWorkSession(sessionId, {
-    gateConfirmedByClient: true,
-    gateConfirmedAt: new Date().toISOString(),
-  });
-  updateGateEvent(sessionId, {
-    status: 'confirmed_late',
-    resolvedAt: new Date().toISOString(),
-    resolvedByUserId: clientId,
-    resolvedByDisplayName: 'Client',
-  });
-
-  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
-  const booking = session
-    ? allClientBookings.find((b) => b.id === session.bookingId)
-    : undefined;
-  if (booking) add(notifyGateConfirmed(booking, true));
-
-  setBookingRefresh((t) => t + 1);
-};
-
-const handleRetroactiveDispute = (sessionId: string) => {
-  const now = new Date().toISOString();
-
-  // Mark the gate event as contested
-  updateGateEvent(sessionId, {
-    status: 'contested',
-    resolvedAt: now,
-    resolvedByUserId: clientId,
-    resolvedByDisplayName: 'Client',
-  });
-
-  // Find the session + booking to build a real dispute record
-  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
-  const booking = session
-    ? allClientBookings.find((b) => b.id === session.bookingId)
-    : undefined;
-
-  if (!session || !booking) {
+ const handleConfirmWorkGate = async (sessionId: string) => {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  try {
+    await bookingService.confirmGate(session.bookingId);
+    const booking = allClientBookings.find((b) => b.id === session.bookingId);
+    if (booking) add(notifyGateConfirmed(booking));
     setBookingRefresh((t) => t + 1);
-    return;
+  } catch (err) {
+    console.error('[confirm-work-gate] failed', err);
+  }
+};
+
+ const handleDenyWorkGate = async (sessionId: string) => {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  try {
+    await bookingService.denyGate(session.bookingId);
+    const booking = allClientBookings.find((b) => b.id === session.bookingId);
+    if (booking) add(notifyGateDenied(booking));
+    setBookingRefresh((t) => t + 1);
+  } catch (err) {
+    console.error('[deny-work-gate] failed', err);
+  }
+};
+
+ const handleRetroactiveConfirm = async (sessionId: string) => {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  try {
+    await bookingService.retroactiveResponse(session.bookingId, 'confirm');
+    const booking = allClientBookings.find((b) => b.id === session.bookingId);
+    if (booking) add(notifyGateConfirmed(booking, true));
+    setBookingRefresh((t) => t + 1);
+  } catch (err) {
+    console.error('[retro-confirm] failed', err);
+  }
+};
+
+const handleRetroactiveDispute = async (sessionId: string) => {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  const booking = allClientBookings.find((b) => b.id === session.bookingId);
+  if (!booking) return;
+
+  // Notify backend that gate is contested
+  try {
+    await bookingService.retroactiveResponse(session.bookingId, 'dispute');
+  } catch (err) {
+    console.warn('[retro-dispute] backend failed', err);
   }
 
+  // Create local dispute record (moves to backend in Phase 6)
+  const now = new Date().toISOString();
   const dispute: Dispute = {
     id: generateId(),
     bookingId: booking.id,
@@ -238,7 +205,6 @@ const handleRetroactiveDispute = (sessionId: string) => {
   };
 
   addLocalDispute(dispute);
-
   addDisputeMessage(dispute.id, {
     authorId: 'system',
     authorDisplayName: 'ServiceConnect',
@@ -256,25 +222,79 @@ const handleRetroactiveDispute = (sessionId: string) => {
   const [allClientBookings, setAllClientBookings] = useState<BookingModel[]>([]);
   const [loadingBookings, setLoadingBookings] = useState(true);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!clientId) {
-        setAllClientBookings([]);
-        setLoadingBookings(false);
-        return;
-      }
-      setLoadingBookings(true);
-      const data = await bookingService.getMyBookings(clientId);
-      if (!cancelled) {
-        setAllClientBookings(data);
-        setLoadingBookings(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [clientId, reviewRefresh, bookingRefresh, activeTab]);
+  const hasLoadedBookingsRef = useRef(false);
+
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    if (!clientId) {
+      setAllClientBookings([]);
+      setLoadingBookings(false);
+      return;
+    }
+    if (!hasLoadedBookingsRef.current) setLoadingBookings(true);
+    const data = await bookingService.getMyBookings(clientId);
+    if (!cancelled) {
+      setAllClientBookings(data);
+      setLoadingBookings(false);
+      hasLoadedBookingsRef.current = true;
+    }
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, [clientId, reviewRefresh, bookingRefresh, activeTab]);
+
+  // Load work sessions for all bookings that could have one
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    // Only fetch sessions for bookings that could have one
+    const candidates = allClientBookings.filter(
+      (b) =>
+        b.workSessionId ||
+        b.status === 'price_agreed' ||
+        b.status === 'in_progress' ||
+        b.status === 'completed'
+    );
+    if (candidates.length === 0) {
+      setSessions([]);
+      return;
+    }
+    const loaded: WorkSession[] = [];
+    for (const b of candidates) {
+      const s = await bookingService.getClientWorkSession(b.id);
+      if (s) loaded.push(s);
+    }
+    if (!cancelled) setSessions(loaded);
+  })();
+  return () => { cancelled = true; };
+}, [allClientBookings, bookingRefresh]);
+
+// Auto-refresh every 10s while the tab is visible
+useEffect(() => {
+  const id = window.setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      setBookingRefresh((t) => t + 1);
+    }
+  }, 10_000);
+  return () => window.clearInterval(id);
+}, []);
+
+// Refresh immediately when the tab regains focus
+useEffect(() => {
+  const onFocus = () => {
+    if (document.visibilityState === 'visible') {
+      setBookingRefresh((t) => t + 1);
+    }
+  };
+  document.addEventListener('visibilitychange', onFocus);
+  window.addEventListener('focus', onFocus);
+  return () => {
+    document.removeEventListener('visibilitychange', onFocus);
+    window.removeEventListener('focus', onFocus);
+  };
+}, []);
 
   // ------------------------------------------
   // Sidebar counts
@@ -304,81 +324,32 @@ const handleRetroactiveDispute = (sessionId: string) => {
   setSearchParams(next, { replace: false });
 };
 
-  const handleConfirmArrival = (sessionId: string) => {
-  const now = new Date().toISOString();
-
-  // 1. Update local component state (drives the arrivedSessions UI)
-  setSessions((prev) =>
-    prev.map((s) => {
-      if (s.id !== sessionId) return s;
-      return {
-        ...s,
-        status: 'confirmed',
-        updatedAt: now,
-        gateConfirmedByClient: true,
-        gateConfirmedAt: now,
-        clockEvents: s.clockEvents.map((e, idx, arr) => {
-          if (e.type === 'in' && idx === arr.length - 1) {
-            return { ...e, confirmedByClient: true };
-          }
-          return e;
-        }),
-      };
-    })
-  );
-
-  // 2. Persist to localStorage so WorkSessionGate / provider sees it
-  updateLocalWorkSession(sessionId, {
-    gateConfirmedByClient: true,
-    gateConfirmedAt: now,
-    status: 'confirmed',
-    updatedAt: now,
-  });
-
-  // 3. Notify the provider
-  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
-  const booking = session
-    ? allClientBookings.find((b) => b.id === session.bookingId)
-    : undefined;
-  if (booking) add(notifyGateConfirmed(booking));
-
-  setExpandedConfirmBookingId(null);
-  setBookingRefresh((t) => t + 1);
+  const handleConfirmArrival = async (sessionId: string) => {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  try {
+    await bookingService.confirmGate(session.bookingId);
+    const booking = allClientBookings.find((b) => b.id === session.bookingId);
+    if (booking) add(notifyGateConfirmed(booking));
+    setExpandedConfirmBookingId(null);
+    setBookingRefresh((t) => t + 1);
+  } catch (err) {
+    console.error('[confirm-arrival] failed', err);
+  }
 };
 
-const handleDenyArrival = (sessionId: string) => {
-  const now = new Date().toISOString();
-
-  // 1. Local state
-  setSessions((prev) =>
-    prev.map((s) =>
-      s.id === sessionId
-        ? {
-            ...s,
-            currentReferenceCode: undefined,
-            referenceCodeExpiresAt: undefined,
-            updatedAt: now,
-          }
-        : s
-    )
-  );
-
-  // 2. Persist to localStorage
-  updateLocalWorkSession(sessionId, {
-    currentReferenceCode: undefined,
-    referenceCodeExpiresAt: undefined,
-    updatedAt: now,
-  });
-
-  // 3. Notify the provider
-  const session = getLocalWorkSessions().find((s) => s.id === sessionId);
-  const booking = session
-    ? allClientBookings.find((b) => b.id === session.bookingId)
-    : undefined;
-  if (booking) add(notifyGateDenied(booking));
-
-  setExpandedConfirmBookingId(null);
-  setBookingRefresh((t) => t + 1);
+const handleDenyArrival = async (sessionId: string) => {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  try {
+    await bookingService.denyGate(session.bookingId);
+    const booking = allClientBookings.find((b) => b.id === session.bookingId);
+    if (booking) add(notifyGateDenied(booking));
+    setExpandedConfirmBookingId(null);
+    setBookingRefresh((t) => t + 1);
+  } catch (err) {
+    console.error('[deny-arrival] failed', err);
+  }
 };
 
   // ------------------------------------------
@@ -500,7 +471,7 @@ const handleDenyArrival = (sessionId: string) => {
     );
 
     try {
-      await bookingService.holdFirm(booking.id);
+        await bookingService.clientHoldFirm(booking.id);
     } catch (err) {
       console.warn('[client-hold-firm] backend failed', err);
     }

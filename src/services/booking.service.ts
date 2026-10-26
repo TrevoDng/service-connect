@@ -6,7 +6,7 @@
 // localBookingOverrides.ts.
 
 import { api } from './api.service';
-import type { Booking } from '../types';
+import type { Booking, ProgressStage, WorkPhoto, WorkSession } from '../types';
 import {
   getBookingsForProvider as getLocalProviderBookings,
   getBookingsForClient as getLocalClientBookings,
@@ -14,6 +14,7 @@ import {
 } from '../utils/allBookings';
 import { setBookingOverride } from '../utils/localBookingOverrides';
 import { addLocalBooking } from '../utils/localBookings';
+import { getLocalWorkSessionByBooking, updateGateEvent, updateLocalWorkSession } from '../utils/localWorkSessions';
 
 // ============================================================
 // FALLBACK WRAPPER
@@ -510,6 +511,364 @@ export const bookingService = {
       }
     );
   },
+
+    // ==========================================
+  // WORK SESSIONS (Phase 4)
+  // ==========================================
+
+  /** Provider arrives on site — creates session with gate code */
+  arriveAtSite: async (
+    bookingId: string,
+    referenceCode: string,
+    expiresAt: string
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'arriveAtSite',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/arrive`,
+            { referenceCode, expiresAt }
+          )
+          .then((r) => r.session),
+      () => {
+        throw new Error('Cannot arrive offline — please connect to the internet');
+      }
+    );
+  },
+
+  /** Get work session (provider view) */
+  getProviderWorkSession: async (
+    bookingId: string
+  ): Promise<WorkSession | null> => {
+    return withFallback(
+      'getProviderWorkSession',
+      () =>
+        api
+          .get<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session`
+          )
+          .then((r) => r.session),
+      () => {
+        // Offline — look up from local store
+        const local = getLocalWorkSessionByBooking(bookingId);
+        return local ?? null;
+      }
+    ).catch(() => null);
+  },
+
+  /** Get work session (client view) */
+  getClientWorkSession: async (
+    bookingId: string
+  ): Promise<WorkSession | null> => {
+    return withFallback(
+      'getClientWorkSession',
+      () =>
+        api
+          .get<{ session: WorkSession }>(
+            `/bookings/${bookingId}/work-session`
+          )
+          .then((r) => r.session),
+      () => {
+        const local = getLocalWorkSessionByBooking(bookingId);
+        return local ?? null;
+      }
+    ).catch(() => null);
+  },
+
+  /** Client confirms gate access */
+  confirmGate: async (bookingId: string): Promise<WorkSession> => {
+    return withFallback(
+      'confirmGate',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/bookings/${bookingId}/work-session/confirm-gate`
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        updateLocalWorkSession(s.id, {
+          gateConfirmedByClient: true,
+          gateConfirmedAt: new Date().toISOString(),
+          status: 'confirmed',
+        });
+        return { ...s, gateConfirmedByClient: true, status: 'confirmed' as const };
+      }
+    );
+  },
+
+  /** Client denies gate access */
+  denyGate: async (bookingId: string): Promise<WorkSession> => {
+    return withFallback(
+      'denyGate',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/bookings/${bookingId}/work-session/deny-gate`
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        updateLocalWorkSession(s.id, {
+          currentReferenceCode: undefined,
+          referenceCodeExpiresAt: undefined,
+        });
+        return { ...s, currentReferenceCode: undefined };
+      }
+    );
+  },
+
+  /** Provider proceeds without client confirmation */
+  proceedAnyway: async (
+    bookingId: string,
+    note: string
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'proceedAnyway',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/proceed-anyway`,
+            { note }
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        updateLocalWorkSession(s.id, { status: 'in_progress' });
+        updateGateEvent(s.id, {
+          status: 'auto_proceeded',
+          resolvedAt: new Date().toISOString(),
+          note,
+        });
+        return { ...s, status: 'in_progress' as const };
+      }
+    );
+  },
+
+  /** Client retroactively confirms or disputes a gate event */
+  retroactiveResponse: async (
+    bookingId: string,
+    action: 'confirm' | 'dispute'
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'retroactiveResponse',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/bookings/${bookingId}/work-session/retroactive`,
+            { action }
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        if (action === 'confirm') {
+          updateLocalWorkSession(s.id, {
+            gateConfirmedByClient: true,
+            gateConfirmedAt: new Date().toISOString(),
+          });
+          updateGateEvent(s.id, { status: 'confirmed_late', resolvedAt: new Date().toISOString() });
+        } else {
+          updateGateEvent(s.id, { status: 'contested', resolvedAt: new Date().toISOString() });
+        }
+        return s;
+      }
+    );
+  },
+
+  /** Provider clocks in */
+  clockIn: async (bookingId: string): Promise<WorkSession> => {
+    return withFallback(
+      'clockIn',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/clock-in`
+          )
+          .then((r) => r.session),
+      () => {
+        throw new Error('Cannot clock in offline — please connect to the internet');
+      }
+    );
+  },
+
+  /** Provider clocks out */
+  clockOut: async (bookingId: string): Promise<WorkSession> => {
+    return withFallback(
+      'clockOut',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/clock-out`
+          )
+          .then((r) => r.session),
+      () => {
+        throw new Error('Cannot clock out offline — please connect to the internet');
+      }
+    );
+  },
+
+  /** Provider marks session complete */
+  completeSession: async (bookingId: string): Promise<WorkSession> => {
+    return withFallback(
+      'completeSession',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/complete`
+          )
+          .then((r) => r.session),
+      () => {
+        throw new Error('Cannot complete offline — please connect to the internet');
+      }
+    );
+  },
+
+  /** Set full beforePhotos array (PUT — replaces) */
+  setBeforePhotos: async (
+    bookingId: string,
+    photos: WorkPhoto[]
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'setBeforePhotos',
+      () =>
+        api
+          .put<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/before-photos`,
+            { photos }
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        updateLocalWorkSession(s.id, { beforePhotos: photos });
+        return { ...s, beforePhotos: photos };
+      }
+    );
+  },
+
+  /** Delete one before photo */
+  deleteBeforePhoto: async (
+    bookingId: string,
+    photoId: string
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'deleteBeforePhoto',
+      () =>
+        api
+          .delete<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/before-photos/${photoId}`
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        const next = s.beforePhotos.filter((p) => p.id !== photoId);
+        updateLocalWorkSession(s.id, { beforePhotos: next });
+        return { ...s, beforePhotos: next };
+      }
+    );
+  },
+
+  /** Set full finalPhotos array (PUT — replaces) */
+  setFinalPhotos: async (
+    bookingId: string,
+    photos: WorkPhoto[]
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'setFinalPhotos',
+      () =>
+        api
+          .put<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/final-photos`,
+            { photos }
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        updateLocalWorkSession(s.id, { finalPhotos: photos });
+        return { ...s, finalPhotos: photos };
+      }
+    );
+  },
+
+  /** Delete one final photo */
+  deleteFinalPhoto: async (
+    bookingId: string,
+    photoId: string
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'deleteFinalPhoto',
+      () =>
+        api
+          .delete<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/final-photos/${photoId}`
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        const next = s.finalPhotos.filter((p) => p.id !== photoId);
+        updateLocalWorkSession(s.id, { finalPhotos: next });
+        return { ...s, finalPhotos: next };
+      }
+    );
+  },
+
+  /** Upsert progress stage */
+  upsertProgressStage: async (
+    bookingId: string,
+    stage: ProgressStage
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'upsertProgressStage',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/progress-stages`,
+            { stage }
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        const existing = s.progressStages.some((st) => st.id === stage.id);
+        const next = existing
+          ? s.progressStages.map((st) => (st.id === stage.id ? stage : st))
+          : [...s.progressStages, stage];
+        updateLocalWorkSession(s.id, { progressStages: next });
+        return { ...s, progressStages: next };
+      }
+    );
+  },
+
+  /** Delete progress stage */
+  deleteProgressStage: async (
+    bookingId: string,
+    stageId: string
+  ): Promise<WorkSession> => {
+    return withFallback(
+      'deleteProgressStage',
+      () =>
+        api
+          .delete<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/progress-stages/${stageId}`
+          )
+          .then((r) => r.session),
+      () => {
+        const s = getLocalWorkSessionByBooking(bookingId);
+        if (!s) throw new Error('Session not found');
+        const next = s.progressStages.filter((st) => st.id !== stageId);
+        updateLocalWorkSession(s.id, { progressStages: next });
+        return { ...s, progressStages: next };
+      }
+    );
+  },  
 };
 
 

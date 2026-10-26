@@ -1,43 +1,31 @@
 // src/pages/WorkSessionGate.tsx
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
 import { useNotifications } from '../account/context/NotificationContext';
 import { useTheme } from '../styles/context/ThemeContext';
-import { getBookingById } from '../utils/allBookings';
-import { setBookingOverride } from '../utils/localBookingOverrides';
-import {
-  getLocalWorkSessionByBooking,
-  addLocalWorkSession,
-  updateLocalWorkSession,
-  updateGateEvent,
-} from '../utils/localWorkSessions';
 import {
   generateClockInCode,
   clockInCodeExpiry,
-  generateId,
 } from '../utils/referenceCode';
-import { formatTime } from '../utils/formatters';
 import {
   notifyConsultationStarted,
-  notifyWorkStarted,
 } from '../utils/notify';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
   faPlay,
   faKey,
-  faClock,
-  faCheckCircle,
   faShieldAlt,
 } from '@fortawesome/free-solid-svg-icons';
 import { CountdownTimer } from '../components/WorkSession';
 
 import { WorkSessionPanel } from '../components/WorkSession';
-import type { ProgressStage, WorkPhoto } from '../types';
+import type { Booking, ProgressStage, WorkPhoto, WorkSession } from '../types';
 //import { generateId } from '../utils/referenceCode';
 import styles from './WorkSessionGate.module.scss';
+import { bookingService } from '../services/booking.service';
 
 // ============================================
 // COMPONENT
@@ -54,254 +42,223 @@ export const WorkSessionGate: React.FC = () => {
   const [showProceedPrompt, setShowProceedPrompt] = useState(false);
   const [proceedNote, setProceedNote] = useState('');
 
-  const booking = useMemo(
-    () => (id ? getBookingById(id) : undefined),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [id, tick]
-  );
+  const [booking, setBooking] = useState<Booking | undefined>(undefined);
+  const [session, setSession] = useState<WorkSession | undefined>(undefined);
+  const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
-  const session = useMemo(
-    () =>
-      booking ? getLocalWorkSessionByBooking(booking.id) : undefined,
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [booking, tick]
-  );
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    if (!id) { setLoading(false); return; }
+    // Only show the loading spinner on the very first fetch.
+    // Polling refreshes must NOT unmount the panel or the user's
+    // in-progress upload / form state is lost.
+    if (!hasLoadedRef.current) setLoading(true);
+    const b = await bookingService.getProviderBookingById(id);
+    if (cancelled) return;
+    setBooking(b);
+    if (b) {
+      const s = await bookingService.getProviderWorkSession(b.id);
+      if (!cancelled) setSession(s ?? undefined);
+    }
+    if (!cancelled) {
+      setLoading(false);
+      hasLoadedRef.current = true;
+    }
+  })();
+  return () => { cancelled = true; };
+}, [id, tick]);
+
+// Auto-refresh every 10s while the tab is visible
+useEffect(() => {
+  const id = window.setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      setTick((t) => t + 1);
+    }
+  }, 10_000);
+  return () => window.clearInterval(id);
+}, []);
+
+// Refresh immediately when the tab regains focus
+useEffect(() => {
+  const onFocus = () => {
+    if (document.visibilityState === 'visible') {
+      setTick((t) => t + 1);
+    }
+  };
+  document.addEventListener('visibilitychange', onFocus);
+  window.addEventListener('focus', onFocus);
+  return () => {
+    document.removeEventListener('visibilitychange', onFocus);
+    window.removeEventListener('focus', onFocus);
+  };
+}, []);
 
   // ------------------------------------------
   // Guards
   // ------------------------------------------
   useEffect(() => {
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-    if (user.role !== 'PROVIDER') {
-      navigate('/');
-      return;
-    }
-    if (!booking) {
-      navigate('/provider/dashboard');
-      return;
-    }
-    if (booking.status !== 'price_agreed' && booking.status !== 'in_progress') {
-      navigate('/provider/dashboard');
-      return;
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [booking, user]);
-
+  if (loading) return;                    // ← wait for fetch
+  if (!user) {
+    navigate('/login');
+    return;
+  }
+  if (user.role !== 'PROVIDER') {
+    navigate('/');
+    return;
+  }
+  if (!booking) {
+    navigate('/provider/dashboard');
+    return;
+  }
+  if (booking.status !== 'price_agreed' && booking.status !== 'in_progress') {
+    navigate('/provider/dashboard');
+    return;
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [booking, user, loading]);             // ← add loading
   // ------------------------------------------
   // Actions
   // ------------------------------------------
-  const handleArriveAndGenerateCode = () => {
-    if (!booking) return;
-
-    const code = generateClockInCode();
-    const expiry = clockInCodeExpiry();
-    const now = new Date().toISOString();
-
-    // Create a fresh work session
-    const newSession = {
-      id: generateId(),
-      bookingId: booking.id,
-      providerId: booking.providerId,
-      clientId: booking.clientId,
-      currentReferenceCode: code,
-      referenceCodeExpiresAt: expiry,
-      clockEvents: [],
-      daysWorked: 0,
-      totalHours: 0,
-      beforePhotos: [],
-      progressStages: [],
-      finalPhotos: [],
-      status: 'arrived' as const,
-      arrivedAt: now,
-      gateConfirmedByClient: false,
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    addLocalWorkSession(newSession);
-
-    // Link the booking to the new session
-    setBookingOverride(booking.id, {
-      workSessionId: newSession.id,
-      updatedAt: now,
-    });
-
-    // Notify the client that the provider has arrived, with the code.
-  add(notifyConsultationStarted(booking, code, newSession.id));
-
+  const handleArriveAndGenerateCode = async () => {
+  if (!booking) return;
+  const code = generateClockInCode();
+  const expiry = clockInCodeExpiry();
+  try {
+    const newSession = await bookingService.arriveAtSite(booking.id, code, expiry);
+    setSession(newSession);
+    add(notifyConsultationStarted(booking, code, newSession.id));
     setTick((t) => t + 1);
-  };
+  } catch (err) {
+    console.error('[arrive] failed', err);
+  }
+};
 
   const handleBack = () => navigate('/provider/dashboard');
 
-  const handleProceedAnyway = () => {
-  if (!session || !booking) return;
-
-  updateGateEvent(session.id, {
-    status: 'auto_proceeded',
-    attemptedAt: session.gateEvent?.attemptedAt ?? session.arrivedAt ?? new Date().toISOString(),
-    resolvedAt: new Date().toISOString(),
-    resolvedByUserId: booking.providerId,
-    resolvedByDisplayName: booking.providerDisplayName,
-    note: proceedNote.trim() || undefined,
-  });
-
-  setShowProceedPrompt(false);
-  setProceedNote('');
-  setTick((t) => t + 1);
+  const handleProceedAnyway = async () => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.proceedAnyway(booking.id, proceedNote.trim());
+    setSession(s);
+    setShowProceedPrompt(false);
+    setProceedNote('');
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[proceed-anyway] failed', err);
+  }
 };
 
   // ------------------------------------------
 // Work session mutators
 // ------------------------------------------
-const handleClockIn = (sessionId: string) => {
-  if (!session || !booking) return;
-  const now = new Date().toISOString();
-
-  updateLocalWorkSession(sessionId, {
-    status: 'in_progress',
-    currentReferenceCode: undefined,
-    referenceCodeExpiresAt: undefined,
-    clockEvents: [
-      ...session.clockEvents,
-      {
-        id: generateId(),
-        type: 'in',
-        at: now,
-        confirmedByClient: session.gateConfirmedByClient === true,
-      },
-    ],
-    updatedAt: now,
-  });
-
-  // Flip the booking to in_progress so the guided view + substep
-  // timeline render for both parties.
-  setBookingOverride(booking.id, {
-    status: 'in_progress',
-    updatedAt: now,
-  });
-
-  // Notify the client that work has begun.
-  // Only fire on the *first* clock-in of the day; subsequent days of
-  // the same job shouldn't spam the client with "work started" again.
-  const isFirstClockIn = session.clockEvents.filter((e) => e.type === 'in').length === 0;
-  if (isFirstClockIn) {
-    add(
-      notifyWorkStarted({
-        ...booking,
-        status: 'in_progress',
-        workSessionId: session.id,
-      })
-    );
+const handleClockIn = async (_sessionId: string) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.clockIn(booking.id);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[clock-in] failed', err);
   }
-
-  setTick((t) => t + 1);
 };
 
-const handleClockOut = (sessionId: string) => {
-  if (!session) return;
-  const outAt = new Date().toISOString();
-  const lastIn = [...session.clockEvents]
-    .reverse()
-    .find((e) => e.type === 'in');
-
-  let addedHours = 0;
-  if (lastIn) {
-    addedHours =
-      (new Date(outAt).getTime() - new Date(lastIn.at).getTime()) /
-      3_600_000;
+const handleClockOut = async (_sessionId: string) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.clockOut(booking.id);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[clock-out] failed', err);
   }
-
-  updateLocalWorkSession(sessionId, {
-    clockEvents: [
-      ...session.clockEvents,
-      {
-        id: generateId(),
-        type: 'out',
-        at: outAt,
-        confirmedByClient: false,
-      },
-    ],
-    daysWorked: session.daysWorked + 1,
-    totalHours: Number((session.totalHours + addedHours).toFixed(2)),
-    updatedAt: outAt,
-  });
-  setTick((t) => t + 1);
 };
 
-const handleMarkComplete = (sessionId: string) => {
-  if (!session) return;
-  updateLocalWorkSession(sessionId, {
-    status: 'completed',
-    currentReferenceCode: undefined,
-    referenceCodeExpiresAt: undefined,
-    completedAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  });
-
-  // Move the booking to completed too
-  if (booking) {
-    setBookingOverride(booking.id, {
-      status: 'completed',
-      updatedAt: new Date().toISOString(),
-    });
+const handleMarkComplete = async (_sessionId: string) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.completeSession(booking.id);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[complete] failed', err);
   }
-  setTick((t) => t + 1);
 };
 
-const handleAddBeforePhotos = (sessionId: string, photos: WorkPhoto[]) => {
-  updateLocalWorkSession(sessionId, { beforePhotos: photos });
-  setTick((t) => t + 1);
+const handleAddBeforePhotos = async (_sessionId: string, photos: WorkPhoto[]) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.setBeforePhotos(booking.id, photos);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[before-photos] failed', err);
+  }
 };
 
-const handleDeleteBeforePhoto = (sessionId: string, photoId: string) => {
-  if (!session) return;
-  updateLocalWorkSession(sessionId, {
-    beforePhotos: session.beforePhotos.filter((p) => p.id !== photoId),
-  });
-  setTick((t) => t + 1);
+const handleDeleteBeforePhoto = async (_sessionId: string, photoId: string) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.deleteBeforePhoto(booking.id, photoId);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[delete-before-photo] failed', err);
+  }
 };
 
-const handleSaveProgressStage = (
-  sessionId: string,
-  stage: ProgressStage
-) => {
-  if (!session) return;
-  const exists = session.progressStages.some((st) => st.id === stage.id);
-  const nextStages = exists
-    ? session.progressStages.map((st) => (st.id === stage.id ? stage : st))
-    : [...session.progressStages, stage];
-  updateLocalWorkSession(sessionId, { progressStages: nextStages });
-  setTick((t) => t + 1);
+const handleSaveProgressStage = async (_sessionId: string, stage: ProgressStage) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.upsertProgressStage(booking.id, stage);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[upsert-stage] failed', err);
+  }
 };
 
-const handleDeleteProgressStage = (sessionId: string, stageId: string) => {
-  if (!session) return;
-  updateLocalWorkSession(sessionId, {
-    progressStages: session.progressStages.filter((st) => st.id !== stageId),
-  });
-  setTick((t) => t + 1);
+const handleDeleteProgressStage = async (_sessionId: string, stageId: string) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.deleteProgressStage(booking.id, stageId);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[delete-stage] failed', err);
+  }
 };
 
-const handleAddFinalPhotos = (sessionId: string, photos: WorkPhoto[]) => {
-  updateLocalWorkSession(sessionId, { finalPhotos: photos });
-  setTick((t) => t + 1);
+const handleAddFinalPhotos = async (_sessionId: string, photos: WorkPhoto[]) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.setFinalPhotos(booking.id, photos);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[final-photos] failed', err);
+  }
 };
 
-const handleDeleteFinalPhoto = (sessionId: string, photoId: string) => {
-  if (!session) return;
-  updateLocalWorkSession(sessionId, {
-    finalPhotos: session.finalPhotos.filter((p) => p.id !== photoId),
-  });
-  setTick((t) => t + 1);
+const handleDeleteFinalPhoto = async (_sessionId: string, photoId: string) => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.deleteFinalPhoto(booking.id, photoId);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[delete-final-photo] failed', err);
+  }
 };
 
   // ------------------------------------------
   // Guard render
   // ------------------------------------------
+  if (loading) {
+  return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading…</div>;
+}
+
   if (!booking) return null;
 
   // ------------------------------------------

@@ -1,6 +1,6 @@
 // src/components/Requests/ProviderRequestsView.tsx
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Booking, Notification } from '../../types';
 import {
@@ -74,22 +74,50 @@ export const ProviderRequestsView: React.FC = () => {
   // ------------------------------------------
     // Backend-driven bookings (Phase 1)
   const [providerBookings, setProviderBookings] = useState<Booking[]>([]);
-  const [loadingBookings, setLoadingBookings] = useState(true);
+const [loadingBookings, setLoadingBookings] = useState(true);
+const hasLoadedBookingsRef = useRef(false);
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoadingBookings(true);
-      const data = await bookingService.getProviderBookings(providerId);
-      if (!cancelled) {
-        setProviderBookings(data);
-        setLoadingBookings(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [providerId, refreshTick]);
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    if (!hasLoadedBookingsRef.current) setLoadingBookings(true);
+    const data = await bookingService.getProviderBookings(providerId);
+    if (!cancelled) {
+      setProviderBookings(data);
+      setLoadingBookings(false);
+      hasLoadedBookingsRef.current = true;
+    }
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, [providerId, refreshTick]);
+
+
+  // Auto-refresh every 10s while the tab is visible
+useEffect(() => {
+  const id = window.setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      setRefreshTick((t) => t + 1);
+    }
+  }, 10_000);
+  return () => window.clearInterval(id);
+}, []);
+
+// Refresh immediately when the tab regains focus
+useEffect(() => {
+  const onFocus = () => {
+    if (document.visibilityState === 'visible') {
+      setRefreshTick((t) => t + 1);
+    }
+  };
+  document.addEventListener('visibilitychange', onFocus);
+  window.addEventListener('focus', onFocus);
+  return () => {
+    document.removeEventListener('visibilitychange', onFocus);
+    window.removeEventListener('focus', onFocus);
+  };
+}, []);
 
   const currentRequests = providerBookings.filter(isCurrentRequest);
   const closedRequests = providerBookings.filter(isClosedRequest);
