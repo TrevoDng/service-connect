@@ -394,6 +394,83 @@ const handleDeleteFinalPhoto = async (_sessionId: string, photoId: string) => {
           >
             Proceed anyway
           </button>
+                </div>
+      </div>
+    )}
+  </section>
+)}
+
+{/* State 2.5 — Access denied, no code — allow retry or proceed anyway */}
+{session && !isConfirmed && !session.currentReferenceCode && (
+  <section className={styles.card}>
+    <div className={styles.iconCircle}>
+      <FontAwesomeIcon icon={faShieldAlt} />
+    </div>
+    <h2 className={styles.cardTitle}>Access was denied</h2>
+    <p className={styles.cardText}>
+      The client didn't confirm your code, or it expired. Request a new code,
+      or proceed anyway if you're sure it's OK.
+    </p>
+
+    <button
+      type="button"
+      className={styles.primaryBtn}
+      onClick={handleArriveAndGenerateCode}
+    >
+      <FontAwesomeIcon icon={faKey} />
+      Request a new code
+    </button>
+
+    {!showProceedPrompt && (
+      <button
+        type="button"
+        className={styles.proceedBtn}
+        onClick={() => setShowProceedPrompt(true)}
+      >
+        Client not available? Proceed anyway
+      </button>
+    )}
+
+    {showProceedPrompt && (
+      <div className={styles.proceedPanel}>
+        <div className={styles.proceedWarning}>
+          <FontAwesomeIcon icon={faShieldAlt} />
+          <div>
+            <strong>Proceeding without confirmation</strong>
+            <span>
+              This step will be recorded. If something goes wrong and ServiceConnect
+              can't verify it happened in the app, we may not be able to mediate the
+              job or cover it under platform protections.
+            </span>
+          </div>
+        </div>
+
+        <textarea
+          value={proceedNote}
+          onChange={(e) => setProceedNote(e.target.value)}
+          rows={2}
+          placeholder="Optional note — e.g. 'Security let me in'"
+          className={styles.proceedNote}
+        />
+
+        <div className={styles.proceedActions}>
+          <button
+            type="button"
+            className={styles.proceedCancel}
+            onClick={() => {
+              setShowProceedPrompt(false);
+              setProceedNote('');
+            }}
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            className={styles.proceedConfirm}
+            onClick={handleProceedAnyway}
+          >
+            Proceed anyway
+          </button>
         </div>
       </div>
     )}

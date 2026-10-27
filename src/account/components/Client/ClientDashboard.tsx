@@ -11,8 +11,7 @@ import {
   notifyPriceCountered,
 } from '../../../utils/notify';
 import type { WorkSession, Booking as BookingModel, Dispute } from '../../../types';
-import { demoWorkSessions } from '../../../data/demoWorkSessions';
-import { getBookingsForClient, isCurrentRequest, isClosedRequest } from '../../../utils/allBookings';
+import { isCurrentRequest, isClosedRequest } from '../../../utils/allBookings';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
@@ -32,17 +31,14 @@ import { RequestCard } from '../../../components/Requests';
 import { getUnreadCount } from '../../../data/demoNotifications';
 import { generateId } from '../../../utils/referenceCode';
 import { addLocalDispute, addDisputeMessage } from '../../../utils/localDisputes';
-import { setBookingOverride } from '../../../utils/localBookingOverrides';
 import { faGavel } from '@fortawesome/free-solid-svg-icons';
 import { DisputesView } from '../../../components/Disputes';
 import { getOpenDisputeCountForUser } from '../../../utils/allDisputes';
-import { getLocalWorkSessions } from '../../../utils/localWorkSessions';
-import { updateLocalWorkSession } from '../../../utils/localWorkSessions';
-import { updateGateEvent } from '../../../utils/localWorkSessions';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
 import styles from './ClientDashboard.module.scss';
 import { bookingService } from '../../../services/booking.service';
+import { disputeService } from '../../../services/dispute.service';
 
 // ============================================
 // THEME CONSTANTS
@@ -92,14 +88,33 @@ const activeTab: ClientTab = VALID_CLIENT_TABS.includes(
   : 'requests';
 
 const [searchQuery, setSearchQuery] = useState('');
-
+const [reviewRefresh, setReviewRefresh] = useState(0);
+const [bookingRefresh, setBookingRefresh] = useState(0);
 
   // Local work sessions (Step 5b) — mutable for gate confirmation
   const [sessions, setSessions] = useState<WorkSession[]>([]);
 
+  const [openDisputeCount, setOpenDisputeCount] = useState(0);
+
+useEffect(() => {
+  if (!clientId) { setOpenDisputeCount(0); return; }
+  let cancelled = false;
+  (async () => {
+    try {
+      const disputes = await disputeService.getMyDisputes();
+      const open = disputes.filter(
+        (d) => d.status === 'open' || d.status === 'awaiting_info'
+      ).length;
+      if (!cancelled) setOpenDisputeCount(open);
+    } catch {
+      if (!cancelled) setOpenDisputeCount(0);
+    }
+  })();
+  return () => { cancelled = true; };
+}, [clientId, bookingRefresh, reviewRefresh]);
+
   const [expandedConfirmBookingId, setExpandedConfirmBookingId] = useState<string | null>(null);
-  const [reviewRefresh, setReviewRefresh] = useState(0);
-const [bookingRefresh, setBookingRefresh] = useState(0);
+  
 
 // When the URL gains/changes a ?thread= param, switch to Messages.
   // This covers the case where the dashboard is already mounted and
@@ -175,43 +190,47 @@ const handleRetroactiveDispute = async (sessionId: string) => {
   const booking = allClientBookings.find((b) => b.id === session.bookingId);
   if (!booking) return;
 
-  // Notify backend that gate is contested
+  // Contest the gate event
   try {
     await bookingService.retroactiveResponse(session.bookingId, 'dispute');
   } catch (err) {
-    console.warn('[retro-dispute] backend failed', err);
+    console.warn('[retro-dispute] gate update failed', err);
   }
 
-  // Create local dispute record (moves to backend in Phase 6)
-  const now = new Date().toISOString();
-  const dispute: Dispute = {
-    id: generateId(),
-    bookingId: booking.id,
-    requestRef: booking.requestRef,
-    raisedByUserId: booking.clientId,
-    raisedByRole: 'CLIENT',
-    raisedByDisplayName: booking.clientDisplayName,
-    againstUserId: booking.providerId,
-    againstRole: 'PROVIDER',
-    againstDisplayName: booking.providerDisplayName,
-    category: 'no_show',
-    reason:
-      'Provider proceeded with the job without my gate confirmation. See the recorded gate event for details.',
-    photos: [],
-    status: 'open',
-    messages: [],
-    createdAt: now,
-    updatedAt: now,
-  };
+  // Raise a real dispute via backend
+  try {
+    await disputeService.raiseDispute(booking.id, {
+      category: 'no_show',
+      reason:
+        'Provider proceeded with the job without my gate confirmation. See the recorded gate event for details.',
+    });
+  } catch (err) {
+    console.warn('[retro-dispute] raise failed', err);
+  }
 
-  addLocalDispute(dispute);
-  addDisputeMessage(dispute.id, {
-    authorId: 'system',
-    authorDisplayName: 'ServiceConnect',
-    authorRole: 'SYSTEM',
-    text: 'Automatically created from a disputed gate confirmation. Our support team will review this and reach out to both parties.',
-    internal: false,
-  });
+  setBookingRefresh((t) => t + 1);
+};
+
+const handleReportSuspicious = async (sessionId: string) => {
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  const booking = allClientBookings.find((b) => b.id === session.bookingId);
+  if (!booking) return;
+
+  try {
+    await bookingService.denyGate(session.bookingId);
+  } catch (err) {
+    console.warn('[report-suspicious] deny failed', err);
+  }
+
+  try {
+    await disputeService.raiseDispute(booking.id, {
+      category: 'no_show',
+      reason: 'Someone arrived claiming to be my provider with an invalid code. Denied access and reporting to support.',
+    });
+  } catch (err) {
+    console.warn('[report-suspicious] raise failed', err);
+  }
 
   setBookingRefresh((t) => t + 1);
 };
@@ -636,7 +655,7 @@ const handleDenyArrival = async (sessionId: string) => {
   key: 'support',
   label: 'Support',
   icon: faGavel,
-  badge: getOpenDisputeCountForUser(clientId) || undefined,
+  badge: openDisputeCount || undefined,
 },
   ];
 
@@ -742,6 +761,14 @@ const renderWorkGateSection = () => {
                 onClick={() => handleDenyWorkGate(session.id)}
               >
                 This isn't my provider
+              </button>
+
+              <button
+                type="button"
+                className={styles.workGateDeny}
+                onClick={() => handleReportSuspicious(session.id)}
+              >
+                Report suspicious
               </button>
             </>
           )}

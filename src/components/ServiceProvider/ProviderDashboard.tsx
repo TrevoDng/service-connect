@@ -35,6 +35,7 @@ import { DisputesView } from '../Disputes';
 import { getOpenDisputeCountForUser } from '../../utils/allDisputes';
 import { getBookingsForProvider, isCurrentRequest } from '../../utils/allBookings';
 import styles from './ProviderDashboard.module.scss';
+import { disputeService } from '../../services/dispute.service';
 
 // ============================================
 // THEME CONSTANTS
@@ -134,6 +135,25 @@ useEffect(() => {
       setLoading(false);
     }
   };
+
+  const [openDisputeCount, setOpenDisputeCount] = useState(0);
+
+useEffect(() => {
+  if (!providerId) { setOpenDisputeCount(0); return; }
+  let cancelled = false;
+  (async () => {
+    try {
+      const disputes = await disputeService.getMyDisputes();
+      const open = disputes.filter(
+        (d) => d.status === 'open' || d.status === 'awaiting_info'
+      ).length;
+      if (!cancelled) setOpenDisputeCount(open);
+    } catch {
+      if (!cancelled) setOpenDisputeCount(0);
+    }
+  })();
+  return () => { cancelled = true; };
+}, [providerId]);
 
   // ------------------------------------------
   // Sidebar badge counts
@@ -314,7 +334,7 @@ useEffect(() => {
   key: 'support',
   label: 'Support',
   icon: faGavel,
-  badge: getOpenDisputeCountForUser(providerId) || undefined,
+  badge: openDisputeCount || undefined,
 },
   ];
 

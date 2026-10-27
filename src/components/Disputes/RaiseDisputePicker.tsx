@@ -1,20 +1,15 @@
 // src/components/Disputes/RaiseDisputePicker.tsx
 
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import type {
   Booking,
   Dispute,
   RaiseDisputeFormData,
-  ViewerRole,
 } from '../../types';
-import {
-  getBookingsForClient,
-  getBookingsForProvider,
-  isEligibleForDispute,
-} from '../../utils/allBookings';
-import { getDisputeByBooking } from '../../utils/allDisputes';
-import { addLocalDispute, addDisputeMessage } from '../../utils/localDisputes';
-import { generateId } from '../../utils/referenceCode';
+import { useAuth } from '../../account/context/AuthContext';
+import { isEligibleForDispute } from '../../utils/allBookings';
+import { bookingService } from '../../services/booking.service';
+import { disputeService } from '../../services/dispute.service';
 import { formatDate } from '../../utils/formatters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -26,110 +21,68 @@ import {
 import { RaiseDisputePanel } from '../Requests/RaiseDisputePanel';
 import styles from './RaiseDisputePicker.module.scss';
 
-// ============================================
-// DEMO USER MAP
-// ============================================
-
-const DEMO_USER_IDS: Record<'CLIENT' | 'PROVIDER', string> = {
-  CLIENT: 'c-001',
-  PROVIDER: 'p-001',
-};
-
-// ============================================
-// PROPS
-// ============================================
-
 export interface RaiseDisputePickerProps {
-  /** Only CLIENT or PROVIDER should render this picker */
   viewerRole: 'CLIENT' | 'PROVIDER';
-  /** Fired when the user cancels the whole flow */
   onCancel: () => void;
-  /** Fired after a dispute has been successfully created */
   onCreated: (dispute: Dispute) => void;
 }
-
-// ============================================
-// COMPONENT
-// ============================================
 
 export const RaiseDisputePicker: React.FC<RaiseDisputePickerProps> = ({
   viewerRole,
   onCancel,
   onCreated,
 }) => {
-  const viewerUserId = DEMO_USER_IDS[viewerRole];
-
-  // Which booking has been selected for raising a dispute (null = picker view)
+  const { user } = useAuth();
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [existingDisputes, setExistingDisputes] = useState<Dispute[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // ------------------------------------------
-  // Eligible bookings
-  // ------------------------------------------
-  const eligibleBookings = useMemo(() => {
-    const source =
-      viewerRole === 'CLIENT'
-        ? getBookingsForClient(viewerUserId)
-        : getBookingsForProvider(viewerUserId);
-
-    return source.filter(
-      (b) => isEligibleForDispute(b) && !getDisputeByBooking(b.id)
-    );
-  }, [viewerRole, viewerUserId]);
-
-  // ------------------------------------------
-  // Handlers
-  // ------------------------------------------
-  const handleSubmit = (form: RaiseDisputeFormData) => {
-    if (!selectedBooking) return;
-
-    const now = new Date().toISOString();
-    const isClient = viewerRole === 'CLIENT';
-    const b = selectedBooking;
-
-    const raisedByUserId = isClient ? b.clientId : b.providerId;
-    const raisedByDisplayName = isClient
-      ? b.clientDisplayName
-      : b.providerDisplayName;
-    const againstUserId = isClient ? b.providerId : b.clientId;
-    const againstDisplayName = isClient
-      ? b.providerDisplayName
-      : b.clientDisplayName;
-
-    const dispute: Dispute = {
-      id: generateId(),
-      bookingId: b.id,
-      requestRef: b.requestRef,
-      raisedByUserId,
-      raisedByRole: viewerRole,
-      raisedByDisplayName,
-      againstUserId,
-      againstRole: isClient ? 'PROVIDER' : 'CLIENT',
-      againstDisplayName,
-      category: form.category,
-      reason: form.reason,
-      photos: form.photos,
-      status: 'open',
-      messages: [],
-      createdAt: now,
-      updatedAt: now,
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const myBookings =
+          viewerRole === 'CLIENT'
+            ? await bookingService.getMyBookings(user.id)
+            : await bookingService.getProviderBookings(user.id);
+        const myDisputes = await disputeService.getMyDisputes();
+        if (!cancelled) {
+          setBookings(myBookings);
+          setExistingDisputes(myDisputes);
+          setLoading(false);
+        }
+      } catch (err) {
+        console.warn('[raise-picker] fetch failed', err);
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
     };
+  }, [user, viewerRole]);
 
-    addLocalDispute(dispute);
+  const eligibleBookings = useMemo(() => {
+    const disputedIds = new Set(existingDisputes.map((d) => d.bookingId));
+    return bookings.filter(
+      (b) => isEligibleForDispute(b) && !disputedIds.has(b.id)
+    );
+  }, [bookings, existingDisputes]);
 
-    // Seed system message
-    addDisputeMessage(dispute.id, {
-      authorId: 'system',
-      authorDisplayName: 'ServiceConnect',
-      authorRole: 'SYSTEM',
-      text: `Dispute raised by ${raisedByDisplayName}. A support agent will review this and respond shortly.`,
-      internal: false,
-    });
-
-    onCreated(dispute);
+  const handleSubmit = async (form: RaiseDisputeFormData) => {
+    if (!selectedBooking) return;
+    try {
+      const dispute = await disputeService.raiseDispute(selectedBooking.id, form);
+      onCreated(dispute);
+    } catch (err) {
+      console.warn('[raise-dispute] failed', err);
+    }
   };
 
   // ------------------------------------------
-  // Raise form view (booking selected)
+  // Raise form
   // ------------------------------------------
   if (selectedBooking) {
     const counterpartyName =
@@ -159,8 +112,23 @@ export const RaiseDisputePicker: React.FC<RaiseDisputePickerProps> = ({
   }
 
   // ------------------------------------------
-  // Picker view
+  // Picker
   // ------------------------------------------
+    if (loading) {
+      return (
+        <div
+          className={styles.wrapper}
+          style={{
+            padding: '2rem',
+            textAlign: 'center',
+            color: 'var(--text-primary, #111)',
+          }}
+        >
+          Loading…
+        </div>
+      );
+  }
+
   return (
     <div className={styles.wrapper}>
       <header className={styles.header}>
@@ -183,11 +151,7 @@ export const RaiseDisputePicker: React.FC<RaiseDisputePickerProps> = ({
               ? "You'll be able to raise a dispute here once a provider accepts one of your requests."
               : "You'll be able to raise a dispute here once a client has accepted a job with you."}
           </p>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={onCancel}
-          >
+          <button type="button" className={styles.cancelBtn} onClick={onCancel}>
             Close
           </button>
         </div>
@@ -199,7 +163,6 @@ export const RaiseDisputePicker: React.FC<RaiseDisputePickerProps> = ({
                 viewerRole === 'CLIENT'
                   ? b.providerDisplayName
                   : b.clientDisplayName;
-
               return (
                 <button
                   key={b.id}
@@ -230,11 +193,7 @@ export const RaiseDisputePicker: React.FC<RaiseDisputePickerProps> = ({
           </div>
 
           <div className={styles.actions}>
-            <button
-              type="button"
-              className={styles.cancelBtn}
-              onClick={onCancel}
-            >
+            <button type="button" className={styles.cancelBtn} onClick={onCancel}>
               Cancel
             </button>
           </div>

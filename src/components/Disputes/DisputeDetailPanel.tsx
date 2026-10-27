@@ -1,21 +1,14 @@
 // src/components/Disputes/DisputeDetailPanel.tsx
 
-import React, { useState } from 'react';
-import type { Dispute, DisputeResolution, BookingStatus } from '../../types';
+import React, { useEffect, useState } from 'react';
+import type { Dispute, DisputeResolution, BookingStatus, Booking } from '../../types';
 import {
   DISPUTE_CATEGORY_LABELS,
   DISPUTE_RESOLUTION_LABELS,
 } from '../../types';
 import { useAuth } from '../../account/context/AuthContext';
-import { useNotifications } from '../../account/context/NotificationContext';
-import { getBookingById } from '../../utils/allBookings';
-import { setBookingOverride } from '../../utils/localBookingOverrides';
-import {
-  addDisputeMessage,
-  setDisputeStatus,
-  resolveDispute,
-} from '../../utils/localDisputes';
-import { notifyDisputeReply } from '../../utils/notify';
+import { bookingService } from '../../services/booking.service';
+import { disputeService } from '../../services/dispute.service';
 import {
   formatDate,
   formatDateTime,
@@ -30,16 +23,10 @@ import {
   faLock,
   faUnlock,
   faCheckCircle,
-  faTimesCircle,
   faUser,
   faUserTie,
-  faCamera,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './DisputeDetailPanel.module.scss';
-
-// ============================================
-// BOOKING STATUS OPTIONS for resolution
-// ============================================
 
 const RESOLUTION_BOOKING_STATUSES: { value: BookingStatus; label: string }[] = [
   { value: 'completed', label: 'Completed' },
@@ -48,20 +35,12 @@ const RESOLUTION_BOOKING_STATUSES: { value: BookingStatus; label: string }[] = [
   { value: 'price_agreed', label: 'Back to price agreed' },
 ];
 
-// ============================================
-// PROPS
-// ============================================
-
 export interface DisputeDetailPanelProps {
   dispute: Dispute;
   onBack: () => void;
   onChanged: () => void;
   canResolve?: boolean;
 }
-
-// ============================================
-// COMPONENT
-// ============================================
 
 export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
   dispute,
@@ -70,131 +49,92 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
   canResolve = true,
 }) => {
   const { user } = useAuth();
-  const { addMany } = useNotifications();
 
-// Derive the author's real role from the logged-in user.
-// Previously every non-admin was hardcoded to EMPLOYEE, which is
-// why CLIENT/PROVIDER replies were mislabelled in the thread.
   const currentRole: 'CLIENT' | 'PROVIDER' | 'EMPLOYEE' | 'ADMIN' =
-  user?.role === 'ADMIN'
-    ? 'ADMIN'
-    : user?.role === 'EMPLOYEE'
-    ? 'EMPLOYEE'
-    : user?.role === 'PROVIDER'
-    ? 'PROVIDER'
-    : 'CLIENT';
+    user?.role === 'ADMIN'
+      ? 'ADMIN'
+      : user?.role === 'EMPLOYEE'
+      ? 'EMPLOYEE'
+      : user?.role === 'PROVIDER'
+      ? 'PROVIDER'
+      : 'CLIENT';
 
   const [messageText, setMessageText] = useState('');
   const [internalNote, setInternalNote] = useState(false);
-
-  // Resolution form
   const [showResolve, setShowResolve] = useState(false);
   const [resolution, setResolution] =
     useState<DisputeResolution>('mutual_agreement');
   const [resolutionNote, setResolutionNote] = useState('');
   const [finalBookingStatus, setFinalBookingStatus] =
     useState<BookingStatus>('completed');
+  const [booking, setBooking] = useState<Booking | undefined>(undefined);
 
-  const booking = getBookingById(dispute.bookingId);
   const isOpen = dispute.status === 'open' || dispute.status === 'awaiting_info';
 
-  // ------------------------------------------
-  // Actions
-  // ------------------------------------------
-  const handleSendMessage = () => {
-  if (!messageText.trim() || !user) return;
+  // Fetch booking context from backend (best-effort)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const b =
+          user?.role === 'CLIENT'
+            ? await bookingService.getClientBookingById(dispute.bookingId)
+            : user?.role === 'PROVIDER'
+            ? await bookingService.getProviderBookingById(dispute.bookingId)
+            : undefined;
+        if (!cancelled) setBooking(b ?? undefined);
+      } catch {
+        if (!cancelled) setBooking(undefined);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [dispute.bookingId, user?.role]);
 
-  const trimmed = messageText.trim();
-  const displayName =
-    `${user.firstName} ${user.lastName}`.trim() || user.email;
-
-  addDisputeMessage(dispute.id, {
-    authorId: user.id,
-    authorDisplayName: displayName,
-    authorRole: currentRole,
-    text: trimmed,
-    internal: internalNote,
-  });
-
-  // Only notify on public messages — internal notes are staff-only.
-  if (!internalNote && booking) {
-    const notifications = notifyDisputeReply(
-      booking,
-      dispute,
-      {
-        userId: user.id,
-        displayName,
-        role: currentRole,
-      },
-      trimmed
-    );
-    if (notifications.length > 0) addMany(notifications);
-  }
-
-  setMessageText('');
-  onChanged();
-};
-
-  const handleRequestInfo = () => {
-    setDisputeStatus(dispute.id, 'awaiting_info');
-    if (user) {
-      addDisputeMessage(dispute.id, {
-	      authorId: user.id,
-	      authorDisplayName: `${user.firstName} ${user.lastName}`.trim() || user.email,
-	      authorRole: currentRole,
-	      text: 'We need more information to continue. Please respond to this thread with any details or evidence you think is relevant.',
-	      internal: false,
-      });
+  const handleSendMessage = async () => {
+    if (!messageText.trim()) return;
+    try {
+      await disputeService.addMessage(dispute.id, messageText.trim(), internalNote);
+      setMessageText('');
+      setInternalNote(false);
+      onChanged();
+    } catch (err) {
+      console.warn('[dispute-message] failed', err);
     }
-    onChanged();
   };
 
-  const handleResolve = () => {
-    if (!resolutionNote.trim() || !user) return;
-
-    resolveDispute(dispute.id, {
-      resolution,
-      resolutionNote: resolutionNote.trim(),
-      finalBookingStatus,
-      resolvedByUserId: user.id,
-      resolvedByDisplayName:
-        `${user.firstName} ${user.lastName}`.trim() || user.email,
-    });
-
-    // Apply the booking status change
-    if (booking) {
-      setBookingOverride(booking.id, {
-        status: finalBookingStatus,
-        updatedAt: new Date().toISOString(),
-      });
+  const handleRequestInfo = async () => {
+    try {
+      await disputeService.requestInfo(dispute.id);
+      onChanged();
+    } catch (err) {
+      console.warn('[dispute-request-info] failed', err);
     }
-
-    // Post a public message with the resolution
-    addDisputeMessage(dispute.id, {
-      authorId: 'system',
-      authorDisplayName: 'ServiceConnect',
-      authorRole: 'SYSTEM',
-      text: `Dispute resolved: ${DISPUTE_RESOLUTION_LABELS[resolution]}. ${resolutionNote.trim()}`,
-      internal: false,
-    });
-
-    setShowResolve(false);
-    onChanged();
   };
 
-  // ============================================
-  // RENDER
-  // ============================================
+  const handleResolve = async () => {
+    if (!resolutionNote.trim()) return;
+    try {
+      await disputeService.resolve(dispute.id, {
+        resolution,
+        resolutionNote: resolutionNote.trim(),
+        finalBookingStatus,
+      });
+      setShowResolve(false);
+      onChanged();
+    } catch (err) {
+      console.warn('[dispute-resolve] failed', err);
+    }
+  };
 
   return (
     <div className={styles.panel}>
-      {/* Back */}
       <button type="button" className={styles.backBtn} onClick={onBack}>
         <FontAwesomeIcon icon={faArrowLeft} />
         Back to disputes
       </button>
 
-      {/* Header */}
       <header className={styles.header}>
         <div className={styles.headerTop}>
           <span className={styles.ref}>{dispute.requestRef}</span>
@@ -219,7 +159,6 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         )}
       </header>
 
-      {/* Parties */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Parties</h2>
         <div className={styles.parties}>
@@ -246,7 +185,6 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         </div>
       </section>
 
-      {/* Reason */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>Reason</h2>
         <div className={styles.reason}>{dispute.reason}</div>
@@ -262,7 +200,6 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         )}
       </section>
 
-      {/* Booking context */}
       {booking && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Booking context</h2>
@@ -297,44 +234,42 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         </section>
       )}
 
-      {/* Messages thread */}
       <section className={styles.section}>
         <h2 className={styles.sectionTitle}>
           <FontAwesomeIcon icon={faGavel} /> Conversation
         </h2>
 
         <div className={styles.thread}>
-  {dispute.messages.filter((m) => !m.internal || canResolve).length === 0 ? (
-    <p className={styles.threadEmpty}>No messages yet.</p>
-  ) : (
-    dispute.messages
-      .filter((m) => !m.internal || canResolve)
-      .map((m) => (
-              <div
-                key={m.id}
-                className={`${styles.message} ${
-                  m.internal ? styles.messageInternal : ''
-                }`}
-              >
-                <div className={styles.messageHeader}>
-                  <strong>{m.authorDisplayName}</strong>
-                  <span className={styles.messageRole}>{m.authorRole}</span>
-                  {m.internal && (
-                    <span className={styles.messageInternalTag}>
-                      <FontAwesomeIcon icon={faLock} /> Internal
+          {dispute.messages.filter((m) => !m.internal || canResolve).length === 0 ? (
+            <p className={styles.threadEmpty}>No messages yet.</p>
+          ) : (
+            dispute.messages
+              .filter((m) => !m.internal || canResolve)
+              .map((m) => (
+                <div
+                  key={m.id}
+                  className={`${styles.message} ${
+                    m.internal ? styles.messageInternal : ''
+                  }`}
+                >
+                  <div className={styles.messageHeader}>
+                    <strong>{m.authorDisplayName}</strong>
+                    <span className={styles.messageRole}>{m.authorRole}</span>
+                    {m.internal && (
+                      <span className={styles.messageInternalTag}>
+                        <FontAwesomeIcon icon={faLock} /> Internal
+                      </span>
+                    )}
+                    <span className={styles.messageTime}>
+                      {formatDateTime(m.createdAt)}
                     </span>
-                  )}
-                  <span className={styles.messageTime}>
-                    {formatDateTime(m.createdAt)}
-                  </span>
+                  </div>
+                  <p className={styles.messageText}>{m.text}</p>
                 </div>
-                <p className={styles.messageText}>{m.text}</p>
-              </div>
-            ))
+              ))
           )}
         </div>
 
-        {/* Composer */}
         {isOpen && (
           <div className={styles.composer}>
             <textarea
@@ -346,17 +281,17 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
             />
 
             <div className={styles.composerRow}>
-	    { canResolve && ( 
-	    <label className={styles.internalToggle}>
-                <input
-                  type="checkbox"
-                  checked={internalNote}
-                  onChange={(e) => setInternalNote(e.target.checked)}
-                />
-                <FontAwesomeIcon icon={internalNote ? faLock : faUnlock} />
-                <span>Internal note</span>
-              </label>
-	)}
+              {canResolve && (
+                <label className={styles.internalToggle}>
+                  <input
+                    type="checkbox"
+                    checked={internalNote}
+                    onChange={(e) => setInternalNote(e.target.checked)}
+                  />
+                  <FontAwesomeIcon icon={internalNote ? faLock : faUnlock} />
+                  <span>Internal note</span>
+                </label>
+              )}
 
               <button
                 type="button"
@@ -372,8 +307,7 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         )}
       </section>
 
-      {/* Resolution */}
-      {isOpen && canResolve  && !showResolve && (
+      {isOpen && canResolve && !showResolve && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Resolution</h2>
           <div className={styles.resolveActions}>
@@ -396,7 +330,6 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         </section>
       )}
 
-      {/* Resolution form */}
       {isOpen && canResolve && showResolve && (
         <section className={styles.section}>
           <h2 className={styles.sectionTitle}>Resolve dispute</h2>
@@ -405,9 +338,7 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
             <label className={styles.label}>Outcome</label>
             <select
               value={resolution}
-              onChange={(e) =>
-                setResolution(e.target.value as DisputeResolution)
-              }
+              onChange={(e) => setResolution(e.target.value as DisputeResolution)}
               className={styles.select}
             >
               {(Object.keys(DISPUTE_RESOLUTION_LABELS) as DisputeResolution[]).map(
@@ -424,9 +355,7 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
             <label className={styles.label}>Final booking status</label>
             <select
               value={finalBookingStatus}
-              onChange={(e) =>
-                setFinalBookingStatus(e.target.value as BookingStatus)
-              }
+              onChange={(e) => setFinalBookingStatus(e.target.value as BookingStatus)}
               className={styles.select}
             >
               {RESOLUTION_BOOKING_STATUSES.map((opt) => (
@@ -469,7 +398,6 @@ export const DisputeDetailPanel: React.FC<DisputeDetailPanelProps> = ({
         </section>
       )}
 
-      {/* Resolution summary (if resolved) */}
       {!isOpen && dispute.resolution && (
         <section className={`${styles.section} ${styles.resolvedSection}`}>
           <h2 className={styles.sectionTitle}>

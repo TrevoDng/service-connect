@@ -1,6 +1,6 @@
 // src/components/Requests/RequestCard.tsx
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import type {
   Booking,
@@ -44,15 +44,12 @@ import { LeaveReviewPanel } from './LeaveReviewPanel';
 import { RaiseDisputePanel } from './RaiseDisputePanel';
 import { getReviewForBooking } from '../../utils/allReviews';
 import { addLocalReview, setProviderReply } from '../../utils/localReviews';
-import { getDisputeByBooking } from '../../utils/allDisputes';
-import { addLocalDispute, addDisputeMessage } from '../../utils/localDisputes';
-import { generateId } from '../../utils/referenceCode';
 import {
-  notifyDisputeRaised,
   notifyReviewSubmitted,
   notifyReviewReplied,
 } from '../../utils/notify';
 import styles from './RequestCard.module.scss';
+import { disputeService } from '../../services/dispute.service';
 
 // ============================================
 // PROPS
@@ -207,7 +204,21 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   // DERIVED DATA
   // ------------------------------------------
   const existingReview = getReviewForBooking(request.id);
-  const existingDispute: Dispute | undefined = getDisputeByBooking(request.id);
+const [existingDispute, setExistingDispute] = useState<Dispute | undefined>(undefined);
+const [disputeRefresh, setDisputeRefresh] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const d = await disputeService.getDisputeByBooking(request.id);
+        if (!cancelled) setExistingDispute(d ?? undefined);
+      } catch {
+        if (!cancelled) setExistingDispute(undefined);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [request.id, disputeRefresh]);
 
   const canRaiseDispute =
     (viewerRole === 'CLIENT' || viewerRole === 'PROVIDER') &&
@@ -293,55 +304,17 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   if (onReviewSubmitted) onReviewSubmitted();
 };
 
-  const handleRaiseDispute = (form: RaiseDisputeFormData) => {
-    const now = new Date().toISOString();
-    const isClient = viewerRole === 'CLIENT';
-
-    const raisedByUserId = isClient ? request.clientId : request.providerId;
-    const raisedByDisplayName = isClient
-      ? request.clientDisplayName
-      : request.providerDisplayName;
-    const againstUserId = isClient ? request.providerId : request.clientId;
-    const againstDisplayName = isClient
-      ? request.providerDisplayName
-      : request.clientDisplayName;
-
-    const dispute: Dispute = {
-      id: generateId(),
-      bookingId: request.id,
-      requestRef: request.requestRef,
-      raisedByUserId,
-      raisedByRole: viewerRole === 'CLIENT' ? 'CLIENT' : 'PROVIDER',
-      raisedByDisplayName,
-      againstUserId,
-      againstRole: isClient ? 'PROVIDER' : 'CLIENT',
-      againstDisplayName,
-      category: form.category,
-      reason: form.reason,
-      photos: form.photos,
-      status: 'open',
-      messages: [],
-      createdAt: now,
-      updatedAt: now,
-    };
-
-    addLocalDispute(dispute);
-
-    addDisputeMessage(dispute.id, {
-      authorId: 'system',
-      authorDisplayName: 'ServiceConnect',
-      authorRole: 'SYSTEM',
-      text: `Dispute raised by ${raisedByDisplayName}. A support agent will review this and respond shortly.`,
-      internal: false,
-    });
-
-    add(notifyDisputeRaised(request, dispute));
-
-    // Shrink back to wizard + notify parent
+  const handleRaiseDispute = async (form: RaiseDisputeFormData) => {
+  try {
+    await disputeService.raiseDispute(request.id, form);
     setShowRaiseDisputePanel(false);
     setShowFullDetails(false);
+    setDisputeRefresh((t) => t + 1);
     if (onDisputeChanged) onDisputeChanged();
-  };
+  } catch (err) {
+    console.warn('[raise-dispute] failed', err);
+  }
+};
 
   // ------------------------------------------
   // WIZARD ACTION DISPATCHER
