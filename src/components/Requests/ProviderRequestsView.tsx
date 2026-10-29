@@ -4,9 +4,6 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Booking, Notification } from '../../types';
 import {
-  getBookingsForProvider,
-  isCurrentRequest,
-  isClosedRequest,
   getBookingById,
 } from '../../utils/allBookings';
 import { getLocalWorkSessions } from '../../utils/localWorkSessions';
@@ -53,7 +50,7 @@ const DEFAULT_CONSULTATION_FEE = 150;
 const getConsultationFeeFor = (category: string): number =>
   CONSULTATION_FEE_BY_CATEGORY[category] ?? DEFAULT_CONSULTATION_FEE;
 
-type Tab = 'current' | 'closed';
+type Tab = 'new' | 'accepted' | 'payed' | 'declined';
 
 // ============================================
 // COMPONENT
@@ -62,7 +59,7 @@ type Tab = 'current' | 'closed';
 export const ProviderRequestsView: React.FC = () => {
   const navigate = useNavigate();
   const { add } = useNotifications();
-  const [activeTab, setActiveTab] = useState<Tab>('current');
+  const [activeTab, setActiveTab] = useState<Tab>('new');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshTick, setRefreshTick] = useState(0);
   const [reviewRefresh, setReviewRefresh] = useState(0);
@@ -119,8 +116,10 @@ useEffect(() => {
   };
 }, []);
 
-  const currentRequests = providerBookings.filter(isCurrentRequest);
-  const closedRequests = providerBookings.filter(isClosedRequest);
+  const newRequests = providerBookings.filter((b) => b.status === 'requested');
+  const acceptedRequests = providerBookings.filter((b) => b.status === 'accepted');
+  const payedRequests = providerBookings.filter((b) => b.status === 'consultation_paid');
+  const declinedRequests = providerBookings.filter((b) => b.status === 'declined');
 
   // ------------------------------------------
   // Search filter
@@ -137,8 +136,11 @@ useEffect(() => {
   };
 
   const visibleList = applySearch(
-    activeTab === 'current' ? currentRequests : closedRequests
-  );
+  activeTab === 'new' ? newRequests
+  : activeTab === 'accepted' ? acceptedRequests
+  : activeTab === 'payed' ? payedRequests
+  : declinedRequests
+);
 
   // ------------------------------------------
   // Resumable work sessions (Step 13.3)
@@ -446,23 +448,35 @@ useEffect(() => {
       <div className={styles.tabs}>
         <button
           type="button"
-          className={`${styles.tabBtn} ${
-            activeTab === 'current' ? styles.tabActive : ''
-          }`}
-          onClick={() => setActiveTab('current')}
+          className={`${styles.tabBtn} ${activeTab === 'new' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('new')}
         >
-          Current
-          <span className={styles.tabCount}>{currentRequests.length}</span>
+          New
+          <span className={styles.tabCount}>{newRequests.length}</span>
         </button>
         <button
           type="button"
-          className={`${styles.tabBtn} ${
-            activeTab === 'closed' ? styles.tabActive : ''
-          }`}
-          onClick={() => setActiveTab('closed')}
+          className={`${styles.tabBtn} ${activeTab === 'accepted' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('accepted')}
         >
-          Closed
-          <span className={styles.tabCount}>{closedRequests.length}</span>
+          Accepted
+          <span className={styles.tabCount}>{acceptedRequests.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.tabBtn} ${activeTab === 'payed' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('payed')}
+        >
+          Payed
+          <span className={styles.tabCount}>{payedRequests.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`${styles.tabBtn} ${activeTab === 'declined' ? styles.tabActive : ''}`}
+          onClick={() => setActiveTab('declined')}
+        >
+          Declined
+          <span className={styles.tabCount}>{declinedRequests.length}</span>
         </button>
       </div>
 
@@ -470,17 +484,22 @@ useEffect(() => {
       {visibleList.length === 0 ? (
         <div className={styles.empty}>
           <span className={styles.emptyIcon}>
-            {activeTab === 'current' ? '📬' : '📁'}
+            {activeTab === 'new' ? '📬'
+              : activeTab === 'accepted' ? '✅'
+              : activeTab === 'payed' ? '💰'
+              : '❌'}
           </span>
           <h3>
-            {activeTab === 'current'
-              ? 'No active requests'
-              : 'No closed requests'}
+            {activeTab === 'new' ? 'No new requests'
+              : activeTab === 'accepted' ? 'No accepted requests'
+              : activeTab === 'payed' ? 'No paid consultations'
+              : 'No declined requests'}
           </h3>
           <p>
-            {activeTab === 'current'
-              ? 'New requests from clients will appear here.'
-              : 'Completed and declined jobs will appear here.'}
+            {activeTab === 'new' ? 'New requests from clients will appear here.'
+              : activeTab === 'accepted' ? 'Requests you accept will appear here while waiting for client payment.'
+              : activeTab === 'payed' ? 'Consultations where the client has paid will appear here.'
+              : 'Requests you declined will appear here.'}
           </p>
           <button
             type="button"

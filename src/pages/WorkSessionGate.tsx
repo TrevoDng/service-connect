@@ -112,7 +112,11 @@ useEffect(() => {
     navigate('/provider/dashboard');
     return;
   }
-  if (booking.status !== 'price_agreed' && booking.status !== 'in_progress') {
+  if (
+    booking.status !== 'price_agreed' &&
+    booking.status !== 'in_progress' &&
+    booking.status !== 'completed'
+  ) {
     navigate('/provider/dashboard');
     return;
   }
@@ -176,13 +180,32 @@ const handleClockOut = async (_sessionId: string) => {
 };
 
 const handleMarkComplete = async (_sessionId: string) => {
-  if (!booking) return;
+  if (!booking || !session) return;
+  const previous = session;
+  // Optimistic — flip UI immediately so button disappears on first click
+  setSession({
+    ...session,
+    status: 'completed',
+    completedAt: new Date().toISOString(),
+  });
   try {
     const s = await bookingService.completeSession(booking.id);
     setSession(s);
     setTick((t) => t + 1);
   } catch (err) {
     console.error('[complete] failed', err);
+    setSession(previous); // rollback on failure
+  }
+};
+
+const handleReopen = async () => {
+  if (!booking) return;
+  try {
+    const s = await bookingService.reopenSession(booking.id);
+    setSession(s);
+    setTick((t) => t + 1);
+  } catch (err) {
+    console.error('[reopen] failed', err);
   }
 };
 
@@ -477,25 +500,46 @@ const handleDeleteFinalPhoto = async (_sessionId: string, photoId: string) => {
   </section>
 )}
 
-	{/* State 3 — Confirmed → show the full work session panel */}
-{session && isConfirmed && (
-  <WorkSessionPanel
-    session={session}
-    booking={booking}
-    providerId={booking.providerId}
-    onClockIn={handleClockIn}
-    onClockOut={handleClockOut}
-    onMarkComplete={handleMarkComplete}
-    workReady
-    mode="work"
-    onAddBeforePhotos={handleAddBeforePhotos}
-    onDeleteBeforePhoto={handleDeleteBeforePhoto}
-    onSaveProgressStage={handleSaveProgressStage}
-    onDeleteProgressStage={handleDeleteProgressStage}
-    onAddFinalPhotos={handleAddFinalPhotos}
-    onDeleteFinalPhoto={handleDeleteFinalPhoto}
-  />
-)}
+		{/* State 3 — Confirmed → show the full work session panel */}
+    {(session && isConfirmed) || (session && session.status === 'completed') ? (
+      <>
+        {session && session.status === 'completed' && (
+          <section className={styles.card} style={{ marginBottom: '1rem' }}>
+            <h2 className={styles.cardTitle}>Job completed</h2>
+            <p className={styles.cardText}>
+              This session was marked complete. If the client wasn't satisfied or new
+              work is required, you can reopen it and continue adding work days and
+              photos.
+            </p>
+            <button
+              type="button"
+              className={styles.primaryBtn}
+              onClick={handleReopen}
+            >
+              Reopen work
+            </button>
+          </section>
+        )}
+        {session && (
+          <WorkSessionPanel
+            session={session}
+            booking={booking}
+            providerId={booking.providerId}
+            onClockIn={handleClockIn}
+            onClockOut={handleClockOut}
+            onMarkComplete={handleMarkComplete}
+            workReady
+            mode="work"
+            onAddBeforePhotos={handleAddBeforePhotos}
+            onDeleteBeforePhoto={handleDeleteBeforePhoto}
+            onSaveProgressStage={handleSaveProgressStage}
+            onDeleteProgressStage={handleDeleteProgressStage}
+            onAddFinalPhotos={handleAddFinalPhotos}
+            onDeleteFinalPhoto={handleDeleteFinalPhoto}
+          />
+        )}
+      </>
+    ) : null}
       </div>
     </div>
   );

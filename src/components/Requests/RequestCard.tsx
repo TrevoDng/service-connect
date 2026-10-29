@@ -42,14 +42,9 @@ import { ConsultationCard } from './ConsultationCard';
 import { FinalPricePanel } from './FinalPricePanel';
 import { LeaveReviewPanel } from './LeaveReviewPanel';
 import { RaiseDisputePanel } from './RaiseDisputePanel';
-import { getReviewForBooking } from '../../utils/allReviews';
-import { addLocalReview, setProviderReply } from '../../utils/localReviews';
-import {
-  notifyReviewSubmitted,
-  notifyReviewReplied,
-} from '../../utils/notify';
 import styles from './RequestCard.module.scss';
 import { disputeService } from '../../services/dispute.service';
+import { reviewService } from '../../services/review.service';
 
 // ============================================
 // PROPS
@@ -203,9 +198,24 @@ export const RequestCard: React.FC<RequestCardProps> = ({
   // ------------------------------------------
   // DERIVED DATA
   // ------------------------------------------
-  const existingReview = getReviewForBooking(request.id);
-const [existingDispute, setExistingDispute] = useState<Dispute | undefined>(undefined);
-const [disputeRefresh, setDisputeRefresh] = useState(0);
+  const [existingReview, setExistingReview] = useState<Review | undefined>(undefined);
+  const [reviewRefreshLocal, setReviewRefreshLocal] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const r = await reviewService.getReviewForBooking(request.id);
+        if (!cancelled) setExistingReview(r ?? undefined);
+      } catch {
+        if (!cancelled) setExistingReview(undefined);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [request.id, reviewRefreshLocal]);
+
+  const [existingDispute, setExistingDispute] = useState<Dispute | undefined>(undefined);
+  const [disputeRefresh, setDisputeRefresh] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -268,41 +278,29 @@ const [disputeRefresh, setDisputeRefresh] = useState(0);
   // ------------------------------------------
   // HANDLERS
   // ------------------------------------------
-  const handleSubmitReview = (args: { id: string; formData: ReviewFormData }) => {
-    const review: Review = {
-      id: args.id,
-      bookingId: request.id,
-      clientId: request.clientId,
-      clientDisplayName: request.clientDisplayName,
-      providerId: request.providerId,
-      providerDisplayName: request.providerDisplayName,
-      rating: args.formData.rating,
-      comment: args.formData.comment,
-      photos: args.formData.photos,
-      tags: args.formData.tags,
-      wouldRecommend: args.formData.wouldRecommend,
-      createdAt: new Date().toISOString(),
-    };
-    addLocalReview(review);
-   
-    // Notify the provider
-  add(notifyReviewSubmitted(request, review));
-    setShowReviewPanel(false);
-    if (onReviewSubmitted) onReviewSubmitted();
+  const handleSubmitReview = async (args: { id: string; formData: ReviewFormData }) => {
+    try {
+      await reviewService.submitReview(request.id, args.formData);
+      setShowReviewPanel(false);
+      setReviewRefreshLocal((t) => t + 1);
+      if (onReviewSubmitted) onReviewSubmitted();
+    } catch (err) {
+      console.warn('[submit-review] failed', err);
+    }
   };
 
-  const handleSubmitReply = () => {
-  if (!existingReview || !reviewReplyText.trim()) return;
-
-  setProviderReply(existingReview.id, reviewReplyText.trim());
-
-  // Notify the client that the provider replied
-  add(notifyReviewReplied(request, existingReview));
-
-  setReviewReplyOpen(false);
-  setReviewReplyText('');
-  if (onReviewSubmitted) onReviewSubmitted();
-};
+  const handleSubmitReply = async () => {
+    if (!existingReview || !reviewReplyText.trim()) return;
+    try {
+      await reviewService.replyToReview(existingReview.id, reviewReplyText.trim());
+      setReviewReplyOpen(false);
+      setReviewReplyText('');
+      setReviewRefreshLocal((t) => t + 1);
+      if (onReviewSubmitted) onReviewSubmitted();
+    } catch (err) {
+      console.warn('[submit-reply] failed', err);
+    }
+  };
 
   const handleRaiseDispute = async (form: RaiseDisputeFormData) => {
   try {

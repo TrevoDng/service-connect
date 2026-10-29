@@ -396,3 +396,79 @@
   color: var(--text-light, $text-light);
   transition: color $transition-base;
 }
+
+.worksessionSubTabs {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  border-bottom: 1px solid var(--border-color, $border-color);
+  padding-bottom: $spacing-xs;
+  overflow-x: auto;
+}
+
+.subTabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-md;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border-radius: $border-radius-full;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--bg-primary, #f8f9fa);
+    color: var(--text-primary, $text-primary);
+  }
+}
+
+.subTabActive {
+  background: $primary-gradient;
+  color: $text-white;
+
+  &:hover {
+    color: $text-white;
+  }
+}
+
+.subTabCount {
+  font-size: $font-size-xs;
+  opacity: 0.8;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-sm;
+  padding: $spacing-3xl $spacing-xl;
+  text-align: center;
+  border: 2px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  background: var(--bg-primary, #f8f9fa);
+
+  h3 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin: 0;
+  }
+
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    margin: 0;
+    max-width: 420px;
+  }
+}
+
+.emptyIcon {
+  font-size: $font-size-3xl;
+  opacity: 0.6;
+}

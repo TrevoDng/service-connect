@@ -62,25 +62,26 @@ export const ClockInCard: React.FC<ClockInCardProps> = ({
   mode = 'arrival',
 }) => {
   const lastClockEvent = session.clockEvents[session.clockEvents.length - 1];
-const hasActiveCode =
-  !!session.currentReferenceCode && session.status !== 'completed';
-const isCompleted = session.status === 'completed';
-const isWorkMode = mode === 'work';
+  const hasActiveCode =
+    !!session.currentReferenceCode && session.status !== 'completed';
+  const isCompleted = session.status === 'completed';
+  const isWorkMode = mode === 'work';
 
-// "Clocked in" means different things per mode:
-//  - arrival mode: an 'in' event was recorded and the code is still live.
-//  - work mode:    the session has transitioned to in_progress.
-// "Clocked in" is always driven by the most recent clock event,
-// in both modes. Session status alone can't tell us if we're
-// currently in or out (it stays 'in_progress' through the whole
-// work phase, even between days).
-const isClockedIn =
-  !isCompleted && lastClockEvent?.type === 'in';
+  // "Clocked in" means different things per mode:
+  //  - arrival mode: an 'in' event was recorded and the code is still live.
+  //  - work mode:    the session has transitioned to in_progress.
+  // "Clocked in" is always driven by the most recent clock event,
+  // in both modes. Session status alone can't tell us if we're
+  // currently in or out (it stays 'in_progress' through the whole
+  // work phase, even between days).
+  const isClockedIn =
+    !isCompleted && lastClockEvent?.type === 'in';
+  const hasFinalPhotos = (session.finalPhotos?.length ?? 0) > 0;
 
-// Whether the "Clock In" / "Start Work" button should be visible.
-const showClockInBtn = isWorkMode
-  ? !isClockedIn && !isCompleted
-  : !hasActiveCode && !isCompleted;
+  // Whether the "Clock In" / "Start Work" button should be visible.
+  const showClockInBtn = isWorkMode
+    ? !isClockedIn && !isCompleted
+    : !hasActiveCode && !isCompleted;
 
   // Only show the last 5 clock events in the timeline (compact)
   const recentEvents = session.clockEvents.slice(-5).reverse();
@@ -194,10 +195,12 @@ const showClockInBtn = isWorkMode
             type="button"
             className={styles.completeBtn}
             onClick={() => onMarkComplete(session.id)}
-            disabled={isClockedIn}
+            disabled={isClockedIn || !hasFinalPhotos}
             title={
               isClockedIn
                 ? 'Clock out first before marking the session complete'
+                : !hasFinalPhotos
+                ? 'Upload at least one final photo before marking complete'
                 : 'Mark the session as finished'
             }
           >

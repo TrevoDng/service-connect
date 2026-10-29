@@ -670,3 +670,85 @@
     color: var(--text-secondary, $text-secondary);
   }
 }
+
+.subTabs {
+  display: flex;
+  gap: $spacing-sm;
+  margin-bottom: $spacing-md;
+  border-bottom: 1px solid var(--border-color, $border-color);
+  padding-bottom: $spacing-xs;
+  overflow-x: auto;
+}
+
+.subTabBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  padding: $spacing-xs $spacing-md;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  border-radius: $border-radius-full;
+  transition: all $transition-fast;
+  white-space: nowrap;
+
+  &:hover {
+    background: var(--bg-primary, #f8f9fa);
+    color: var(--text-primary, $text-primary);
+  }
+}
+
+.subTabActive {
+  background: $primary-gradient;
+  color: $text-white;
+
+  &:hover {
+    color: $text-white;
+  }
+}
+
+.subTabCount {
+  font-size: $font-size-xs;
+  opacity: 0.8;
+}
+
+.sessionCard {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+  padding: $spacing-md $spacing-lg;
+  background: var(--bg-primary, #f8f9fa);
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  text-align: left;
+  cursor: pointer;
+  transition: all $transition-base;
+  margin-bottom: $spacing-sm;
+
+  &:hover {
+    border-color: $primary;
+    box-shadow: var(--shadow-md, $shadow-md);
+    transform: translateY(-2px);
+  }
+
+  h4 {
+    color: var(--text-primary, $text-primary);
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    margin: 0;
+  }
+
+  p {
+    color: var(--text-secondary, $text-secondary);
+    font-size: $font-size-sm;
+    margin: 0;
+  }
+
+  @include mobile {
+    padding: $spacing-sm $spacing-md;
+  }
+}

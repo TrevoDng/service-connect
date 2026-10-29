@@ -728,6 +728,21 @@ export const bookingService = {
     );
   },
 
+    reopenSession: async (bookingId: string): Promise<WorkSession> => {
+    return withFallback(
+      'reopenSession',
+      () =>
+        api
+          .post<{ session: WorkSession }>(
+            `/provider/bookings/${bookingId}/work-session/reopen`
+          )
+          .then((r) => r.session),
+      () => {
+        throw new Error('Cannot reopen offline — please connect to the internet');
+      }
+    );
+  },
+
   /** Set full beforePhotos array (PUT — replaces) */
   setBeforePhotos: async (
     bookingId: string,

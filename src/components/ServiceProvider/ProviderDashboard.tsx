@@ -7,7 +7,7 @@ import { AddServiceForm } from './AddServiceForm';
 import { ProviderServicesList } from './ProviderServicesList';
 import { serviceService } from '../../services/service.service';
 import type { ServiceStats } from '../../types/service.types';
-import type { WorkSession, ProgressStage, WorkPhoto } from '../../types';
+import type { WorkSession, ProgressStage, WorkPhoto, Booking } from '../../types';
 import { demoWorkSessions } from '../../data/demoWorkSessions';
 import { getBookingById } from '../../utils/allBookings';
 //import { getLocalWorkSessions } from '../../utils/localWorkSessions';
@@ -36,6 +36,7 @@ import { getOpenDisputeCountForUser } from '../../utils/allDisputes';
 import { getBookingsForProvider, isCurrentRequest } from '../../utils/allBookings';
 import styles from './ProviderDashboard.module.scss';
 import { disputeService } from '../../services/dispute.service';
+import { bookingService } from '../../services/booking.service';
 
 // ============================================
 // THEME CONSTANTS
@@ -53,7 +54,7 @@ const PROVIDER_ROLE_BG = 'rgba(245, 158, 11, 0.1)';
 // TYPES
 // ============================================
 
-type ProviderView = 'requests' | 'my-services' | 'work-log' | 'messages' | 'support';
+type ProviderView = 'consultations' | 'requests' | 'my-services' | 'work-log' | 'messages' | 'support';
 type ServicesTab = 'list' | 'add';
 
 // ============================================
@@ -70,6 +71,7 @@ const tabFromUrl = searchParams.get('tab');
 const threadIdFromUrl = searchParams.get('thread');
 
 const VALID_PROVIDER_TABS: ProviderView[] = [
+  'consultations',
   'requests',
   'my-services',
   'work-log',
@@ -137,6 +139,89 @@ useEffect(() => {
   };
 
   const [openDisputeCount, setOpenDisputeCount] = useState(0);
+
+    type WorkSubTab = 'new_jobs' | 'active' | 'completed';
+    const [workSubTab, setWorkSubTab] = useState<WorkSubTab>('active');
+    const [providerBookings, setProviderBookings] = useState<Booking[]>([]);
+    const [workRefresh, setWorkRefresh] = useState(0);
+
+    type ConsultSubTab = 'waiting' | 'active' | 'completed';
+    const [consultSubTab, setConsultSubTab] = useState<ConsultSubTab>('active');
+
+  useEffect(() => {
+    if (!providerId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await bookingService.getProviderBookings(providerId);
+        if (!cancelled) setProviderBookings(data);
+      } catch (err) {
+        console.warn('[provider-dashboard] bookings fetch failed', err);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [providerId, workRefresh]);
+
+  useEffect(() => {
+    if (!providerId) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') setWorkRefresh((t) => t + 1);
+    }, 10_000);
+    return () => window.clearInterval(id);
+  }, [providerId]);
+
+  // Derived work-phase bookings
+  const workBookings = providerBookings.filter(
+    (b) => b.status === 'price_agreed' || b.status === 'in_progress' || b.status === 'completed'
+  );
+  const workSubCounts = {
+    new_jobs: workBookings.filter((b) => b.status === 'price_agreed').length,
+    active: workBookings.filter((b) => b.status === 'in_progress').length,
+    completed: workBookings.filter((b) => b.status === 'completed').length,
+  };
+  const filteredWorkBookings = workBookings.filter((b) => {
+    if (workSubTab === 'new_jobs') return b.status === 'price_agreed';
+    if (workSubTab === 'active') return b.status === 'in_progress';
+    return b.status === 'completed';
+  });
+
+    // Consultation-phase bookings (dual display with Requests→Payed)
+  const consultBookings = providerBookings.filter(
+    (b) =>
+      b.status === 'consultation_paid' ||
+      b.status === 'evaluated' ||
+      b.status === 'price_proposed' ||
+      b.status === 'price_disputed'
+  );
+
+  const consultSubCounts = {
+    waiting: consultBookings.filter(
+      (b) => b.status === 'consultation_paid' && !b.consultationClockIn
+    ).length,
+    active: consultBookings.filter(
+      (b) => b.status === 'consultation_paid' && !!b.consultationClockIn
+    ).length,
+    completed: consultBookings.filter(
+      (b) =>
+        b.status === 'evaluated' ||
+        b.status === 'price_proposed' ||
+        b.status === 'price_disputed'
+    ).length,
+  };
+
+  const filteredConsultBookings = consultBookings.filter((b) => {
+    if (consultSubTab === 'waiting') {
+      return b.status === 'consultation_paid' && !b.consultationClockIn;
+    }
+    if (consultSubTab === 'active') {
+      return b.status === 'consultation_paid' && !!b.consultationClockIn;
+    }
+    return (
+      b.status === 'evaluated' ||
+      b.status === 'price_proposed' ||
+      b.status === 'price_disputed'
+    );
+  });
 
 useEffect(() => {
   if (!providerId) { setOpenDisputeCount(0); return; }
@@ -309,6 +394,17 @@ useEffect(() => {
   // ------------------------------------------
   const navItems: SidebarNavItem[] = [
     {
+      key: 'consultations',
+      label: 'Consultations',
+      icon: faComments,
+      badge:
+        consultBookings.filter(
+          (b) =>
+            b.status === 'consultation_paid' ||
+            b.status === 'price_proposed'
+        ).length || undefined,
+    },
+    {
       key: 'requests',
       label: 'Requests',
       icon: faInbox,
@@ -317,12 +413,9 @@ useEffect(() => {
     { key: 'my-services', label: 'My Services', icon: faList },
     {
       key: 'work-log',
-      label: 'Work Log',
+      label: 'Worksession',
       icon: faHardHat,
-      badge:
-        sessions.filter(
-          (s) => s.providerId === providerId && s.status !== 'completed'
-        ).length || undefined,
+      badge: workSubCounts.active || undefined,
     },
     {
       key: 'messages',
@@ -407,6 +500,103 @@ useEffect(() => {
     </div>
   );
 
+    // ------------------------------------------
+  // Consultations view
+  // ------------------------------------------
+  const renderConsultations = () => (
+    <div className={styles.mainContent}>
+      <div className={styles.workLogHeader}>
+        <h2>Consultations</h2>
+        <p className={styles.workLogSubtitle}>Site visits and price negotiations.</p>
+      </div>
+
+      <div className={styles.worksessionSubTabs}>
+        {(['waiting', 'active', 'completed'] as const).map((key) => {
+          const label =
+            key === 'waiting' ? 'Waiting'
+            : key === 'active' ? 'Active'
+            : 'Completed';
+          return (
+            <button
+              key={key}
+              type="button"
+              className={`${styles.subTabBtn} ${consultSubTab === key ? styles.subTabActive : ''}`}
+              onClick={() => setConsultSubTab(key)}
+            >
+              {label}
+              <span className={styles.subTabCount}>{consultSubCounts[key]}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {filteredConsultBookings.length === 0 ? (
+        <div className={styles.emptyState}>
+          <span className={styles.emptyIcon}>🔍</span>
+          <h3>
+            {consultSubTab === 'waiting'
+              ? 'No consultations waiting'
+              : consultSubTab === 'active'
+              ? 'No active consultations'
+              : 'No completed consultations'}
+          </h3>
+          <p>
+            {consultSubTab === 'waiting'
+              ? 'Paid consultations waiting to start will appear here.'
+              : consultSubTab === 'active'
+              ? 'Consultations in progress (clocked in) will appear here.'
+              : 'Finished consultations and price negotiations will appear here.'}
+          </p>
+        </div>
+      ) : (
+        <div className={styles.sessionList}>
+          {filteredConsultBookings.map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              className={styles.sessionCard}
+              onClick={() => navigate(`/provider/bookings/${b.id}/consultation`)}
+            >
+              <div className={styles.sessionLeft}>
+                <span className={styles.sessionRef}>{b.requestRef}</span>
+                <h4 className={styles.sessionTitle}>{b.serviceTitle}</h4>
+                <p className={styles.sessionClient}>Client: {b.clientDisplayName}</p>
+              </div>
+              <div className={styles.sessionRight}>
+                <span
+                  className={`${styles.sessionStatus} ${
+                    b.status === 'evaluated' ||
+                    b.status === 'price_proposed' ||
+                    b.status === 'price_disputed'
+                      ? styles.sessionStatusDone
+                      : styles.sessionStatusActive
+                  }`}
+                >
+                  {b.status === 'consultation_paid' && !b.consultationClockIn
+                    ? 'Ready to visit'
+                    : b.status === 'consultation_paid'
+                    ? 'Visit in progress'
+                    : b.status === 'evaluated'
+                    ? 'Awaiting price proposal'
+                    : b.status === 'price_proposed'
+                    ? 'Negotiating'
+                    : 'Price disputed'}
+                </span>
+                <span className={styles.sessionMeta}>
+                  {b.status === 'price_proposed' && b.finalPrice !== undefined
+                    ? `R${b.finalPrice} proposed`
+                    : b.status === 'evaluated'
+                    ? 'Consultation done'
+                    : ''}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+
   // ------------------------------------------
   // Requests view
   // ------------------------------------------
@@ -419,89 +609,91 @@ useEffect(() => {
   // ------------------------------------------
   // Work Log view
   // ------------------------------------------
-  const renderWorkLog = () => {
-    if (selectedSession && selectedBooking) {
-      return (
-        <div className={styles.mainContent}>
-          <WorkSessionPanel
-            session={selectedSession}
-            booking={selectedBooking}
-            providerId={providerId}
-            onBack={() => setSelectedSessionId(null)}
-            onClockIn={handleClockIn}
-            onClockOut={handleClockOut}
-            onMarkComplete={handleMarkComplete}
-            workReady={selectedBooking.siteVisited}
-            onAddBeforePhotos={handleAddBeforePhotos}
-            onDeleteBeforePhoto={handleDeleteBeforePhoto}
-            onSaveProgressStage={handleSaveProgressStage}
-            onDeleteProgressStage={handleDeleteProgressStage}
-            onAddFinalPhotos={handleAddFinalPhotos}
-            onDeleteFinalPhoto={handleDeleteFinalPhoto}
-          />
-        </div>
-      );
-    }
-
-    const providerSessions = sessions
-      .filter((s) => s.providerId === providerId)
-      .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-
-    return (
-      <div className={styles.mainContent}>
-        <div className={styles.workLogHeader}>
-          <h2>Work Log</h2>
-          <p className={styles.workLogSubtitle}>Active and recent job sessions.</p>
-        </div>
-
-        {providerSessions.length === 0 ? (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>🛠️</span>
-            <h3>No work sessions yet</h3>
-            <p>Sessions appear here once a booking is agreed and you clock in.</p>
-          </div>
-        ) : (
-          <div className={styles.sessionList}>
-            {providerSessions.map((session) => {
-              const booking = getBookingById(session.bookingId);
-              if (!booking) return null;
-              const isActive = session.status !== 'completed';
-              return (
-                <button
-                  key={session.id}
-                  type="button"
-                  className={styles.sessionCard}
-                  onClick={() => setSelectedSessionId(session.id)}
-                >
-                  <div className={styles.sessionLeft}>
-                    <span className={styles.sessionRef}>{booking.requestRef}</span>
-                    <h4 className={styles.sessionTitle}>{booking.serviceTitle}</h4>
-                    <p className={styles.sessionClient}>Client: {booking.clientDisplayName}</p>
-                  </div>
-                  <div className={styles.sessionRight}>
-                    <span
-                      className={`${styles.sessionStatus} ${
-                        isActive ? styles.sessionStatusActive : styles.sessionStatusDone
-                      }`}
-                    >
-                      {session.status}
-                    </span>
-                    <span className={styles.sessionMeta}>
-                      {session.daysWorked}d ·{' '}
-                      {formatDuration(Math.round(session.totalHours * 60))}
-                    </span>
-                    <span className={styles.sessionMeta}>
-                      {formatRelative(session.updatedAt)}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+  const renderWorksession = () => (
+    <div className={styles.mainContent}>
+      <div className={styles.workLogHeader}>
+        <h2>Worksession</h2>
+        <p className={styles.workLogSubtitle}>Jobs that have passed consultation.</p>
       </div>
-    );
-  };
+
+      {/* Sub-tabs */}
+      <div className={styles.worksessionSubTabs}>
+        {(['new_jobs', 'active', 'completed'] as const).map((key) => {
+          const label =
+            key === 'new_jobs' ? 'New Jobs'
+            : key === 'active' ? 'Active'
+            : 'Completed Work';
+          return (
+            <button
+              key={key}
+              type="button"
+              className={`${styles.subTabBtn} ${workSubTab === key ? styles.subTabActive : ''}`}
+              onClick={() => setWorkSubTab(key)}
+            >
+              {label}
+              <span className={styles.subTabCount}>{workSubCounts[key]}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* List */}
+      {filteredWorkBookings.length === 0 ? (
+        <div className={styles.emptyState}>
+          <span className={styles.emptyIcon}>🛠️</span>
+          <h3>
+            {workSubTab === 'new_jobs'
+              ? 'No new jobs'
+              : workSubTab === 'active'
+              ? 'No active work'
+              : 'No completed work yet'}
+          </h3>
+          <p>
+            {workSubTab === 'new_jobs'
+              ? 'Jobs with agreed prices will appear here.'
+              : workSubTab === 'active'
+              ? 'Clock-ins appear here once work begins.'
+              : 'Finished jobs will appear here.'}
+          </p>
+        </div>
+      ) : (
+        <div className={styles.sessionList}>
+          {filteredWorkBookings.map((b) => (
+            <button
+              key={b.id}
+              type="button"
+              className={styles.sessionCard}
+              onClick={() => navigate(`/provider/bookings/${b.id}/start-work`)}
+            >
+              <div className={styles.sessionLeft}>
+                <span className={styles.sessionRef}>{b.requestRef}</span>
+                <h4 className={styles.sessionTitle}>{b.serviceTitle}</h4>
+                <p className={styles.sessionClient}>Client: {b.clientDisplayName}</p>
+              </div>
+              <div className={styles.sessionRight}>
+                <span
+                  className={`${styles.sessionStatus} ${
+                    b.status === 'completed'
+                      ? styles.sessionStatusDone
+                      : styles.sessionStatusActive
+                  }`}
+                >
+                  {b.status}
+                </span>
+                <span className={styles.sessionMeta}>
+                  {b.status === 'price_agreed'
+                    ? 'Ready to start'
+                    : b.status === 'in_progress'
+                    ? 'In progress'
+                    : 'Completed'}
+                </span>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   // ------------------------------------------
   // Messages view
@@ -521,13 +713,7 @@ useEffect(() => {
   // ------------------------------------------
   // Compose
   // ------------------------------------------
-  const selectedSession = selectedSessionId
-    ? sessions.find((s) => s.id === selectedSessionId) || null
-    : null;
 
-  const selectedBooking = selectedSession
-    ? getBookingById(selectedSession.bookingId)
-    : undefined;
 
   return (
     <div className={theme === 'dark' ? 'dark-theme' : ''}>
@@ -549,9 +735,10 @@ useEffect(() => {
           />
         }
       >
+        {activeView === 'consultations' && renderConsultations()}
         {activeView === 'requests' && renderRequests()}
         {activeView === 'my-services' && renderMyServices()}
-        {activeView === 'work-log' && renderWorkLog()}
+        {activeView === 'work-log' && renderWorksession()}
         {activeView === 'messages' && renderMessages()}
 	{activeView === 'support' && renderSupport()}
 

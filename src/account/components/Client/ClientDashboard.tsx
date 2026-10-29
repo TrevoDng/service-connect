@@ -11,17 +11,16 @@ import {
   notifyPriceCountered,
 } from '../../../utils/notify';
 import type { WorkSession, Booking as BookingModel, Dispute } from '../../../types';
-import { isCurrentRequest, isClosedRequest } from '../../../utils/allBookings';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
-  faHistory,
   faPlusCircle,
   faComments,
   faSearch,
   faBell,
   faChevronDown,
   faChevronUp,
+  faHardHat,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
@@ -29,11 +28,8 @@ import { MessagesView } from '../../../components/Chat';
 import { ClockConfirmCard, ClientWorkSessionCard } from '../../../components/WorkSession';
 import { RequestCard } from '../../../components/Requests';
 import { getUnreadCount } from '../../../data/demoNotifications';
-import { generateId } from '../../../utils/referenceCode';
-import { addLocalDispute, addDisputeMessage } from '../../../utils/localDisputes';
 import { faGavel } from '@fortawesome/free-solid-svg-icons';
 import { DisputesView } from '../../../components/Disputes';
-import { getOpenDisputeCountForUser } from '../../../utils/allDisputes';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { faKey } from '@fortawesome/free-solid-svg-icons';
 import styles from './ClientDashboard.module.scss';
@@ -56,7 +52,22 @@ const CLIENT_ROLE_BG = 'rgba(102, 126, 234, 0.1)';
 // TYPES
 // ============================================
 
-type ClientTab = 'requests' | 'history' | 'messages' | 'support';
+type ClientTab = 'consultations' | 'requests' | 'worksession' | 'messages' | 'support';
+type ConsultSubTab = 'not_started' | 'active' | 'completed';
+type RequestSubTab = 'new' | 'accepted' | 'payed' | 'declined';
+
+const getConsultationSubTab = (status: BookingModel['status']): ConsultSubTab => {
+  if (status === 'requested' || status === 'accepted') return 'not_started';
+  if (status === 'consultation_paid') return 'active';
+  return 'completed';
+};
+
+const REQUEST_SUBTAB_STATUS: Record<RequestSubTab, BookingModel['status']> = {
+  new: 'requested',
+  accepted: 'accepted',
+  payed: 'consultation_paid',
+  declined: 'declined',
+};
 
 // ============================================
 // COMPONENT
@@ -70,26 +81,39 @@ export const ClientDashboard: React.FC = () => {
   const clientId = user?.id || '';
 
   const [searchParams, setSearchParams] = useSearchParams();
-const threadIdFromUrl = searchParams.get('thread');
-const tabFromUrl = searchParams.get('tab');
+  const threadIdFromUrl = searchParams.get('thread');
+  const tabFromUrl = searchParams.get('tab');
 
-const VALID_CLIENT_TABS: ClientTab[] = [
-  'requests',
-  'history',
-  'messages',
-  'support',
-];
+  const VALID_CLIENT_TABS: ClientTab[] = [
+    'consultations',
+    'requests',
+    'worksession',
+    'messages',
+    'support',
+  ];
 
-// Derive active tab from the URL. Missing/invalid → default to 'requests'.
-const activeTab: ClientTab = VALID_CLIENT_TABS.includes(
-  tabFromUrl as ClientTab
-)
-  ? (tabFromUrl as ClientTab)
-  : 'requests';
+  // Derive active tab from the URL. Missing/invalid → default to 'requests'.
+  const activeTab: ClientTab = VALID_CLIENT_TABS.includes(
+    tabFromUrl as ClientTab
+  )
+    ? (tabFromUrl as ClientTab)
+    : 'consultations';
 
-const [searchQuery, setSearchQuery] = useState('');
-const [reviewRefresh, setReviewRefresh] = useState(0);
-const [bookingRefresh, setBookingRefresh] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [consultSubTab, setConsultSubTab] = useState<ConsultSubTab>('active');
+  const [requestSubTab, setRequestSubTab] = useState<RequestSubTab>('new');
+  type WorkSubTab = 'new_jobs' | 'active' | 'completed';
+  const [workSubTab, setWorkSubTab] = useState<WorkSubTab>('active');
+    const [selectedWorkSessionBookingId, setSelectedWorkSessionBookingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setConsultSubTab('active');
+    setRequestSubTab('new');
+    setSelectedWorkSessionBookingId(null);
+  }, [activeTab]);
+
+  const [reviewRefresh, setReviewRefresh] = useState(0);
+  const [bookingRefresh, setBookingRefresh] = useState(0);
 
   // Local work sessions (Step 5b) — mutable for gate confirmation
   const [sessions, setSessions] = useState<WorkSession[]>([]);
@@ -318,7 +342,18 @@ useEffect(() => {
   // ------------------------------------------
   // Sidebar counts
   // ------------------------------------------
-  const currentCount = allClientBookings.filter(isCurrentRequest).length;
+  const requestCount = allClientBookings.filter(
+    (b) => b.status === 'requested' || b.status === 'accepted'
+  ).length;
+
+  const consultationCount = allClientBookings.filter(
+    (b) =>
+      b.status === 'consultation_paid' ||
+      b.status === 'evaluated' ||
+      b.status === 'price_proposed' ||
+      b.status === 'price_disputed'
+  ).length;
+
   const unreadMessages = getUnreadCount(clientId);
 
   // ------------------------------------------
@@ -511,22 +546,20 @@ const handleDenyArrival = async (sessionId: string) => {
   // ------------------------------------------
   // Filtered lists
   // ------------------------------------------
-  const filteredCurrent = useMemo(() => {
-    let list = allClientBookings.filter(isCurrentRequest);
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(
-        (b) =>
-          b.serviceTitle.toLowerCase().includes(q) ||
-          b.providerDisplayName.toLowerCase().includes(q) ||
-          b.requestRef.toLowerCase().includes(q)
-      );
-    }
-    return list;
-  }, [allClientBookings, searchQuery]);
+  const filteredByPhase = useMemo(() => {
+    const isConsultations = activeTab === 'consultations';
+    const isRequests = activeTab === 'requests';
 
-  const filteredClosed = useMemo(() => {
-    let list = allClientBookings.filter(isClosedRequest);
+    let list = allClientBookings;
+
+    if (isConsultations) {
+      list = list.filter((b) => getConsultationSubTab(b.status) === consultSubTab);
+    } else {
+      // Default to request filter — anything reaching here (post early returns)
+      // is the requests tab
+      list = list.filter((b) => b.status === REQUEST_SUBTAB_STATUS[requestSubTab]);
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(
@@ -536,8 +569,43 @@ const handleDenyArrival = async (sessionId: string) => {
           b.requestRef.toLowerCase().includes(q)
       );
     }
+
     return list;
-  }, [allClientBookings, searchQuery]);
+  }, [allClientBookings, searchQuery, activeTab, consultSubTab, requestSubTab]);
+
+  const consultSubCounts = useMemo(() => {
+    const counts: Record<ConsultSubTab, number> = { not_started: 0, active: 0, completed: 0 };
+    allClientBookings.forEach((b) => {
+      counts[getConsultationSubTab(b.status)]++;
+    });
+    return counts;
+  }, [allClientBookings]);
+
+  const requestSubCounts = useMemo(() => {
+    const counts: Record<RequestSubTab, number> = { new: 0, accepted: 0, payed: 0, declined: 0 };
+    allClientBookings.forEach((b) => {
+      if (b.status === 'requested') counts.new++;
+      else if (b.status === 'accepted') counts.accepted++;
+      else if (b.status === 'consultation_paid') counts.payed++;
+      else if (b.status === 'declined') counts.declined++;
+    });
+    return counts;
+  }, [allClientBookings]);
+
+
+  const workBookings = allClientBookings.filter(
+    (b) => b.status === 'price_agreed' || b.status === 'in_progress' || b.status === 'completed'
+  );
+  const workSubCounts = {
+    new_jobs: workBookings.filter((b) => b.status === 'price_agreed').length,
+    active: workBookings.filter((b) => b.status === 'in_progress').length,
+    completed: workBookings.filter((b) => b.status === 'completed').length,
+  };
+  const filteredWorkBookings = workBookings.filter((b) => {
+    if (workSubTab === 'new_jobs') return b.status === 'price_agreed';
+    if (workSubTab === 'active') return b.status === 'in_progress';
+    return b.status === 'completed';
+  });
 
   // ------------------------------------------
   // Arrival banners (Step 4d)
@@ -571,6 +639,9 @@ const handleDenyArrival = async (sessionId: string) => {
               >
                 <FontAwesomeIcon icon={faBell} className={styles.arrivalBell} />
                 <span className={styles.arrivalText}>
+                  <code style={{ marginRight: 8, opacity: 0.7, fontSize: '0.85em' }}>
+                    {booking.requestRef}
+                  </code>
                   <strong>{booking.providerDisplayName}</strong> is at your gate — confirm access
                 </span>
                 <FontAwesomeIcon
@@ -637,27 +708,38 @@ const handleDenyArrival = async (sessionId: string) => {
   // Sidebar nav items
   // ------------------------------------------
   const navItems: SidebarNavItem[] = [
-    {
-      key: 'requests',
-      label: 'Requests',
-      icon: faClipboardList,
-      badge: currentCount || undefined,
-    },
-    { key: 'history', label: 'History', icon: faHistory },
-    {
-      key: 'messages',
-      label: 'Messages',
-      icon: faComments,
-      badge: unreadMessages > 0 ? unreadMessages : undefined,
-    },
-    { key: 'new', label: 'Request New Service', icon: faPlusCircle },
-    {
-  key: 'support',
-  label: 'Support',
-  icon: faGavel,
-  badge: openDisputeCount || undefined,
-},
-  ];
+  {
+    key: 'consultations',
+    label: 'Consultations',
+    icon: faComments,
+    badge: consultationCount || undefined,
+  },
+  {
+    key: 'requests',
+    label: 'Requests',
+    icon: faClipboardList,
+    badge: requestCount || undefined,
+  },
+  {
+    key: 'messages',
+    label: 'Messages',
+    icon: faComments,
+    badge: unreadMessages > 0 ? unreadMessages : undefined,
+  },
+  { key: 'new', label: 'Request New Service', icon: faPlusCircle },
+  {
+    key: 'support',
+    label: 'Support',
+    icon: faGavel,
+    badge: openDisputeCount || undefined,
+  },
+  {
+    key: 'worksession',
+    label: 'Worksession',
+    icon: faHardHat,
+    badge: workSubCounts.active || undefined,
+  },
+];
 
   // ------------------------------------------
 // Work gate section (Step 13.3)
@@ -684,6 +766,9 @@ const renderWorkGateSection = () => {
             className={styles.arrivalBell}
           />
           <div>
+            <code style={{ display: 'block', marginBottom: 2, opacity: 0.7, fontSize: '0.8em' }}>
+              {booking.requestRef}
+            </code>
             <strong>
               {wasAutoProceeded
                 ? `${booking.providerDisplayName} started work without your confirmation`
@@ -781,10 +866,122 @@ const renderWorkGateSection = () => {
   );
 };
 
+
+  // ------------------------------------------
+  // Render content renderWorksession
+  // ------------------------------------------
+
+const renderWorksession = () => {
+  if (selectedWorkSessionBookingId) {
+    const booking = allClientBookings.find((b) => b.id === selectedWorkSessionBookingId);
+    const session = sessions.find((s) => s.bookingId === selectedWorkSessionBookingId);
+    
+    if (booking && session) {
+      return (
+        <div className={styles.mainContent}>
+          <div className={styles.contentHeader} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '1rem' }}>
+            <button
+              onClick={() => setSelectedWorkSessionBookingId(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: 'var(--text-secondary)',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                fontSize: '0.9rem',
+                padding: 0
+              }}
+            >
+              ← Back to Worksession
+            </button>
+            <h2>Work Session Details</h2>
+          </div>
+          <ClientWorkSessionCard session={session} booking={booking} />
+        </div>
+      );
+    }
+  }
+
+  return (
+  <div className={styles.mainContent}>
+    <div className={styles.contentHeader}>
+      <h2>Worksession</h2>
+    </div>
+
+    <div className={styles.subTabs}>
+      {(['new_jobs', 'active', 'completed'] as const).map((key) => {
+        const label =
+          key === 'new_jobs' ? 'New Jobs'
+          : key === 'active' ? 'Active'
+          : 'Completed Work';
+        return (
+          <button
+            key={key}
+            type="button"
+            className={`${styles.subTabBtn} ${workSubTab === key ? styles.subTabActive : ''}`}
+            onClick={() => setWorkSubTab(key)}
+          >
+            {label}
+            <span className={styles.subTabCount}>{workSubCounts[key]}</span>
+          </button>
+        );
+      })}
+    </div>
+
+    {filteredWorkBookings.length === 0 ? (
+      <div className={styles.emptyState}>
+        <span className={styles.emptyIcon}>🛠️</span>
+        <h3>
+          {workSubTab === 'new_jobs' ? 'No new jobs'
+            : workSubTab === 'active' ? 'No active work'
+            : 'No completed work yet'}
+        </h3>
+        <p>
+          {workSubTab === 'new_jobs' ? 'Agreed prices will appear here.'
+            : workSubTab === 'active' ? 'Clock-ins appear here once work begins.'
+            : 'Finished jobs will appear here.'}
+        </p>
+      </div>
+    ) : (
+      <div className={styles.requestsList}>
+        {filteredWorkBookings.map((b) => (
+          <button
+            key={b.id}
+            type="button"
+            className={styles.sessionCard}
+            onClick={() => setSelectedWorkSessionBookingId(b.id)}
+            style={{ cursor: 'pointer', textAlign: 'left' }}
+          >
+            <span
+              style={{
+                fontFamily: 'monospace',
+                fontSize: '0.75rem',
+                opacity: 0.7,
+                color: 'var(--text-light, #8a8aaa)',
+              }}
+            >
+              {b.requestRef}
+            </span>
+            <h4 style={{ margin: '4px 0' }}>{b.serviceTitle}</h4>
+            <p style={{ margin: 0, fontSize: '0.85rem', opacity: 0.8 }}>
+              Provider: {b.providerDisplayName} · Status: {b.status}
+            </p>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+  );
+};
+
   // ------------------------------------------
   // Render content
   // ------------------------------------------
   const renderContent = () => {
+    if (activeTab === 'worksession') {
+      return renderWorksession();
+    }
     if (activeTab === 'messages') {
       return (
         <div className={styles.mainContent}>
@@ -801,20 +998,22 @@ const renderWorkGateSection = () => {
   );
 }
 
-    const isRequests = activeTab === 'requests';
-    const list = isRequests ? filteredCurrent : filteredClosed;
+    const list = filteredByPhase;
+const isConsultations = activeTab === 'consultations';
+const isRequests = activeTab === 'requests';
 
-    return (
-      <div className={styles.mainContent}>
-        {/* Header */}
-        <div className={styles.contentHeader}>
-          <h2>{isRequests ? 'Your Requests' : 'Request History'}</h2>
+return (
+  <div className={styles.mainContent}>
+    {/* Header */}
+    <div className={styles.contentHeader}>
+      <h2>{isConsultations ? 'Consultations' : 'Requests'}</h2>
           <div className={styles.headerActions}>
             <div className={styles.searchBox}>
+              
               <FontAwesomeIcon icon={faSearch} />
               <input
                 type="text"
-                placeholder="Search requests..."
+                placeholder={isConsultations ? "Search consultations..." : "Search requests..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={styles.searchInput}
@@ -823,26 +1022,68 @@ const renderWorkGateSection = () => {
           </div>
         </div>
 
-        {/* Arrival banners (requests tab only) */}
-        {isRequests && renderArrivalSection()}
-
-        {/* Active work (requests tab only) */}
-        {isRequests && renderActiveWorkSection()}
-
-	{/* Work gate banners (requests tab only) */}
-        {isRequests && renderWorkGateSection()}
+        {/* Sub-tabs */}
+        <div className={styles.subTabs}>
+          {isConsultations
+            ? (['not_started', 'active', 'completed'] as const).map((key) => {
+                const label =
+                  key === 'not_started' ? 'Waiting'
+                  : key === 'active' ? 'Active'
+                  : 'Completed';
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`${styles.subTabBtn} ${consultSubTab === key ? styles.subTabActive : ''}`}
+                    onClick={() => setConsultSubTab(key)}
+                  >
+                    {label}
+                    <span className={styles.subTabCount}>{consultSubCounts[key]}</span>
+                  </button>
+                );
+              })
+            : (['new', 'accepted', 'payed', 'declined'] as const).map((key) => {
+                const label =
+                  key === 'new' ? 'New'
+                  : key === 'accepted' ? 'Accepted'
+                  : key === 'payed' ? 'Payed'
+                  : 'Declined';
+                return (
+                  <button
+                    key={key}
+                    type="button"
+                    className={`${styles.subTabBtn} ${requestSubTab === key ? styles.subTabActive : ''}`}
+                    onClick={() => setRequestSubTab(key)}
+                  >
+                    {label}
+                    <span className={styles.subTabCount}>{requestSubCounts[key]}</span>
+                  </button>
+                );
+              })}
+        </div>
 
         {/* Requests list */}
         {list.length === 0 ? (
           <div className={styles.emptyState}>
             <span className={styles.emptyIcon}>{isRequests ? '📭' : '📁'}</span>
             <h3>
-              {isRequests ? 'No active requests' : 'No past requests yet'}
+              {isConsultations
+                ? 'No consultations in this view'
+                : requestSubTab === 'new' ? 'No new requests'
+                : requestSubTab === 'accepted' ? 'No accepted requests'
+                : requestSubTab === 'payed' ? 'No paid consultations'
+                : 'No declined requests'}
             </h3>
             <p>
-              {isRequests
-                ? 'You have no pending service requests. Browse services to get started!'
-                : 'Your completed and cancelled requests will appear here.'}
+              {isConsultations
+                ? 'Bookings at this stage will appear here.'
+                : requestSubTab === 'new'
+                ? 'Requests waiting for a provider to respond will appear here.'
+                : requestSubTab === 'accepted'
+                ? 'Providers who accepted your requests will appear here.'
+                : requestSubTab === 'payed'
+                ? 'Requests with paid consultation fees will appear here.'
+                : 'Declined requests will appear here.'}
             </p>
             <button
               className={styles.browseBtn}
@@ -901,3 +1142,4 @@ const renderWorkGateSection = () => {
 };
 
 export default ClientDashboard;
+

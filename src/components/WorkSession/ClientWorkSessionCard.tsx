@@ -81,9 +81,12 @@ export const ClientWorkSessionCard: React.FC<ClientWorkSessionCardProps> = ({
         </div>
 
         <div className={styles.headerInfo}>
-          <span className={`${styles.statusBadge} ${statusClass(session.status)}`}>
-            {statusLabel(session.status)}
-          </span>
+          <div className={styles.refRow}>
+            <span className={styles.ref}>{booking.requestRef}</span>
+            <span className={`${styles.statusBadge} ${statusClass(session.status)}`}>
+              {statusLabel(session.status)}
+            </span>
+          </div>
           <h4 className={styles.title}>{booking.serviceTitle}</h4>
           <p className={styles.provider}>
             Provider: <strong>{booking.providerDisplayName}</strong>

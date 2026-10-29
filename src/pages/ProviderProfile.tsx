@@ -1,6 +1,6 @@
 // src/pages/ProviderProfile.tsx
 
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../styles/context/ThemeContext';
 import { getProviderRatingSummary, getReviewsForProvider } from '../utils/allReviews';
@@ -19,6 +19,8 @@ import {
   faMapPin,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './ProviderProfile.module.scss';
+import type { ProviderRatingSummary, Review } from '../types';
+import { reviewService } from '../services/review.service';
 
 // ============================================
 // HELPERS
@@ -51,11 +53,36 @@ export const ProviderProfile: React.FC = () => {
 
   const profile = id ? getDemoProviderProfile(id) : undefined;
 
-  const reviews = useMemo(() => (id ? getReviewsForProvider(id) : []), [id]);
-  const summary = useMemo(
-    () => (id ? getProviderRatingSummary(id) : null),
-    [id]
-  );
+  const [reviews, setReviews] = useState<Review[]>([]);
+const [summary, setSummary] = useState<ProviderRatingSummary | null>(null);
+const [reviewsLoaded, setReviewsLoaded] = useState(false);
+
+useEffect(() => {
+  if (!id) {
+    setReviews([]);
+    setSummary(null);
+    setReviewsLoaded(true);
+    return;
+  }
+  let cancelled = false;
+  (async () => {
+    try {
+      const { reviews: list, summary: sum } =
+        await reviewService.getReviewsForProvider(id);
+      if (!cancelled) {
+        setReviews(list);
+        setSummary(sum);
+        setReviewsLoaded(true);
+      }
+    } catch (err) {
+      console.warn('[provider-profile] reviews fetch failed', err);
+      if (!cancelled) setReviewsLoaded(true);
+    }
+  })();
+  return () => {
+    cancelled = true;
+  };
+}, [id]);
 
   const providerName = chatProvider?.displayName || 'Service Provider';
   const gradient =

@@ -58,6 +58,8 @@ export const WizardStep: React.FC<WizardStepProps> = ({
 
   const role: 'CLIENT' | 'PROVIDER' =
     viewerRole === 'PROVIDER' ? 'PROVIDER' : 'CLIENT';
+  const counterpartyName =
+  viewerRole === 'CLIENT' ? booking.providerDisplayName : booking.clientDisplayName;
 
   const step = getWizardStep(booking, role);
   const milestone = getMilestoneState(booking.status);
@@ -110,6 +112,15 @@ export const WizardStep: React.FC<WizardStepProps> = ({
 
   return (
     <div className={`${styles.wizard} ${step.passive ? styles.passive : ''}`}>
+      {/* Header: ref + counterparty */}
+      <div className={styles.wizardHeader}>
+        <span className={styles.ref}>{booking.requestRef}</span>
+        <span className={styles.counterparty}>
+          {viewerRole === 'CLIENT' ? 'Provider: ' : 'Client: '}
+          <strong>{counterpartyName}</strong>
+        </span>
+      </div>
+
       {/* Progress dots */}
       <div className={styles.progress}>
         <span className={styles.progressLabel}>

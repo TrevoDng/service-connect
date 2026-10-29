@@ -454,3 +454,32 @@
     color: var(--text-primary, $text-primary);
   }
 }
+
+.wizardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: $spacing-sm;
+  padding-bottom: $spacing-xs;
+  margin-bottom: $spacing-xs;
+  border-bottom: 1px dashed var(--border-color, $border-color);
+  flex-wrap: wrap;
+}
+
+.ref {
+  font-family: $font-family-mono;
+  font-size: $font-size-xs;
+  color: var(--text-light, $text-light);
+  background: var(--bg-primary, #f8f9fa);
+  padding: 2px 8px;
+  border-radius: $border-radius-sm;
+}
+
+.counterparty {
+  font-size: $font-size-xs;
+  color: var(--text-secondary, $text-secondary);
+  strong {
+    color: var(--text-primary, $text-primary);
+    font-weight: $font-weight-semibold;
+  }
+}
