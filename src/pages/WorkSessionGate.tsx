@@ -139,7 +139,7 @@ useEffect(() => {
   }
 };
 
-  const handleBack = () => navigate('/provider/dashboard');
+  const handleBack = () => navigate('/provider/dashboard?tab=work-log');
 
   const handleProceedAnyway = async () => {
   if (!booking) return;
@@ -311,6 +311,13 @@ const handleDeleteFinalPhoto = async (_sessionId: string, photoId: string) => {
             {booking.serviceTitle} · {booking.clientDisplayName}
           </p>
         </header>
+
+        {booking.hasComplaint && (
+          <div style={{ padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', borderRadius: '8px', marginBottom: '1rem' }}>
+            <h3 style={{ margin: '0 0 0.5rem', color: '#ef4444', fontSize: '1rem' }}>Client Complaint</h3>
+            <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>"{booking.complaintText}"</p>
+          </div>
+        )}
 
         {/* State 1 — No session yet */}
         {!session && (

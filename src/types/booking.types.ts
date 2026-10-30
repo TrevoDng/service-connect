@@ -108,14 +108,12 @@ export interface Booking {
   // CONSULTATION VISIT TRACKING (Step 7g)
   // ============================================
 
-  /** ISO timestamp of when the provider clocked in for the consultation visit */
   consultationClockIn?: string;
-  /** ISO timestamp of when the provider clocked out */
   consultationClockOut?: string;
-  /** Active reference code shown for gate confirmation */
   consultationReferenceCode?: string;
-  /** ISO timestamp of when the reference code expires */
   consultationReferenceExpiresAt?: string;
-  /** Whether the client confirmed the visit at the gate */
   consultationClockConfirmedByClient?: boolean;
+  hasComplaint?: boolean;
+  complaintText?: string;
+  clientConfirmedComplete?: boolean;
 }

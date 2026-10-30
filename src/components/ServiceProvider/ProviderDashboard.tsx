@@ -140,7 +140,7 @@ useEffect(() => {
 
   const [openDisputeCount, setOpenDisputeCount] = useState(0);
 
-    type WorkSubTab = 'new_jobs' | 'active' | 'completed';
+    type WorkSubTab = 'new_jobs' | 'active' | 'completed' | 'closed' | 'complaints';
     const [workSubTab, setWorkSubTab] = useState<WorkSubTab>('active');
     const [providerBookings, setProviderBookings] = useState<Booking[]>([]);
     const [workRefresh, setWorkRefresh] = useState(0);
@@ -174,16 +174,20 @@ useEffect(() => {
   const workBookings = providerBookings.filter(
     (b) => b.status === 'price_agreed' || b.status === 'in_progress' || b.status === 'completed'
   );
-  const workSubCounts = {
-    new_jobs: workBookings.filter((b) => b.status === 'price_agreed').length,
-    active: workBookings.filter((b) => b.status === 'in_progress').length,
-    completed: workBookings.filter((b) => b.status === 'completed').length,
-  };
-  const filteredWorkBookings = workBookings.filter((b) => {
-    if (workSubTab === 'new_jobs') return b.status === 'price_agreed';
-    if (workSubTab === 'active') return b.status === 'in_progress';
-    return b.status === 'completed';
-  });
+    const workSubCounts = {
+      new_jobs: workBookings.filter((b) => b.status === 'price_agreed').length,
+      active: workBookings.filter((b) => b.status === 'in_progress').length,
+      completed: workBookings.filter((b) => b.status === 'completed' && !b.clientConfirmedComplete && !b.hasComplaint).length,
+      closed: workBookings.filter((b) => b.status === 'completed' && b.clientConfirmedComplete).length,
+      complaints: workBookings.filter((b) => b.hasComplaint).length,
+    };
+    const filteredWorkBookings = workBookings.filter((b) => {
+      if (workSubTab === 'new_jobs') return b.status === 'price_agreed';
+      if (workSubTab === 'active') return b.status === 'in_progress';
+      if (workSubTab === 'completed') return b.status === 'completed' && !b.clientConfirmedComplete && !b.hasComplaint;
+      if (workSubTab === 'closed') return b.status === 'completed' && b.clientConfirmedComplete;
+      return b.hasComplaint; // complaints
+    });
 
     // Consultation-phase bookings (dual display with Requests→Payed)
   const consultBookings = providerBookings.filter(
@@ -618,11 +622,13 @@ useEffect(() => {
 
       {/* Sub-tabs */}
       <div className={styles.worksessionSubTabs}>
-        {(['new_jobs', 'active', 'completed'] as const).map((key) => {
-          const label =
-            key === 'new_jobs' ? 'New Jobs'
-            : key === 'active' ? 'Active'
-            : 'Completed Work';
+          {(['new_jobs', 'active', 'completed', 'closed', 'complaints'] as const).map((key) => {
+            const label =
+              key === 'new_jobs' ? 'New Jobs'
+              : key === 'active' ? 'Active'
+              : key === 'completed' ? 'Completed Work'
+              : key === 'closed' ? 'Closed'
+              : 'Complaints';
           return (
             <button
               key={key}
@@ -681,12 +687,16 @@ useEffect(() => {
                   {b.status}
                 </span>
                 <span className={styles.sessionMeta}>
-                  {b.status === 'price_agreed'
-                    ? 'Ready to start'
-                    : b.status === 'in_progress'
-                    ? 'In progress'
-                    : 'Completed'}
-                </span>
+                    {b.hasComplaint
+                      ? '⚠️ Complaint raised'
+                      : b.status === 'price_agreed'
+                      ? 'Ready to start'
+                      : b.status === 'in_progress'
+                      ? 'In progress'
+                      : b.clientConfirmedComplete
+                      ? 'Closed'
+                      : 'Completed'}
+                  </span>
               </div>
             </button>
           ))}

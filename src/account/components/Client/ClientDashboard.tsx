@@ -102,7 +102,7 @@ export const ClientDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [consultSubTab, setConsultSubTab] = useState<ConsultSubTab>('active');
   const [requestSubTab, setRequestSubTab] = useState<RequestSubTab>('new');
-  type WorkSubTab = 'new_jobs' | 'active' | 'completed';
+    type WorkSubTab = 'new_jobs' | 'active' | 'completed' | 'closed' | 'complaints';
   const [workSubTab, setWorkSubTab] = useState<WorkSubTab>('active');
     const [selectedWorkSessionBookingId, setSelectedWorkSessionBookingId] = useState<string | null>(null);
 
@@ -543,6 +543,28 @@ const handleDenyArrival = async (sessionId: string) => {
     console.log('[7x TODO] Open work session for', booking.id);
   };
 
+    const handleConfirmComplete = async (bookingId: string) => {
+    try {
+      const updated = await bookingService.confirmComplete(bookingId);
+      setAllClientBookings((prev) => prev.map((b) => (b.id === bookingId ? updated : b)));
+    } catch (err) {
+      console.warn('[confirm-complete] failed', err);
+    }
+  };
+
+  const handleComplain = async (bookingId: string) => {
+    const reason = window.prompt('Describe the issue with the completed job:');
+    if (!reason || !reason.trim()) return;
+
+    try {
+      const updated = await bookingService.complainOnBooking(bookingId, reason.trim());
+      setAllClientBookings((prev) => prev.map((b) => (b.id === bookingId ? updated : b)));
+      alert('Complaint submitted. The provider has been notified.');
+    } catch (err) {
+      console.warn('[complain] failed', err);
+    }
+  };
+
   // ------------------------------------------
   // Filtered lists
   // ------------------------------------------
@@ -599,12 +621,16 @@ const handleDenyArrival = async (sessionId: string) => {
   const workSubCounts = {
     new_jobs: workBookings.filter((b) => b.status === 'price_agreed').length,
     active: workBookings.filter((b) => b.status === 'in_progress').length,
-    completed: workBookings.filter((b) => b.status === 'completed').length,
+    completed: workBookings.filter((b) => b.status === 'completed' && !b.clientConfirmedComplete && !b.hasComplaint).length,
+    closed: workBookings.filter((b) => b.status === 'completed' && b.clientConfirmedComplete).length,
+    complaints: workBookings.filter((b) => b.hasComplaint).length,
   };
   const filteredWorkBookings = workBookings.filter((b) => {
     if (workSubTab === 'new_jobs') return b.status === 'price_agreed';
     if (workSubTab === 'active') return b.status === 'in_progress';
-    return b.status === 'completed';
+    if (workSubTab === 'completed') return b.status === 'completed' && !b.clientConfirmedComplete && !b.hasComplaint;
+    if (workSubTab === 'closed') return b.status === 'completed' && b.clientConfirmedComplete;
+    return b.hasComplaint; // complaints
   });
 
   // ------------------------------------------
@@ -897,10 +923,36 @@ const renderWorksession = () => {
             </button>
             <h2>Work Session Details</h2>
           </div>
-          <ClientWorkSessionCard session={session} booking={booking} />
-        </div>
-      );
-    }
+            <ClientWorkSessionCard session={session} booking={booking} />
+             {booking.status === 'completed' && !booking.clientConfirmedComplete && !booking.hasComplaint && (
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '8px' }}>
+              <p style={{ flex: 1, margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                Is the work done to your satisfaction?
+              </p>
+              <button
+                onClick={() => handleComplain(booking.id)}
+                style={{ padding: '0.5rem 1rem', background: 'transparent', border: '1px solid #ef4444', color: '#ef4444', borderRadius: '999px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Complain
+              </button>
+              <button
+                onClick={() => handleConfirmComplete(booking.id)}
+                style={{ padding: '0.5rem 1rem', background: '#10b981', color: '#fff', border: 'none', borderRadius: '999px', cursor: 'pointer', fontWeight: 600 }}
+              >
+                Confirm & Close
+              </button>
+            </div>
+          )}
+          
+          {booking.hasComplaint && (
+            <div style={{ marginTop: '1.5rem', padding: '1rem', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', borderRadius: '8px' }}>
+              <h3 style={{ margin: '0 0 0.5rem', color: '#ef4444', fontSize: '1rem' }}>Complaint Submitted</h3>
+              <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>"{booking.complaintText}"</p>
+            </div>
+          )}
+          </div>
+        );
+      }
   }
 
   return (
@@ -910,11 +962,13 @@ const renderWorksession = () => {
     </div>
 
     <div className={styles.subTabs}>
-      {(['new_jobs', 'active', 'completed'] as const).map((key) => {
+      {(['new_jobs', 'active', 'completed', 'closed', 'complaints'] as const).map((key) => {
         const label =
           key === 'new_jobs' ? 'New Jobs'
           : key === 'active' ? 'Active'
-          : 'Completed Work';
+          : key === 'completed' ? 'Completed Work'
+          : key === 'closed' ? 'Closed'
+          : 'Complaints';
         return (
           <button
             key={key}

@@ -278,6 +278,60 @@ export const bookingService = {
     );
   },
 
+    // ==========================================
+  // COMPLAINTS & CONFIRM COMPLETE (Phase 8.6)
+  // ==========================================
+
+  complainOnBooking: async (bookingId: string, text: string): Promise<Booking> => {
+    return withFallback(
+      'complainOnBooking',
+      () =>
+        api
+          .post<{ booking: Booking }>(`/bookings/${bookingId}/complain`, { text })
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          hasComplaint: true,
+          complaintText: text,
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, hasComplaint: true, complaintText: text };
+      }
+    );
+  },
+
+  confirmComplete: async (bookingId: string): Promise<Booking> => {
+    return withFallback(
+      'confirmComplete',
+      () =>
+        api
+          .post<{ booking: Booking }>(`/bookings/${bookingId}/confirm-complete`)
+          .then((r) => r.booking),
+      () => {
+        const b = getLocalBookingById(bookingId);
+        if (!b) throw new Error('Booking not found in local store');
+        setBookingOverride(bookingId, {
+          clientConfirmedComplete: true,
+          updatedAt: new Date().toISOString(),
+        });
+        return { ...b, clientConfirmedComplete: true };
+      }
+    );
+  },
+
+  getProviderComplaints: async (): Promise<Booking[]> => {
+    return withFallback(
+      'getProviderComplaints',
+      () =>
+        api
+          .get<{ complaints: Booking[] }>('/provider/complaints')
+          .then((r) => r.complaints),
+      () => []
+    );
+  },
+
   /** Accept a booking (sets status=accepted + consultationFee) */
   acceptBooking: async (
     bookingId: string,
