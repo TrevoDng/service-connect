@@ -1,9 +1,9 @@
 // src/pages/Home.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getUrl } from '../services/getUrl';
-import { demoServices, categories } from '../data/demoServices';
+import { serviceService } from '../services/service.service';
+import type { Service } from '../types/service.types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getServiceIcon } from '../utils/serviceIcons';
 import styles from './Home.module.scss';
@@ -17,35 +17,47 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [filteredServices, setFilteredServices] = useState(demoServices);
-  const [loading, setLoading] = useState(false);
+  
+  const [services, setServices] = useState<Service[]>([]);
+  const [categories, setCategories] = useState<string[]>(['All']);
+  const [filteredServices, setFilteredServices] = useState<Service[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Filter services based on search and category
   useEffect(() => {
-    setLoading(true);
-    
-    const timer = setTimeout(() => {
-      let filtered = demoServices;
-      
-      if (selectedCategory !== 'All') {
-        filtered = filtered.filter(service => service.category === selectedCategory);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [fetchedServices, fetchedCategories] = await Promise.all([
+          serviceService.getServices(),
+          serviceService.getCategories()
+        ]);
+        setServices(fetchedServices);
+        setFilteredServices(fetchedServices);
+        setCategories(['All', ...fetchedCategories]);
+      } catch (err) {
+        console.error('Failed to load home data', err);
+      } finally {
+        setLoading(false);
       }
-      
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase().trim();
-        filtered = filtered.filter(service => 
-          service.title.toLowerCase().includes(query) ||
-          service.description.toLowerCase().includes(query) ||
-          service.category.toLowerCase().includes(query)
-        );
-      }
-      
-      setFilteredServices(filtered);
-      setLoading(false);
-    }, 300);
-    
-    return () => clearTimeout(timer);
-  }, [searchQuery, selectedCategory]);
+    };
+    fetchData();
+  }, []);
+
+  useEffect(() => {
+    let filtered = services;
+    if (selectedCategory !== 'All') {
+      filtered = filtered.filter(service => service.category === selectedCategory);
+    }
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter(service => 
+        service.title.toLowerCase().includes(query) ||
+        service.description.toLowerCase().includes(query) ||
+        service.category.toLowerCase().includes(query)
+      );
+    }
+    setFilteredServices(filtered);
+  }, [searchQuery, selectedCategory, services]);
 
   const handleGetStarted = (serviceId: string) => {
     navigate(getUrl('/login', '')[0]);
@@ -67,10 +79,6 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
             <polygon points="200,400 250,320 300,400" fill="rgba(255,255,255,0.07)" className={styles.floatingShape} style={{ animationDelay: '2s' }} />
             <rect x="700" y="350" width="80" height="80" rx="10" fill="rgba(255,255,255,0.05)" className={styles.floatingShapeReverse} style={{ animationDelay: '3s' }} />
             <circle cx="450" cy="480" r="40" fill="rgba(255,255,255,0.06)" className={styles.floatingShape} style={{ animationDelay: '1s' }} />
-            <polygon points="550,150 580,100 610,150 580,200" fill="rgba(255,255,255,0.07)" className={styles.floatingShapeReverse} style={{ animationDelay: '2.5s' }} />
-            <circle cx="150" cy="450" r="50" fill="rgba(255,255,255,0.05)" className={styles.floatingShape} style={{ animationDelay: '3.5s' }} />
-            <polygon points="780,480 810,460 840,480 840,510 810,530 780,510" fill="rgba(255,255,255,0.06)" className={styles.floatingShapeReverse} style={{ animationDelay: '1.5s' }} />
-            <circle cx="350" cy="180" r="30" fill="rgba(255,255,255,0.07)" className={styles.floatingShape} style={{ animationDelay: '4s' }} />
           </svg>
         </div>
 
@@ -78,9 +86,7 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
           <h1>
             <span className={styles.highlight}>Service</span>Connect
           </h1>
-          <p className={styles.subtitle}>
-            Find the right professional for your home services
-          </p>
+          <p className={styles.subtitle}>Find the right professional for your home services</p>
           
           <div className={styles.searchSection}>
             <input
@@ -98,9 +104,7 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
               aria-label="Filter by category"
             >
               {categories.map((category) => (
-                <option key={category} value={category}>
-                  {category}
-                </option>
+                <option key={category} value={category}>{category}</option>
               ))}
             </select>
           </div>
@@ -122,60 +126,26 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
           <div className={styles.noResults}>
             <span className={styles.noResultsIcon}>🔍</span>
             <p>No services found</p>
-            <p style={{ fontSize: '0.875rem', color: 'var(--text-light)' }}>
-              Try adjusting your search or filter
-            </p>
           </div>
         ) : (
           <div className={styles.servicesGrid}>
             {filteredServices.map((service) => {
               const icon = getServiceIcon(service.title);
               return (
-                <div 
-                  key={service.id} 
-                  className={styles.serviceCard}
-                  onClick={() => handleServiceClick(service.id)}
-                  style={{ '--card-accent': service.color } as React.CSSProperties}
-                >
-                  {/* Card Header - Icon + Title */}
+                <div key={service.id} className={styles.serviceCard} onClick={() => handleServiceClick(service.id)}>
                   <div className={styles.cardHeader}>
                     <div className={styles.serviceIconWrapper}>
-                      <FontAwesomeIcon 
-                        icon={icon} 
-                        className={styles.serviceIcon}
-                      />
+                      <FontAwesomeIcon icon={icon} className={styles.serviceIcon} />
                     </div>
                     <h3 className={styles.serviceTitle}>{service.title}</h3>
                   </div>
-
-                  {/* Card Body */}
                   <p className={styles.serviceDescription}>{service.description}</p>
-                  
                   <div className={styles.serviceMeta}>
-                    {service.rating && (
-                      <span className={styles.rating}>
-                        ⭐ {service.rating.toFixed(1)}
-                      </span>
-                    )}
-                    {service.price && (
-                      <span className={styles.price}>{service.price}</span>
-                    )}
-                    {service.providerCount && (
-                      <span className={styles.providers}>
-                        👤 {service.providerCount} providers
-                      </span>
-                    )}
+                    {service.rating && <span className={styles.rating}>⭐ {service.rating.toFixed(1)}</span>}
+                    {service.price > 0 && <span className={styles.price}>From R{service.price}</span>}
                   </div>
-
-                  {/* Card Footer - Button */}
                   <div className={styles.cardFooter}>
-                    <button 
-                      className={styles.getStartedBtn}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleGetStarted(service.id);
-                      }}
-                    >
+                    <button className={styles.getStartedBtn} onClick={(e) => { e.stopPropagation(); handleGetStarted(service.id); }}>
                       Get Started →
                     </button>
                   </div>
@@ -184,64 +154,38 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
             })}
           </div>
         )}
-            </section>
+      </section>
 
-      {/* ============================================
-          CHAT-FIRST SECTION (Step 12)
-          ============================================ */}
+      {/* CHAT-FIRST SECTION */}
       <section className={styles.chatFirstSection}>
         <div className={styles.chatFirstGrid}>
-          {/* Left column — copy */}
           <div className={styles.chatFirstCopy}>
-            <span className={styles.chatFirstEyebrow}>
-              💬 Chat before you commit
-            </span>
-            <h2 className={styles.chatFirstTitle}>
-              Talk to providers before you book
-            </h2>
+            <span className={styles.chatFirstEyebrow}>💬 Chat before you commit</span>
+            <h2 className={styles.chatFirstTitle}>Talk to providers before you book</h2>
             <p className={styles.chatFirstSubtitle}>
-              Ask questions, share photos, agree on scope — all inside
-              ServiceConnect. Your contact details stay private until you
-              choose to share them.
+              Ask questions, share photos, agree on scope — all inside ServiceConnect. Your contact details stay private until you choose to share them.
             </p>
-
             <ul className={styles.chatFirstFeatures}>
               <li className={styles.chatFirstFeature}>
                 <span className={styles.featureIcon}>💬</span>
-                <div>
-                  <strong>Chat first</strong>
-                  <p>Message multiple providers, compare, then decide.</p>
-                </div>
+                <div><strong>Chat first</strong><p>Message multiple providers, compare, then decide.</p></div>
               </li>
               <li className={styles.chatFirstFeature}>
                 <span className={styles.featureIcon}>📸</span>
-                <div>
-                  <strong>Share photos</strong>
-                  <p>Show the job so quotes are accurate from day one.</p>
-                </div>
+                <div><strong>Share photos</strong><p>Show the job so quotes are accurate from day one.</p></div>
               </li>
               <li className={styles.chatFirstFeature}>
                 <span className={styles.featureIcon}>🛡️</span>
-                <div>
-                  <strong>Stay private</strong>
-                  <p>Your address and phone stay hidden until you choose.</p>
-                </div>
+                <div><strong>Stay private</strong><p>Your address and phone stay hidden until you choose.</p></div>
               </li>
             </ul>
-
-            <button
-              type="button"
-              className={styles.chatFirstCta}
-              onClick={() => navigate(getUrl('/services', '')[0])}
-            >
+            <button type="button" className={styles.chatFirstCta} onClick={() => navigate(getUrl('/services', '')[0])}>
               Browse providers →
             </button>
           </div>
 
-          {/* Right column — chat mock */}
           <div className={styles.chatFirstMock}>
             <div className={styles.mockCard}>
-              {/* Mock header */}
               <div className={styles.mockHeader}>
                 <div className={styles.mockAvatar}>TB</div>
                 <div className={styles.mockHeaderInfo}>
@@ -249,34 +193,11 @@ const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
                   <span className={styles.mockMeta}>⭐ 4.8 · 46 jobs</span>
                 </div>
               </div>
-
-              {/* Mock messages */}
               <div className={styles.mockBody}>
-                <div className={styles.mockBubbleOther}>
-                  <span>Hi! My kitchen sink is leaking. Can you help this week?</span>
-                </div>
-                <div className={styles.mockBubbleOther}>
-                  <div className={styles.mockImageRow}>
-                    <span className={styles.mockImage}>📷</span>
-                    <span className={styles.mockImage}>📷</span>
-                  </div>
-                </div>
-                <div className={styles.mockBubbleOwn}>
-                  <span>Looks like a worn seal — around R350, confirmed on-site.</span>
-                </div>
-                <div className={styles.mockBubbleOwn}>
-                  <span>Great. Tuesday 9am works for me.</span>
-                </div>
-              </div>
-
-              {/* Mock footer */}
-              <div className={styles.mockFooter}>
-                <span>Book this provider</span>
-                <span className={styles.mockBookArrow}>→</span>
+                <div className={styles.mockBubbleOther}><span>Hi! My kitchen sink is leaking. Can you help this week?</span></div>
+                <div className={styles.mockBubbleOwn}><span>Looks like a worn seal — around R350, confirmed on-site.</span></div>
               </div>
             </div>
-
-            {/* Decorative glow */}
             <div className={styles.mockGlow} aria-hidden="true" />
           </div>
         </div>

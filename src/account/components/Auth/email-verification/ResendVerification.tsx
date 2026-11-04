@@ -49,6 +49,14 @@ const ResendVerification: React.FC = () => {
           setTimeout(() => navigate('/login'), 2000);
           return;
         }
+        
+        // ADD THIS BLOCK:
+        if (data.error?.code === 'INVALID_STATUS' && data.message.includes('pending_approval')) {
+          setSuccess(true);
+          setError('');
+          return;
+        }
+        
         throw new Error(data.message || data.error?.message || 'Failed to resend verification');
       }
 

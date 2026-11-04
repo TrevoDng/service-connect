@@ -147,3 +147,37 @@
     color: #34d399;
   }
 }
+
+.attachmentGrid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  margin-top: $spacing-xs;
+  
+  .attachmentLink {
+    display: block;
+    border-radius: $border-radius-sm;
+    overflow: hidden;
+    max-width: 250px;
+    
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: $border-radius-sm;
+      transition: transform $transition-fast;
+      
+      &:hover {
+        transform: scale(1.02);
+      }
+    }
+  }
+}
+
+.text {
+  margin-bottom: 0;
+  
+  & + .attachmentGrid {
+    margin-top: $spacing-sm;
+  }
+}

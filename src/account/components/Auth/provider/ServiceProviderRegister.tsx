@@ -1,6 +1,6 @@
 // src/account/components/Auth/provider/ServiceProviderRegister.tsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import type { RegisterData } from '../../../types/user';
 import { getUrl } from '../../../../services/getUrl';
@@ -8,6 +8,9 @@ import styles from './ServiceProviderRegister.module.scss';
 
 const ServiceProviderRegister: React.FC = () => {
   const { register, isLoading } = useAuth();
+   const [searchParams] = useSearchParams();
+  const codeFromUrl = searchParams.get('code');
+
   const [formData, setFormData] = useState<RegisterData>({
     firstName: '',
     lastName: '',
@@ -19,7 +22,9 @@ const ServiceProviderRegister: React.FC = () => {
     serviceType: '',
     companyName: '',
     registrationNumber: '',
+    secretCode: codeFromUrl || '', // <-- 1. Add code from URL to state
   });
+
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -231,6 +236,24 @@ const ServiceProviderRegister: React.FC = () => {
             )}
 
             <div className={styles.registerInputGroup}>
+              <div className={styles.registerField}>
+                <label htmlFor="secretCode" className={styles.registerLabel}>
+                  Security Code
+                </label>
+                <input
+                  id="secretCode"
+                  name="secretCode"
+                  type="text"
+                  required
+                  value={formData.secretCode || ''}
+                  onChange={handleChange}
+                  className={`${styles.registerInput} ${errors.secretCode ? styles.error : ''}`}
+                  placeholder="Enter the code sent to your email"
+                  style={{ textTransform: 'uppercase', letterSpacing: '1px' }}
+                />
+                {errors.secretCode && <p className={styles.registerFieldError}>{errors.secretCode}</p>}
+              </div>
+              
               <div className={styles.registerField}>
                 <label htmlFor="firstName" className={styles.registerLabel}>First Name</label>
                 <input

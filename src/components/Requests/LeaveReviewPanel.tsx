@@ -1,6 +1,7 @@
 // src/components/Requests/LeaveReviewPanel.tsx
 
-import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
+import React, { useMemo, useState } from 'react';
 import type { ReviewFormData } from '../../types';
 import { generateId } from '../../utils/referenceCode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -65,6 +66,8 @@ export const LeaveReviewPanel: React.FC<LeaveReviewPanelProps> = ({
   const [tags, setTags] = useState<string[]>([]);
   const [wouldRecommend, setWouldRecommend] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const draftId = useMemo(() => uuidv4(), []);
+  
 
   const toggleTag = (tag: string) => {
     setTags((prev) =>
@@ -95,7 +98,7 @@ export const LeaveReviewPanel: React.FC<LeaveReviewPanelProps> = ({
       wouldRecommend,
     };
 
-    onSubmit({ id: generateId(), formData });
+    onSubmit({ id: draftId, formData });
   };
 
   return (
@@ -202,6 +205,11 @@ export const LeaveReviewPanel: React.FC<LeaveReviewPanelProps> = ({
         {photos.length < MAX_PHOTOS && (
           <div className={styles.uploadRow}>
             <PhotoUploadButton
+            uploadContext={{
+              entityType: 'reviews',
+              entityId: draftId,
+              category: 'review',
+            }}
               onUploaded={handlePhotoUpload}
               maxFiles={MAX_PHOTOS - photos.length}
               label={photos.length === 0 ? 'Add photos' : 'Add more'}

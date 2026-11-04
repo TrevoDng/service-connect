@@ -21,6 +21,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import { ChatBubble } from './ChatBubble';
 import { ChatComposer } from './ChatComposer';
+import type { ViewerRole } from '../../types';
 import styles from './ChatPanel.module.scss';
 
 // ============================================
@@ -29,7 +30,7 @@ import styles from './ChatPanel.module.scss';
 
 export interface ChatPanelProps {
   thread: ChatThread | null;
-  viewerRole: 'CLIENT' | 'PROVIDER';
+  viewerRole: ViewerRole;
   /**
    * Effective chat user id for the viewer, or `null` for observer mode.
    *
@@ -122,6 +123,7 @@ const handleSent = useCallback(
 // ------------------------------------------
 const { messages, send } = useChatThread(threadId, effectiveViewerId, {
   onSent: handleSent,
+  observerMode,
 });
 
 // ------------------------------------------
@@ -164,7 +166,23 @@ useEffect(() => {
   // ------------------------------------------
   // RESOLVE THE "OTHER" PARTICIPANT
   // ------------------------------------------
+    // ------------------------------------------
+  // RESOLVE THE "OTHER" PARTICIPANT
+  // ------------------------------------------
+  // Staff observers see both parties. Client/Provider viewers see the
+  // counterparty only. Avatar defaults to the provider (as the "primary"
+  // party) unless the viewer is the provider themselves.
+  const isStaff = viewerRole === 'ADMIN' || viewerRole === 'EMPLOYEE';
   const other = viewerRole === 'CLIENT' ? thread.provider : thread.client;
+
+  const headerAvatarGradient =
+    viewerRole === 'PROVIDER'
+      ? thread.client.avatarGradient
+      : thread.provider.avatarGradient;
+  const headerAvatarName =
+    viewerRole === 'PROVIDER'
+      ? thread.client.displayName
+      : thread.provider.displayName;
 
   // ------------------------------------------
   // RENDER
@@ -188,18 +206,24 @@ useEffect(() => {
           className={styles.headerAvatar}
           style={{
             background:
-              other.avatarGradient ||
+              headerAvatarGradient ||
               'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           }}
           aria-hidden="true"
         >
-          {(other.displayName.split(/\s+/)[0]?.charAt(0) || '') +
-            (other.displayName.split(/\s+/).slice(-1)[0]?.charAt(0) || '')}
+          {(headerAvatarName.split(/\s+/)[0]?.charAt(0) || '') +
+            (headerAvatarName.split(/\s+/).slice(-1)[0]?.charAt(0) || '')}
         </div>
 
         <div className={styles.headerInfo}>
           <div className={styles.headerName}>
-            {viewerRole === 'CLIENT' ? (
+            {isStaff ? (
+              <span>
+                {thread.client.displayName}
+                <span style={{ margin: '0 8px', opacity: 0.4 }}>↔</span>
+                {thread.provider.displayName}
+              </span>
+            ) : viewerRole === 'CLIENT' ? (
               <button
                 type="button"
                 className={styles.headerNameLink}
@@ -217,6 +241,13 @@ useEffect(() => {
               />
             )}
           </div>
+
+          {isStaff && (
+            <div className={styles.headerMeta}>
+              <FontAwesomeIcon icon={faEye} />
+              <span>Support observer view</span>
+            </div>
+          )}
 
           {viewerRole === 'CLIENT' && other.providerRating !== undefined && (
             <div className={styles.headerMeta}>
@@ -255,17 +286,28 @@ useEffect(() => {
             <p>No messages yet. Say hello 👋</p>
           </div>
         ) : (
-          messages.map((msg) => (
-            <ChatBubble
-              key={msg.id}
-              message={msg}
-              senderName={
-                msg.senderId === effectiveViewerId ? 'You' : other.displayName
-              }
-              isOwn={msg.senderId === effectiveViewerId}
-              senderAvatarGradient={other.avatarGradient}
-            />
-          ))
+          messages.map((msg) => {
+            const sender =
+              msg.senderId === thread.clientId
+                ? thread.client
+                : msg.senderId === thread.providerId
+                ? thread.provider
+                : null;
+
+            return (
+              <ChatBubble
+                key={msg.id}
+                message={msg}
+                senderName={
+                  msg.senderId === effectiveViewerId
+                    ? 'You'
+                    : sender?.displayName ?? 'Unknown'
+                }
+                isOwn={msg.senderId === effectiveViewerId}
+                senderAvatarGradient={sender?.avatarGradient}
+              />
+            );
+          })
         )}
       </div>
 
@@ -276,7 +318,10 @@ useEffect(() => {
           <span>Read-only — support view</span>
         </div>
       ) : (
-        <ChatComposer onSend={send} />
+        <ChatComposer 
+          onSend={send}
+          threadId={thread.id}
+          />
       )}
     </div>
   );

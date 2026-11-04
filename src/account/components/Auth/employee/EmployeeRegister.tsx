@@ -1,6 +1,6 @@
 // src/account/components/Auth/employee/EmployeeRegister.tsx
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { getUrl } from '../../../../services/getUrl';
 import { useAuth } from '../../../context/AuthContext';
 import type { RegisterData } from '../../../types/user';
@@ -8,8 +8,16 @@ import styles from './EmployeeRegister.module.scss';
 
 const EmployeeRegister: React.FC = () => {
   const { register, isLoading } = useAuth();
-  const [step, setStep] = useState<'code' | 'register'>('code');
-  const [code, setCode] = useState('');
+
+  // 1. Get code from URL
+  const [searchParams] = useSearchParams();
+  const codeFromUrl = searchParams.get('code');
+
+  // 2. If code exists in URL, skip the 'code' step and go straight to 'register'
+  const [step, setStep] = useState<'code' | 'register'>(codeFromUrl ? 'register' : 'code');
+  const [code, setCode] = useState(codeFromUrl || '');
+  const [codeValid, setCodeValid] = useState(!!codeFromUrl);
+
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -19,7 +27,6 @@ const EmployeeRegister: React.FC = () => {
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [verifyingCode, setVerifyingCode] = useState(false);
-  const [codeValid, setCodeValid] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordMatch, setPasswordMatch] = useState<boolean | null>(null);

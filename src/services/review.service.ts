@@ -6,9 +6,11 @@ export const reviewService = {
   /** Client submits a review for a completed booking */
   submitReview: async (
     bookingId: string,
-    formData: ReviewFormData
+    formData: ReviewFormData,
+    id?: string
   ): Promise<Review> => {
     const { review } = await api.post<{ review: Review }>('/reviews', {
+      id,
       bookingId,
       rating: formData.rating,
       comment: formData.comment,

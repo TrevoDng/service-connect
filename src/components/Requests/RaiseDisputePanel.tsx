@@ -1,6 +1,7 @@
 // src/components/Requests/RaiseDisputePanel.tsx
 
-import React, { useState } from 'react';
+import { v4 as uuidv4 } from 'uuid'; 
+import React, { useMemo, useState } from 'react';
 import type { DisputeCategory, RaiseDisputeFormData } from '../../types';
 import { DISPUTE_CATEGORY_LABELS } from '../../types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -37,6 +38,7 @@ export const RaiseDisputePanel: React.FC<RaiseDisputePanelProps> = ({
   const [reason, setReason] = useState('');
   const [photos, setPhotos] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const draftId = useMemo(() => uuidv4(), []);
 
   const handlePhotoUpload = (urls: string[]) => {
     const remaining = MAX_PHOTOS - photos.length;
@@ -58,11 +60,14 @@ export const RaiseDisputePanel: React.FC<RaiseDisputePanelProps> = ({
     }
 
     onSubmit({
+      id: draftId,
       category,
       reason: reason.trim(),
       photos: photos.length > 0 ? photos : undefined,
     });
   };
+
+  const tempFolderId = useMemo(() => `draft-${Date.now()}`, []);
 
   return (
     <div className={styles.panel}>
@@ -145,6 +150,11 @@ export const RaiseDisputePanel: React.FC<RaiseDisputePanelProps> = ({
         {photos.length < MAX_PHOTOS && (
           <div className={styles.uploadRow}>
             <PhotoUploadButton
+              uploadContext={{
+                entityType: 'disputes',
+                entityId: draftId,
+                category: 'evidence',
+              }}
               onUploaded={handlePhotoUpload}
               maxFiles={MAX_PHOTOS - photos.length}
               label={photos.length === 0 ? 'Add photos' : 'Add more'}

@@ -11,6 +11,7 @@ import styles from './App.module.scss';
 import CustomerLogin from './account/components/Auth/customer/CustomerLogin';
 import Home from './pages/Home';
 import { PageNotFound } from './pagenotfound/pagenotfound';
+import RequestRegistration from './pages/RequestRegistration';
 import CustomerRegister from './account/components/Auth/customer/CustomerRegister';
 import AccountProfile from './account/components/customer/CustomerAccountProfile';
 import { ServiceDetails } from './pages/ServiceDetails';
@@ -22,45 +23,67 @@ import EmployeeLogin from './account/components/Auth/employee/EmployeeLogin';
 import { ThemeProvider, useTheme } from './styles/context/ThemeContext';
 import { ClientDashboard } from './account/components/Client/ClientDashboard';
 import ConsultationUpload from './pages/ConsultationUpload';
-import DevLogin from './pages/DevLogin';
 import ServiceProviderRegister from './account/components/Auth/provider/ServiceProviderRegister';
 import ConsultationPayment from './pages/ConsultationPayment';
 import ConsultationOutcomes from './pages/ConsultationOutcomes';
 import ProviderProfile from './pages/ProviderProfile';
 import WorkSessionGate from './pages/WorkSessionGate';
 import AdminLogin from './account/components/Auth/admin/AdminLogin';
-//import { library } from '@fortawesome/fontawesome-svg-core';
-//import { fas } from '@fortawesome/free-solid-svg-icons';
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+import EmailVerification from './account/components/Auth/email-verification/EmailVerification';
+import ResendVerification from './account/components/Auth/email-verification/ResendVerification';
+
+// ============================================
+// ROUTE GUARDS
+// ============================================
+
+const ProtectedRoute: React.FC<{ 
+  children: React.ReactNode; 
+  allowedRoles?: Array<'CLIENT' | 'PROVIDER' | 'EMPLOYEE' | 'ADMIN'> 
+}> = ({ children, allowedRoles }) => {
+  const { isAuthenticated, user, isLoading } = useAuth();
+
   if (isLoading) {
     return (
       <div className={styles.loadingFallback}>
-  <div className={styles.loadingSpinner} />
-</div>
+        <div className={styles.loadingSpinner} />
+      </div>
     );
   }
-  return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
+
+  // 1. Check if logged in
+  if (!isAuthenticated || !user) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // 2. Check if role is allowed (if allowedRoles is provided)
+  if (allowedRoles && !allowedRoles.includes(user.role as any)) {
+    // Redirect them to their correct dashboard
+    if (user.role === 'ADMIN') return <Navigate to="/admin-dashboard" replace />;
+    if (user.role === 'EMPLOYEE') return <Navigate to="/employee-dashboard" replace />;
+    if (user.role === 'PROVIDER') return <Navigate to="/provider/dashboard" replace />;
+    return <Navigate to="/services" replace />;
+  }
+
+  return <>{children}</>;
 };
 
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, user, isLoading } = useAuth();
-  if (isLoading) return null;
+  const { isAuthenticated, user } = useAuth();
+
   if (!isAuthenticated) return <>{children}</>;
 
   // Already logged in — send each role to its own landing page
-  if (user?.role === 'ADMIN') return <Navigate to="/admin-dashboard" />;
-  if (user?.role === 'EMPLOYEE') return <Navigate to="/employee-dashboard" />;
-  if (user?.role === 'PROVIDER') return <Navigate to="/provider/dashboard" />;
-  if (user?.role === 'CLIENT') return <Navigate to="/services" />;
+  if (user?.role === 'ADMIN') return <Navigate to="/admin-dashboard" replace />;
+  if (user?.role === 'EMPLOYEE') return <Navigate to="/employee-dashboard" replace />;
+  if (user?.role === 'PROVIDER') return <Navigate to="/provider/dashboard" replace />;
+  if (user?.role === 'CLIENT') return <Navigate to="/services" replace />;
 
-  return <Navigate to="/services" />;
+  return <Navigate to="/services" replace />;
 };
 
-// const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-//   const { isAuthenticated } = useAuth();
-//   return isAuthenticated ? <Navigate to="/services" /> : <>{children}</>;
-// };
+// ============================================
+// APP CONTENT
+// ============================================
 
 const AppContent: React.FC = () => {
   const [currentPage, setCurrentPage] = useState('home');
@@ -82,33 +105,60 @@ const AppContent: React.FC = () => {
           <Route path="/services" element={<ClientServices />} />
           <Route path="/services/:id" element={<ServiceDetails />} />
           <Route path="/about" element={<About />} />
+          <Route path="/providers/:id" element={<ProviderProfile />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<PublicRoute><CustomerLogin /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><CustomerRegister /></PublicRoute>} />
+          <Route path="/apply" element={<PublicRoute><RequestRegistration /></PublicRoute>} />
           <Route path="/service-provider-register" element={<ServiceProviderRegister />} />
           <Route path="/register/employee" element={<PublicRoute><EmployeeRegister /></PublicRoute>} />
-	        <Route path="/providers/:id" element={<ProviderProfile />} />
           <Route path="/login/employee" element={<PublicRoute><EmployeeLogin /></PublicRoute>} />
           <Route path="/login/admin" element={<PublicRoute><AdminLogin /></PublicRoute>} />
+          <Route path="/verify-email" element={<EmailVerification />} />
+          <Route path="/resend-verification" element={<ResendVerification />} />
 
-          {/* DEV ONLY — remove before production */}
-          <Route path="/dev-login" element={<DevLogin />} />
+          {/* Protected Booking Flow */}
+          <Route 
+            path="/bookings/:id/consultation" 
+            element={<ProtectedRoute allowedRoles={['CLIENT']}><ConsultationPayment /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/bookings/:id/outcomes" 
+            element={<ProtectedRoute allowedRoles={['CLIENT', 'PROVIDER']}><ConsultationOutcomes /></ProtectedRoute>} 
+          />
 
-          {/* Booking flow */}
-          <Route path="/bookings/:id/consultation" element={<ConsultationPayment />} />
-	  <Route path="/bookings/:id/outcomes" element={<ConsultationOutcomes />} />
-
-          {/* Protected Routes */}
-          <Route path="/account" element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} />
+          {/* User Account */}
+          <Route 
+            path="/account" 
+            element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} 
+          />
 
           {/* Dashboards */}
-          <Route path="/client/dashboard" element={<ClientDashboard />} />
-          <Route path="/admin-dashboard" element={<AdminDashboard />} />
-          <Route path="/employee-dashboard" element={<EmployeeDashboard />} />
-          <Route path="/provider/dashboard" element={<ProviderDashboard />} />
-	  <Route path="/provider/bookings/:id/consultation" element={<ConsultationUpload />} />
-	  <Route path="/provider/bookings/:id/start-work" element={<WorkSessionGate />} />
+          <Route 
+            path="/client/dashboard" 
+            element={<ProtectedRoute allowedRoles={['CLIENT']}><ClientDashboard /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/admin-dashboard" 
+            element={<ProtectedRoute allowedRoles={['ADMIN']}><AdminDashboard /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/employee-dashboard" 
+            element={<ProtectedRoute allowedRoles={['EMPLOYEE']}><EmployeeDashboard /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/provider/dashboard" 
+            element={<ProtectedRoute allowedRoles={['PROVIDER']}><ProviderDashboard /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/provider/bookings/:id/consultation" 
+            element={<ProtectedRoute allowedRoles={['PROVIDER']}><ConsultationUpload /></ProtectedRoute>} 
+          />
+          <Route 
+            path="/provider/bookings/:id/start-work" 
+            element={<ProtectedRoute allowedRoles={['PROVIDER']}><WorkSessionGate /></ProtectedRoute>} 
+          />
 
           {/* 404 */}
           <Route path="*" element={<PageNotFound />} />

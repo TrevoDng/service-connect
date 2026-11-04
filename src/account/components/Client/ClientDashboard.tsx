@@ -10,7 +10,7 @@ import {
   notifyPriceAccepted,
   notifyPriceCountered,
 } from '../../../utils/notify';
-import type { WorkSession, Booking as BookingModel, Dispute } from '../../../types';
+import type { WorkSession, Booking as BookingModel } from '../../../types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faClipboardList,
@@ -21,13 +21,14 @@ import {
   faChevronDown,
   faChevronUp,
   faHardHat,
+  faFileInvoiceDollar,
+  faHandshake,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
 import { MessagesView } from '../../../components/Chat';
 import { ClockConfirmCard, ClientWorkSessionCard } from '../../../components/WorkSession';
 import { RequestCard } from '../../../components/Requests';
-import { getUnreadCount } from '../../../data/demoNotifications';
 import { faGavel } from '@fortawesome/free-solid-svg-icons';
 import { DisputesView } from '../../../components/Disputes';
 import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
@@ -75,7 +76,7 @@ const REQUEST_SUBTAB_STATUS: Record<RequestSubTab, BookingModel['status']> = {
 
 export const ClientDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { add } = useNotifications();
+  const { add, unreadCount: unreadMessages } = useNotifications();
   const { theme } = useTheme();
   const { user, logout } = useAuth();
   const clientId = user?.id || '';
@@ -130,8 +131,9 @@ useEffect(() => {
         (d) => d.status === 'open' || d.status === 'awaiting_info'
       ).length;
       if (!cancelled) setOpenDisputeCount(open);
-    } catch {
-      if (!cancelled) setOpenDisputeCount(0);
+    } catch (err) {
+      // 👇 DO NOT set to 0 on failure. Just leave the previous value.
+      console.warn('Failed to fetch disputes', err); 
     }
   })();
   return () => { cancelled = true; };
@@ -169,16 +171,31 @@ const pendingWorkGates = useMemo(() => {
 }, [sessions, clientId]);
 
 
- const handleConfirmWorkGate = async (sessionId: string) => {
-  const session = sessions.find((s) => s.id === sessionId);
-  if (!session) return;
+  const handleConfirmWorkGate = async (idOrSession: string | any) => {
+  // Find the session by either session.id or session.bookingId
+  const session = typeof idOrSession === 'string' 
+    ? sessions.find((s) => s.id === idOrSession || s.bookingId === idOrSession) 
+    : idOrSession;
+
+  if (!session) {
+    console.error('Session not found for', idOrSession);
+    return;
+  }
+
   try {
     await bookingService.confirmGate(session.bookingId);
+    
+    // Optimistic update so banner disappears instantly
+    setSessions((prev) => 
+      prev.map((s) => s.id === session.id ? { ...s, gateConfirmedByClient: true, status: 'confirmed' } : s)
+    );
+
     const booking = allClientBookings.find((b) => b.id === session.bookingId);
     if (booking) add(notifyGateConfirmed(booking));
     setBookingRefresh((t) => t + 1);
   } catch (err) {
     console.error('[confirm-work-gate] failed', err);
+    alert('Failed to confirm access. Please try again.');
   }
 };
 
@@ -289,55 +306,69 @@ useEffect(() => {
 }, [clientId, reviewRefresh, bookingRefresh, activeTab]);
 
   // Load work sessions for all bookings that could have one
-useEffect(() => {
-  let cancelled = false;
-  (async () => {
-    // Only fetch sessions for bookings that could have one
-    const candidates = allClientBookings.filter(
-      (b) =>
-        b.workSessionId ||
-        b.status === 'price_agreed' ||
-        b.status === 'in_progress' ||
-        b.status === 'completed'
-    );
-    if (candidates.length === 0) {
-      setSessions([]);
-      return;
-    }
-    const loaded: WorkSession[] = [];
-    for (const b of candidates) {
-      const s = await bookingService.getClientWorkSession(b.id);
-      if (s) loaded.push(s);
-    }
-    if (!cancelled) setSessions(loaded);
-  })();
-  return () => { cancelled = true; };
-}, [allClientBookings, bookingRefresh]);
+// Load work sessions for all bookings that could have one
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const candidates = allClientBookings.filter(
+        (b) =>
+          b.workSessionId ||
+          b.status === 'price_agreed' ||
+          b.status === 'in_progress' ||
+          b.status === 'completed'
+      );
+      
+      if (candidates.length === 0) {
+        setSessions([]);
+        return;
+      }
 
-// Auto-refresh every 10s while the tab is visible
-useEffect(() => {
-  const id = window.setInterval(() => {
-    if (document.visibilityState === 'visible') {
-      setBookingRefresh((t) => t + 1);
-    }
-  }, 10_000);
-  return () => window.clearInterval(id);
-}, []);
+      const loaded: WorkSession[] = [];
+      let hasError = false; // <-- Add this flag
 
-// Refresh immediately when the tab regains focus
-useEffect(() => {
-  const onFocus = () => {
-    if (document.visibilityState === 'visible') {
-      setBookingRefresh((t) => t + 1);
-    }
-  };
-  document.addEventListener('visibilitychange', onFocus);
-  window.addEventListener('focus', onFocus);
-  return () => {
-    document.removeEventListener('visibilitychange', onFocus);
-    window.removeEventListener('focus', onFocus);
-  };
-}, []);
+      for (const b of candidates) {
+        try {
+          const s = await bookingService.getClientWorkSession(b.id);
+          if (s) loaded.push(s);
+        } catch (err) {
+          hasError = true; // <-- Flag the error
+          console.warn('[work-sessions] fetch failed for one item', err);
+        }
+      }
+      
+      // 👇 ONLY update state if there were NO errors.
+      // This prevents wiping the screen if a rate limit hits.
+      if (!cancelled && !hasError) {
+        setSessions(loaded);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [allClientBookings, bookingRefresh]);
+
+  // Auto-refresh every 10s while the tab is visible
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setBookingRefresh((t) => t + 1);
+      }
+    }, 10_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Refresh immediately when the tab regains focus
+  useEffect(() => {
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') {
+        setBookingRefresh((t) => t + 1);
+      }
+    };
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []);
 
   // ------------------------------------------
   // Sidebar counts
@@ -354,7 +385,6 @@ useEffect(() => {
       b.status === 'price_disputed'
   ).length;
 
-  const unreadMessages = getUnreadCount(clientId);
 
   // ------------------------------------------
   // Actions
@@ -378,19 +408,33 @@ useEffect(() => {
   setSearchParams(next, { replace: false });
 };
 
-  const handleConfirmArrival = async (sessionId: string) => {
-  const session = sessions.find((s) => s.id === sessionId);
-  if (!session) return;
-  try {
-    await bookingService.confirmGate(session.bookingId);
-    const booking = allClientBookings.find((b) => b.id === session.bookingId);
-    if (booking) add(notifyGateConfirmed(booking));
-    setExpandedConfirmBookingId(null);
-    setBookingRefresh((t) => t + 1);
-  } catch (err) {
-    console.error('[confirm-arrival] failed', err);
-  }
-};
+    const handleConfirmArrival = async (idOrSession: string | any) => {
+    const session = typeof idOrSession === 'string' 
+      ? sessions.find((s) => s.id === idOrSession || s.bookingId === idOrSession) 
+      : idOrSession;
+
+    if (!session) {
+      console.error('Session not found for', idOrSession);
+      return;
+    }
+
+    try {
+      await bookingService.confirmGate(session.bookingId);
+      
+      // Optimistic update so banner disappears instantly
+      setSessions((prev) => 
+        prev.map((s) => s.id === session.id ? { ...s, gateConfirmedByClient: true, status: 'confirmed' } : s)
+      );
+
+      const booking = allClientBookings.find((b) => b.id === session.bookingId);
+      if (booking) add(notifyGateConfirmed(booking));
+      setExpandedConfirmBookingId(null);
+      setBookingRefresh((t) => t + 1);
+    } catch (err) {
+      console.error('[confirm-arrival] failed', err);
+      alert('Failed to confirm access. Please try again.');
+    }
+  };
 
 const handleDenyArrival = async (sessionId: string) => {
   const session = sessions.find((s) => s.id === sessionId);
@@ -741,8 +785,8 @@ const handleDenyArrival = async (sessionId: string) => {
     badge: consultationCount || undefined,
   },
   {
-    key: 'requests',
-    label: 'Requests',
+    key: 'requests',        // ← unchanged
+    label: 'Bookings',      // ← was 'Requests'
     icon: faClipboardList,
     badge: requestCount || undefined,
   },
@@ -782,6 +826,7 @@ const renderWorkGateSection = () => {
   if (!booking) return null;
 
   const wasAutoProceeded = session.gateEvent?.status === 'auto_proceeded';
+  const isExpired = session.referenceCodeExpiresAt ? new Date(session.referenceCodeExpiresAt).getTime() < Date.now() : false;
 
   return (
     <div key={session.id} className={styles.arrivalBanner}>
@@ -863,8 +908,10 @@ const renderWorkGateSection = () => {
                 type="button"
                 className={styles.workGateConfirm}
                 onClick={() => handleConfirmWorkGate(session.id)}
+                disabled={isExpired} // 👈 Disable it
+                style={isExpired ? { opacity: 0.5, cursor: 'not-allowed' } : {}}
               >
-                Confirm &amp; grant access
+                {isExpired ? 'Code Expired' : 'Confirm & grant access'}
               </button>
               <button
                 type="button"
@@ -908,22 +955,26 @@ const renderWorksession = () => {
           <div className={styles.contentHeader} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '0.5rem', marginBottom: '1rem' }}>
             <button
               onClick={() => setSelectedWorkSessionBookingId(null)}
-              style={{
-                background: 'transparent',
-                border: 'none',
-                color: 'var(--text-secondary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                fontSize: '0.9rem',
-                padding: 0
-              }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '0.9rem', padding: 0 }}
             >
               ← Back to Worksession
             </button>
             <h2>Work Session Details</h2>
           </div>
-            <ClientWorkSessionCard session={session} booking={booking} />
+
+          {/* 👇 ADD THIS: Show the confirm card if the provider is at the gate */}
+          {session.status === 'arrived' && (
+            <div style={{ marginBottom: '1.5rem' }}>
+              <ClockConfirmCard 
+                session={session}
+                providerName={booking.providerDisplayName}
+                onConfirm={handleConfirmArrival}
+                onDeny={handleDenyArrival}
+              />
+            </div>
+          )}
+
+          <ClientWorkSessionCard session={session} booking={booking} />   
              {booking.status === 'completed' && !booking.clientConfirmedComplete && !booking.hasComplaint && (
             <div style={{ marginTop: '1.5rem', display: 'flex', gap: '1rem', padding: '1rem', background: 'var(--bg-primary)', borderRadius: '8px' }}>
               <p style={{ flex: 1, margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
@@ -953,6 +1004,15 @@ const renderWorksession = () => {
           </div>
         );
       }
+
+      // 👇 ADD THIS: If booking or session is temporarily missing, show a loading state
+    return (
+      <div className={styles.mainContent}>
+        <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-secondary)' }}>
+          Loading session details...
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -1030,6 +1090,114 @@ const renderWorksession = () => {
 };
 
   // ------------------------------------------
+  // PRIORITY ACTION BANNER
+  // ------------------------------------------
+  const renderPriorityBanner = () => {
+    // 1. Highest priority: Provider at the gate
+        // 1. Highest priority: Provider at the gate
+    if (arrivedSessions.length > 0) {
+      const { booking, session } = arrivedSessions[0];
+      
+      // 👇 Calculate if the code is expired
+      const isExpired = session.referenceCodeExpiresAt
+        ? new Date(session.referenceCodeExpiresAt).getTime() < Date.now()
+        : false;
+
+      return (
+        <div style={{ 
+          padding: '16px', 
+          background: isExpired ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', 
+          border: `1px solid ${isExpired ? '#ef4444' : '#10b981'}`, 
+          borderRadius: '8px', 
+          marginBottom: '16px', 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between', 
+          flexWrap: 'wrap', 
+          gap: '12px' 
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ 
+              background: isExpired ? '#ef4444' : '#10b981', 
+              color: 'white', 
+              padding: '8px', 
+              borderRadius: '50%' 
+            }}>
+              <FontAwesomeIcon icon={isExpired ? faExclamationTriangle : faBell} />
+            </div>
+            <div>
+              <strong style={{ display: 'block', color: 'var(--text-primary)' }}>
+                {isExpired ? 'Access Code Expired' : 'Provider is at your gate!'}
+              </strong>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>
+                {isExpired 
+                  ? `${booking.providerDisplayName} is waiting, but the code has expired. Ask them to regenerate the code.`
+                  : `${booking.providerDisplayName} is waiting for access to ${booking.serviceTitle}.`}
+              </span>
+            </div>
+          </div>
+           <button 
+            onClick={() => handleConfirmArrival(session.id)} // <-- FIX: Confirm directly!
+            disabled={isExpired}
+            style={{ 
+              padding: '8px 16px', 
+              background: isExpired ? '#9ca3af' : '#10b981', 
+              color: 'white', 
+              border: 'none', 
+              borderRadius: '999px', 
+              fontWeight: 600, 
+              cursor: isExpired ? 'not-allowed' : 'pointer',
+              opacity: isExpired ? 0.7 : 1
+            }}
+          >
+            {isExpired ? 'Code Expired' : 'Confirm Access'}
+          </button>
+        </div>
+      );
+    }
+
+    // 2. Second priority: Accepted request waiting for payment
+    const unpaidAccepted = allClientBookings.find(b => b.status === 'accepted');
+    if (unpaidAccepted) {
+      return (
+        <div style={{ padding: '16px', background: 'rgba(59, 130, 246, 0.1)', border: '1px solid #3b82f6', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: '#3b82f6', color: 'white', padding: '8px', borderRadius: '50%' }}><FontAwesomeIcon icon={faFileInvoiceDollar} /></div>
+            <div>
+              <strong style={{ display: 'block', color: 'var(--text-primary)' }}>Consultation Fee Required</strong>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Pay the fee for {unpaidAccepted.serviceTitle} to schedule the site visit.</span>
+            </div>
+          </div>
+          <button onClick={() => handlePayConsultation(unpaidAccepted)} style={{ padding: '8px 16px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 600, cursor: 'pointer' }}>
+            Pay Now
+          </button>
+        </div>
+      );
+    }
+
+    // 3. Third priority: Price proposed by provider
+    const priceProposed = allClientBookings.find(b => b.status === 'price_proposed' && b.pendingCounterParty === 'CLIENT');
+    if (priceProposed) {
+      return (
+        <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: '#f59e0b', color: 'white', padding: '8px', borderRadius: '50%' }}><FontAwesomeIcon icon={faHandshake} /></div>
+            <div>
+              <strong style={{ display: 'block', color: 'var(--text-primary)' }}>New Price Proposal</strong>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Review the price of R{priceProposed.finalPrice} for {priceProposed.serviceTitle}.</span>
+            </div>
+          </div>
+          <button onClick={() => setSearchParams({ tab: 'requests' }, { replace: false })} style={{ padding: '8px 16px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 600, cursor: 'pointer' }}>
+            Review Price
+          </button>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
+  // ------------------------------------------
   // Render content
   // ------------------------------------------
   const renderContent = () => {
@@ -1060,14 +1228,14 @@ return (
   <div className={styles.mainContent}>
     {/* Header */}
     <div className={styles.contentHeader}>
-      <h2>{isConsultations ? 'Consultations' : 'Requests'}</h2>
+      <h2>{isConsultations ? 'Consultations' : 'Bookings'}</h2>
           <div className={styles.headerActions}>
             <div className={styles.searchBox}>
               
               <FontAwesomeIcon icon={faSearch} />
               <input
                 type="text"
-                placeholder={isConsultations ? "Search consultations..." : "Search requests..."}
+                placeholder={isConsultations ? "Search consultations..." : "Search bookings..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={styles.searchInput}
@@ -1123,21 +1291,21 @@ return (
             <h3>
               {isConsultations
                 ? 'No consultations in this view'
-                : requestSubTab === 'new' ? 'No new requests'
-                : requestSubTab === 'accepted' ? 'No accepted requests'
+                : requestSubTab === 'new' ? 'No new bookings'
+                : requestSubTab === 'accepted' ? 'No accepted bookings'
                 : requestSubTab === 'payed' ? 'No paid consultations'
-                : 'No declined requests'}
+                : 'No declined bookings'}
             </h3>
             <p>
               {isConsultations
                 ? 'Bookings at this stage will appear here.'
                 : requestSubTab === 'new'
-                ? 'Requests waiting for a provider to respond will appear here.'
+                ? 'Bookings waiting for a provider to respond will appear here.'
                 : requestSubTab === 'accepted'
-                ? 'Providers who accepted your requests will appear here.'
+                ? 'Providers who accepted your bookings will appear here.'
                 : requestSubTab === 'payed'
-                ? 'Requests with paid consultation fees will appear here.'
-                : 'Declined requests will appear here.'}
+                ? 'Bookings with paid consultation fees will appear here.'
+                : 'Declined bookings will appear here.'}
             </p>
             <button
               className={styles.browseBtn}
@@ -1189,6 +1357,11 @@ return (
           />
         }
       >
+
+        <div style={{ padding: '0 16px', paddingTop: '16px' }}>
+          {renderPriorityBanner()}
+        </div>
+
         {renderContent()}
       </DashboardLayout>
     </div>

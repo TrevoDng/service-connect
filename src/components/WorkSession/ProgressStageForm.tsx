@@ -12,19 +12,17 @@ import styles from './ProgressStageForm.module.scss';
 const MAX_PHOTOS = 5;
 
 export interface ProgressStageFormProps {
-  /** Existing stage being edited; omit to create a new one */
   initial?: ProgressStage;
-  /** Current provider user id (used on new photo records) */
   providerId: string;
-  /** Fired with the completed stage when the user saves */
+  bookingId: string;
   onSave: (stage: ProgressStage) => void;
-  /** Fired when the user cancels */
   onCancel: () => void;
 }
 
 export const ProgressStageForm: React.FC<ProgressStageFormProps> = ({
   initial,
   providerId,
+  bookingId,
   onSave,
   onCancel,
 }) => {
@@ -117,6 +115,11 @@ export const ProgressStageForm: React.FC<ProgressStageFormProps> = ({
         {remainingSlots > 0 && (
           <div className={styles.uploadRow}>
             <PhotoUploadButton
+              uploadContext={{
+                entityType: 'worksessions',
+                entityId: bookingId, 
+                category: 'progress',
+              }}
               onUploaded={handleUploaded}
               maxFiles={remainingSlots}
               label={photos.length === 0 ? 'Add photos' : 'Add more'}

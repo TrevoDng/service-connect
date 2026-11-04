@@ -1,41 +1,30 @@
 // src/utils/imageUpload.ts
-// Client-side helpers for image handling.
-// - validateImage: type + size guard
-// - compressImage: downscale + re-encode to keep memory reasonable
-// - uploadImage: placeholder that returns a blob URL (swap for a real upload later)
+import { getToken } from '../account/context/AuthContext';
 
 // ============================================
-// VALIDATION
+// VALIDATION & COMPRESSION (Unchanged)
 // ============================================
 
-const VALID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'];
+const VALID_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg', 'application/pdf'];
+
 const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB per file
 
 export const validateImage = (file: File): { ok: boolean; reason?: string } => {
   if (!VALID_TYPES.includes(file.type)) {
-    return { ok: false, reason: 'Only JPEG, PNG, or WebP images are allowed.' };
+    // Change the error message here:
+    return { ok: false, reason: 'Only JPEG, PNG, WebP, or PDF files are allowed.' };
   }
   if (file.size > MAX_SIZE_BYTES) {
-    return { ok: false, reason: 'Image is larger than 10 MB.' };
+    // Update this too for clarity:
+    return { ok: false, reason: 'File is larger than 10 MB.' };
   }
   return { ok: true };
 };
 
-// ============================================
-// COMPRESSION
-// ============================================
-
 const MAX_DIMENSION = 1600;
 const JPEG_QUALITY = 0.8;
 
-/**
- * Downscales an image to at most MAX_DIMENSION on the longest edge and
- * returns a compressed JPEG File. GIFs and animated images should be
- * skipped (they will be flattened). For our use case (before/progress/final
- * photos) that's fine.
- */
 export const compressImage = async (file: File): Promise<File> => {
-  // Non-raster types bypass compression
   if (!file.type.startsWith('image/')) return file;
 
   return new Promise<File>((resolve) => {
@@ -47,8 +36,6 @@ export const compressImage = async (file: File): Promise<File> => {
       const img = new Image();
       img.onload = () => {
         let { width, height } = img;
-
-        // Compute scaled dimensions
         const longest = Math.max(width, height);
         if (longest > MAX_DIMENSION) {
           const ratio = MAX_DIMENSION / longest;
@@ -87,15 +74,57 @@ export const compressImage = async (file: File): Promise<File> => {
 };
 
 // ============================================
-// UPLOAD (PLACEHOLDER)
+// UPLOAD TO BACKEND
 // ============================================
 
+export interface UploadContext {
+  entityType: 'bookings' | 'disputes' | 'worksessions' | 'reviews' | 'chats' | 'registrations';
+  entityId: string;
+  category: 'request' | 'consultation' | 'evidence' | 'before' | 'progress' | 'final' | 'review' | 'attachments' | 'documents';
+}
+
 /**
- * Currently returns a local blob URL. When a real backend exists, replace
- * the body of this function with a fetch/FormData call.
+ * Uploads a single image to the backend, returning the full URL.
  */
-export const uploadImage = async (file: File): Promise<string> => {
-  return URL.createObjectURL(file);
+export const uploadImage = async (file: File, context: UploadContext): Promise<string> => {
+  const token = getToken();
+  
+  // Only require token if it's NOT a registration
+  if (context.entityType !== 'registrations' && !token) {
+    throw new Error('Not authenticated');
+  }
+
+  const formData = new FormData();
+  formData.append('entityType', context.entityType);
+  formData.append('entityId', context.entityId);
+  formData.append('category', context.category);
+  formData.append('file', file);
+
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001/api';
+  const BACKEND_ORIGIN = API_BASE_URL.replace('/api', '');
+
+  // Choose route based on entityType
+  const isRegistration = context.entityType === 'registrations';
+  const endpoint = isRegistration ? `${API_BASE_URL}/upload/public` : `${API_BASE_URL}/upload`;
+
+  const headers: HeadersInit = {};
+  if (token && !isRegistration) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
+  const response = await fetch(endpoint, {
+    method: 'POST',
+    headers,
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Upload failed');
+  }
+
+  return `${BACKEND_ORIGIN}${data.data.url}`;
 };
 
 // ============================================
@@ -103,11 +132,12 @@ export const uploadImage = async (file: File): Promise<string> => {
 // ============================================
 
 /**
- * Runs an array of files through validate → compress → upload and returns
- * the resulting URLs. Skips files that fail validation.
+ * Runs an array of files through validate → compress → upload.
+ * Skips files that fail validation.
  */
 export const processImageBatch = async (
-  files: File[]
+  files: File[],
+  context: UploadContext
 ): Promise<{ urls: string[]; rejected: string[] }> => {
   const urls: string[] = [];
   const rejected: string[] = [];
@@ -118,9 +148,13 @@ export const processImageBatch = async (
       rejected.push(`${file.name}: ${check.reason}`);
       continue;
     }
-    const compressed = await compressImage(file);
-    const url = await uploadImage(compressed);
-    urls.push(url);
+    try {
+      const compressed = await compressImage(file);
+      const url = await uploadImage(compressed, context);
+      urls.push(url);
+    } catch (err: any) {
+      rejected.push(`${file.name}: ${err.message || 'Upload failed'}`);
+    }
   }
 
   return { urls, rejected };

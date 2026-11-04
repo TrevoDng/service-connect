@@ -385,7 +385,7 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     }
   };
 
-  // ------------------------------------------
+    // ------------------------------------------
   // ACTIONS
   // ------------------------------------------
   const renderActions = () => {
@@ -395,27 +395,15 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     if (canAcceptRequest(viewerRole) && request.status === 'requested') {
       if (onAccept) {
         actions.push(
-          <button
-            key="accept"
-            type="button"
-            className={styles.primaryBtn}
-            onClick={() => onAccept(request)}
-          >
-            <FontAwesomeIcon icon={faCheck} />
-            Accept
+          <button key="accept" type="button" className={styles.primaryBtn} onClick={() => onAccept(request)}>
+            <FontAwesomeIcon icon={faCheck} /> Accept
           </button>
         );
       }
       if (onDecline) {
         actions.push(
-          <button
-            key="decline"
-            type="button"
-            className={styles.dangerBtn}
-            onClick={() => onDecline(request)}
-          >
-            <FontAwesomeIcon icon={faTimes} />
-            Decline
+          <button key="decline" type="button" className={styles.dangerBtn} onClick={() => onDecline(request)}>
+            <FontAwesomeIcon icon={faTimes} /> Decline
           </button>
         );
       }
@@ -424,80 +412,41 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     // -------- CLIENT: pay consultation --------
     if (canPayConsultation(viewerRole) && request.status === 'accepted' && onPayConsultation) {
       actions.push(
-        <button
-          key="pay"
-          type="button"
-          className={styles.primaryBtn}
-          onClick={() => onPayConsultation(request)}
-        >
-          <FontAwesomeIcon icon={faFileInvoiceDollar} />
-          Pay consultation fee
+        <button key="pay" type="button" className={styles.primaryBtn} onClick={() => onPayConsultation(request)}>
+          <FontAwesomeIcon icon={faFileInvoiceDollar} /> Pay consultation fee
         </button>
       );
     }
 
     // -------- PROVIDER: propose final price --------
-    if (
-      request.status === 'evaluated' &&
-      canProposePrice(viewerRole) &&
-      onProposeFinalPrice &&
-      !showProposePanel
-    ) {
+    if (request.status === 'evaluated' && canProposePrice(viewerRole) && onProposeFinalPrice && !showProposePanel) {
       actions.push(
-        <button
-          key="propose"
-          type="button"
-          className={styles.primaryBtn}
-          onClick={() => setShowProposePanel(true)}
-        >
-          <FontAwesomeIcon icon={faDollarSign} />
-          Propose final price
+        <button key="propose" type="button" className={styles.primaryBtn} onClick={() => setShowProposePanel(true)}>
+          <FontAwesomeIcon icon={faDollarSign} /> Propose final price
         </button>
       );
     }
 
     // -------- CLIENT: accept / counter / dispute --------
-    if (
-      canRespondToPrice(viewerRole) &&
-      request.status === 'price_proposed' &&
-      turn === 'CLIENT' &&
-      !request.holdFirm
-    ) {
+    if (canRespondToPrice(viewerRole) && request.status === 'price_proposed' && turn === 'CLIENT' && !request.holdFirm) {
       if (onAcceptFinalPrice) {
         actions.push(
-          <button
-            key="accept-price"
-            type="button"
-            className={styles.primaryBtn}
-            onClick={() => onAcceptFinalPrice(request)}
-          >
-            <FontAwesomeIcon icon={faHandshake} />
-            Accept price
+          <button key="accept-price" type="button" className={styles.acceptBtn} onClick={() => onAcceptFinalPrice(request)}>
+            <FontAwesomeIcon icon={faHandshake} /> Accept {formatPrice(livePrice)}
           </button>
         );
       }
       if (onCounterFinalPrice && !showCounterPanel) {
         actions.push(
-          <button
-            key="counter-price"
-            type="button"
-            className={styles.secondaryBtn}
-            onClick={() => setShowCounterPanel(true)}
-          >
-            Counter
+          <button key="counter-price" type="button" className={styles.counterBtn} onClick={() => setShowCounterPanel(true)}>
+            Propose New Price
           </button>
         );
       }
       if (onDisputeFinalPrice && !showPriceDisputePanel) {
         actions.push(
-          <button
-            key="dispute-price"
-            type="button"
-            className={styles.dangerBtn}
-            onClick={() => setShowPriceDisputePanel(true)}
-          >
-            <FontAwesomeIcon icon={faGavel} />
-            Dispute
+          <button key="dispute-price" type="button" className={styles.holdFirmBtn} onClick={() => setShowPriceDisputePanel(true)}>
+            <FontAwesomeIcon icon={faGavel} /> Dispute
           </button>
         );
       }
@@ -506,60 +455,32 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     // -------- PROVIDER: accept counter / hold firm --------
     if (providerCanAcceptCounter) {
       actions.push(
-        <button
-          key="accept-counter"
-          type="button"
-          className={styles.primaryBtn}
-          onClick={() => onAcceptCounter!(request)}
-        >
-          <FontAwesomeIcon icon={faHandshake} />
-          Accept counter
+        <button key="accept-counter" type="button" className={styles.primaryBtn} onClick={() => onAcceptCounter!(request)}>
+          <FontAwesomeIcon icon={faHandshake} /> Accept counter
         </button>
       );
     }
     if (providerCanHoldFirm) {
       actions.push(
-        <button
-          key="hold-firm"
-          type="button"
-          className={styles.secondaryBtn}
-          onClick={() => onHoldFirm!(request)}
-        >
-          <FontAwesomeIcon icon={faLock} />
-          Hold firm
+        <button key="hold-firm" type="button" className={styles.secondaryBtn} onClick={() => onHoldFirm!(request)}>
+          <FontAwesomeIcon icon={faLock} /> Hold firm
         </button>
       );
     }
 
-        // -------- CLIENT: hold firm active → only Accept / Dispute --------
-    if (
-      viewerRole === 'CLIENT' &&
-      turn === 'CLIENT' &&
-      request.holdFirm === true
-    ) {
+    // -------- CLIENT: hold firm active → only Accept / Dispute --------
+    if (viewerRole === 'CLIENT' && turn === 'CLIENT' && request.holdFirm === true) {
       if (onAcceptFinalPrice) {
         actions.push(
-          <button
-            key="accept-held"
-            type="button"
-            className={styles.primaryBtn}
-            onClick={() => onAcceptFinalPrice(request)}
-          >
-            <FontAwesomeIcon icon={faHandshake} />
-            Accept {formatPrice(request.finalPrice ?? 0)}
+          <button key="accept-held" type="button" className={styles.acceptBtn} onClick={() => onAcceptFinalPrice(request)}>
+            <FontAwesomeIcon icon={faHandshake} /> Accept {formatPrice(request.finalPrice ?? 0)}
           </button>
         );
       }
       if (onDisputeFinalPrice && !showPriceDisputePanel) {
         actions.push(
-          <button
-            key="dispute-held"
-            type="button"
-            className={styles.dangerBtn}
-            onClick={() => setShowPriceDisputePanel(true)}
-          >
-            <FontAwesomeIcon icon={faGavel} />
-            Dispute
+          <button key="dispute-held" type="button" className={styles.holdFirmBtn} onClick={() => setShowPriceDisputePanel(true)}>
+            <FontAwesomeIcon icon={faGavel} /> Dispute
           </button>
         );
       }
@@ -568,36 +489,17 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     // -------- CLIENT: can hold firm (only on their own turn, not yet held) --------
     if (clientCanHoldFirm && !showCounterPanel) {
       actions.push(
-        <button
-          key="hold-firm-client"
-          type="button"
-          className={styles.secondaryBtn}
-          onClick={() => {
-            if (onHoldFirm) onHoldFirm(request);
-          }}
-        >
-          <FontAwesomeIcon icon={faLock} />
-          Hold firm at {formatPrice(request.finalPrice ?? 0)}
+        <button key="hold-firm-client" type="button" className={styles.counterBtn} onClick={() => onHoldFirm?.(request)}>
+          <FontAwesomeIcon icon={faLock} /> Hold firm at {formatPrice(request.finalPrice ?? 0)}
         </button>
       );
     }
 
     // -------- CLIENT: leave review --------
-    if (
-      viewerRole === 'CLIENT' &&
-      request.status === 'completed' &&
-      !existingReview &&
-      !showReviewPanel
-    ) {
+    if (viewerRole === 'CLIENT' && request.status === 'completed' && !existingReview && !showReviewPanel) {
       actions.push(
-        <button
-          key="leave-review"
-          type="button"
-          className={styles.primaryBtn}
-          onClick={() => setShowReviewPanel(true)}
-        >
-          <FontAwesomeIcon icon={faStar} />
-          Leave review
+        <button key="leave-review" type="button" className={styles.primaryBtn} onClick={() => setShowReviewPanel(true)}>
+          <FontAwesomeIcon icon={faStar} /> Leave review
         </button>
       );
     }
@@ -605,14 +507,8 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     // -------- Either party: raise dispute --------
     if (canRaiseDispute && !showRaiseDisputePanel) {
       actions.push(
-        <button
-          key="raise-dispute"
-          type="button"
-          className={styles.dangerBtn}
-          onClick={() => setShowRaiseDisputePanel(true)}
-        >
-          <FontAwesomeIcon icon={faGavel} />
-          Raise dispute
+        <button key="raise-dispute" type="button" className={styles.dangerBtn} onClick={() => setShowRaiseDisputePanel(true)}>
+          <FontAwesomeIcon icon={faGavel} /> Raise dispute
         </button>
       );
     }
@@ -620,42 +516,24 @@ export const RequestCard: React.FC<RequestCardProps> = ({
     // -------- SHARED --------
     if (onViewWorkSession && canViewWorkSession(request.status)) {
       actions.push(
-        <button
-          key="work-session"
-          type="button"
-          className={styles.secondaryBtn}
-          onClick={() => onViewWorkSession(request)}
-        >
-          <FontAwesomeIcon icon={faKey} />
-          View work session
+        <button key="work-session" type="button" className={styles.secondaryBtn} onClick={() => onViewWorkSession(request)}>
+          <FontAwesomeIcon icon={faKey} /> View work session
         </button>
       );
     }
 
     if (onViewOutcomes && canViewOutcomes(request.status)) {
       actions.push(
-        <button
-          key="outcomes"
-          type="button"
-          className={styles.secondaryBtn}
-          onClick={() => onViewOutcomes(request)}
-        >
-          <FontAwesomeIcon icon={faFlagCheckered} />
-          View outcomes
+        <button key="outcomes" type="button" className={styles.secondaryBtn} onClick={() => onViewOutcomes(request)}>
+          <FontAwesomeIcon icon={faFlagCheckered} /> View outcomes
         </button>
       );
     }
 
     if (onOpen) {
       actions.push(
-        <button
-          key="open"
-          type="button"
-          className={styles.ghostBtn}
-          onClick={() => onOpen(request)}
-        >
-          <FontAwesomeIcon icon={faEye} />
-          View details
+        <button key="open" type="button" className={styles.ghostBtn} onClick={() => onOpen(request)}>
+          <FontAwesomeIcon icon={faEye} /> View details
         </button>
       );
     }

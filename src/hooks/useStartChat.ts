@@ -5,23 +5,16 @@
 // ============================================
 //
 // Resolves the current user, gets (or lazily creates) the thread between
-// them and a target provider, and returns a function that navigates the
-// user into that thread.
+// them and a target provider, and navigates the user into that thread.
 //
-// Zero-data safe:
-//   - Not logged in / viewer id unresolvable → returns a no-op function
-//   - Current user is not a CLIENT → returns a no-op function
-//   - Missing provider details → returns a no-op function
-//   - Existing thread → reuses it, does not create a duplicate
-//
-// Provider-to-provider chat is intentionally not supported here yet.
-// When that lands, this hook grows a symmetric "asProvider" mode.
+// Now uses chatService.openThread, which tries the backend first for
+// real users, and falls back to localStorage for demo users (or if
+// the backend is unreachable).
 
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
-import { resolveChatUserId } from '../utils/chatIdentity';
-import { getOrCreateThread } from '../utils/chatApi';
+import { chatService } from '../services/chat.service';
 
 export interface StartChatTarget {
   providerId: string;
@@ -39,7 +32,7 @@ export interface UseStartChatResult {
    * Silently no-ops when the current user cannot start a chat.
    * Returns the threadId on success, `null` on no-op.
    */
-  startChat: (target: StartChatTarget) => string | null;
+  startChat: (target: StartChatTarget) => Promise<string | null>;
   /** True when the current viewer is allowed to start chats. */
   canStartChat: boolean;
 }
@@ -48,11 +41,11 @@ export const useStartChat = (): UseStartChatResult => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const viewerId = resolveChatUserId(user);
+  const viewerId = user?.id || null;
   const canStartChat = !!user && user.role === 'CLIENT' && !!viewerId;
 
   const startChat = useCallback(
-    (target: StartChatTarget): string | null => {
+    async (target: StartChatTarget): Promise<string | null> => {
       // Guard: only logged-in clients can start chats in this step
       if (!canStartChat || !viewerId || !user) return null;
 
@@ -65,17 +58,19 @@ export const useStartChat = (): UseStartChatResult => {
         'Client';
 
       try {
-        const thread = getOrCreateThread({
+        const { thread } = await chatService.openThread({
           clientId: viewerId,
-          clientDisplayName,
-          clientAvatarGradient: undefined,
           providerId: target.providerId,
-          providerDisplayName: target.providerDisplayName,
-          providerAvatarGradient: target.providerAvatarGradient,
-          providerRating: target.providerRating,
-          providerCompletedJobs: target.providerCompletedJobs,
-          providerCategories: target.providerCategories,
-          providerVerified: target.providerVerified,
+          fallback: {
+            clientDisplayName,
+            clientAvatarGradient: undefined,
+            providerDisplayName: target.providerDisplayName,
+            providerAvatarGradient: target.providerAvatarGradient,
+            providerRating: target.providerRating,
+            providerCompletedJobs: target.providerCompletedJobs,
+            providerCategories: target.providerCategories,
+            providerVerified: target.providerVerified,
+          },
         });
 
         // Navigate to the dashboard with the thread pre-selected.

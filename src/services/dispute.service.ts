@@ -18,6 +18,7 @@ export const disputeService = {
     form: RaiseDisputeFormData
   ): Promise<Dispute> => {
     const { dispute } = await api.post<{ dispute: Dispute }>('/disputes', {
+      id: form.id,
       bookingId,
       category: form.category,
       reason: form.reason,

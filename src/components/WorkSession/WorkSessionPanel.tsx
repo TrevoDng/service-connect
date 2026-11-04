@@ -172,6 +172,11 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
         maxPhotos={5}
         uploadDisabled={isCompleted}
         emptyMessage="Upload 1–5 photos when you arrive on site."
+        uploadContext={{
+          entityType: 'worksessions',
+          entityId: booking.id, // <-- Use the booking ID so all session photos live in one folder
+          category: 'before',
+        }}
       />
 
       {/* Progress */}
@@ -189,11 +194,17 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
               }
             : undefined
         }
+        uploadContext={{
+          entityType: 'worksessions',
+          entityId: session.bookingId,
+          category: 'progress',
+        }}
       >
         {/* Add new stage form */}
         {isAddingStage && (
           <ProgressStageForm
             providerId={providerId}
+            bookingId={booking.id}
             onSave={handleSaveStage}
             onCancel={() => setIsAddingStage(false)}
           />
@@ -204,6 +215,7 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
           <ProgressStageForm
             initial={editingStage}
             providerId={providerId}
+            bookingId={booking.id}
             onSave={handleSaveStage}
             onCancel={() => setEditingStageId(null)}
           />
@@ -284,6 +296,11 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
         maxPhotos={5}
         uploadDisabled={isCompleted}
         emptyMessage="When the job is finished, upload 1–5 photos and mark the session complete."
+        uploadContext={{ // <-- ADD THIS BLOCK
+          entityType: 'worksessions',
+          entityId: session.bookingId,
+          category: 'final',
+        }}
       />
     </div>
   );

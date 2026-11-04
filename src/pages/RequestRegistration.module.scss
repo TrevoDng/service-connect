@@ -1,0 +1,201 @@
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
+
+.page {
+  min-height: 100vh;
+  background: var(--bg-primary, #f8f9fa);
+  padding: $spacing-3xl $spacing-md;
+  display: flex;
+  justify-content: center;
+}
+
+.card {
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-xl;
+  box-shadow: var(--shadow-lg, $shadow-lg);
+  padding: $spacing-2xl;
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+}
+
+.backBtn {
+  background: none;
+  border: none;
+  color: var(--text-secondary, $text-secondary);
+  cursor: pointer;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  margin-bottom: $spacing-lg;
+  padding: 0;
+
+  &:hover { color: $primary; }
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-lg;
+
+  h2 {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    margin: 0;
+    color: var(--text-primary, $text-primary);
+  }
+
+  p {
+    color: var(--text-secondary, $text-secondary);
+    margin: 0;
+    font-size: $font-size-sm;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xxs;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--text-primary, $text-primary);
+  }
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+
+  @include mobile { grid-template-columns: 1fr; }
+}
+
+.input, .select {
+  width: 100%;
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  font-size: $font-size-base;
+  outline: none;
+
+  &:focus {
+    border-color: $primary;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+}
+
+.uploadArea {
+  border: 2px dashed var(--border-color, $border-color);
+  border-radius: $border-radius-lg;
+  padding: $spacing-2xl;
+  text-align: center;
+  background: var(--bg-primary, #f8f9fa);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-sm;
+
+  p { font-size: $font-size-sm; color: var(--text-secondary, $text-secondary); }
+}
+
+.uploadIcon {
+  font-size: 2rem;
+  color: $primary;
+  opacity: 0.7;
+}
+
+.fileInput {
+  margin-top: $spacing-md;
+  font-size: $font-size-sm;
+}
+
+.docList {
+  background: rgba(16, 185, 129, 0.05);
+  padding: $spacing-md;
+  border-radius: $border-radius-md;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+
+  h4 { margin: 0 0 $spacing-sm; font-size: $font-size-sm; color: #059669; }
+}
+
+.docItem {
+  display: flex;
+  justify-content: space-between;
+  font-size: $font-size-sm;
+  padding: $spacing-xs 0;
+  border-bottom: 1px solid rgba(16, 185, 129, 0.1);
+
+  a { color: $primary; text-decoration: underline; }
+  &:last-child { border-bottom: none; }
+}
+
+.primaryBtn {
+  background: $primary-gradient;
+  color: white;
+  border: none;
+  padding: $spacing-md;
+  border-radius: $border-radius-full;
+  font-size: $font-size-base;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  margin-top: $spacing-md;
+  transition: all $transition-base;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md, $shadow-md);
+  }
+  &:disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.stepSuccess {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+  
+  h2 { color: #10b981; }
+}
+
+.successIcon {
+  font-size: 4rem;
+  color: #10b981;
+}
+
+.error {
+  margin-top: $spacing-md;
+  background: rgba(239, 68, 68, 0.1);
+  color: #ef4444;
+  padding: $spacing-sm;
+  border-radius: $border-radius-sm;
+  font-size: $font-size-sm;
+}
+
+.secondaryBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+    background: rgba(102, 126, 234, 0.05);
+  }
+}

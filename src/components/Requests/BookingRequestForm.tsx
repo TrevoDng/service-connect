@@ -1,7 +1,7 @@
 
 // src/components/Requests/BookingRequestForm.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Booking, WorkPhoto, Notification } from '../../types';
 import { useAuth } from '../../account/context/AuthContext';
@@ -18,6 +18,7 @@ import {
   faSpinner,
 } from '@fortawesome/free-solid-svg-icons';
 import { PhotoUploadButton } from '../WorkSession';
+import { v4 as uuidv4 } from 'uuid';
 import styles from './BookingRequestForm.module.scss';
 
 export interface BookingRequestFormProps {
@@ -60,6 +61,8 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
   const [photos, setPhotos] = useState<WorkPhoto[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const draftId = useMemo(() => uuidv4(), []);
+
 
   // ------------------------------------------
   // Photo handlers
@@ -251,6 +254,11 @@ export const BookingRequestForm: React.FC<BookingRequestFormProps> = ({
               onUploaded={handlePhotoUpload}
               maxFiles={remaining}
               label={photos.length === 0 ? 'Add photos' : 'Add more'}
+              uploadContext={{
+                entityType: 'bookings',
+                entityId: draftId, // <-- Use the temp ID
+                category: 'request',
+              }}
             />
           </div>
         )}

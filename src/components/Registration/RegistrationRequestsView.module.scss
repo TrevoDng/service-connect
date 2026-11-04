@@ -1,0 +1,231 @@
+/* src/components/Registration/RegistrationRequestsView.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.container { 
+  display: flex; 
+  flex-direction: column; 
+  gap: $spacing-lg; 
+}
+
+.header { 
+  h2 { 
+    margin: 0; 
+    font-size: $font-size-xl; 
+    color: var(--text-primary); /* Fix: Ensure header is visible */
+  } 
+  p { 
+    color: var(--text-secondary); 
+    margin: $spacing-xs 0 0; 
+  } 
+}
+
+.successBanner {
+  padding: $spacing-sm;
+  background: rgba(16, 185, 129, 0.1);
+  color: #059669; /* Light mode text */
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-medium;
+  
+  :global(.dark-theme) & {
+    color: #34d399; /* Dark mode text */
+    background: rgba(16, 185, 129, 0.25);
+  }
+}
+
+.empty { 
+  text-align: center; 
+  padding: $spacing-3xl; 
+  color: var(--text-secondary); 
+  background: var(--bg-primary); 
+  border-radius: $border-radius-lg; 
+  border: 2px dashed var(--border-color); 
+}
+
+.list { 
+  display: flex; 
+  flex-direction: column; 
+  gap: $spacing-md; 
+}
+
+.card {
+  background: var(--bg-card); 
+  border: 1px solid var(--border-color); 
+  border-radius: $border-radius-lg; 
+  padding: $spacing-lg;
+  display: flex; 
+  flex-direction: column; 
+  gap: $spacing-md;
+  color: var(--text-primary); /* Fix: Ensure all text inside the card is visible */
+}
+
+.cardDisabled { 
+  opacity: 0.5; 
+  pointer-events: none; 
+}
+
+.cardHeader {
+  display: flex; 
+  justify-content: space-between; 
+  align-items: flex-start;
+  
+  h3 { 
+    margin: 0 0 $spacing-xs; 
+    font-size: $font-size-lg; 
+    color: var(--text-primary); /* Fix: Ensure name is visible */
+  }
+}
+
+.roleBadge { 
+  background: rgba(102, 126, 234, 0.15); 
+  color: var(--text-primary); /* Fix: Visible on dark mode */
+  padding: 2px 8px; 
+  border-radius: 4px; 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+}
+
+.statusBadge { 
+  padding: 4px 10px; 
+  border-radius: 999px; 
+  font-size: 0.75rem; 
+  font-weight: 600; 
+  text-transform: uppercase; 
+}
+
+/* Badges */
+.pending { background: rgba(251, 191, 36, 0.15); color: #d97706; }
+.approved { background: rgba(16, 185, 129, 0.15); color: #059669; }
+.declined { background: rgba(239, 68, 68, 0.15); color: #dc2626; }
+
+/* Badge Dark Mode Overrides */
+:global(.dark-theme) {
+  .pending { background: rgba(251, 191, 36, 0.25); color: #fbbf24; }
+  .approved { background: rgba(16, 185, 129, 0.25); color: #34d399; }
+  .declined { background: rgba(239, 68, 68, 0.25); color: #f87171; }
+}
+
+.details { 
+  font-size: $font-size-sm; 
+  color: var(--text-secondary); 
+  display: flex; 
+  gap: $spacing-lg; 
+}
+
+.documents {
+  background: var(--bg-primary); 
+  padding: $spacing-md; 
+  border-radius: $border-radius-md;
+  
+  h4 { 
+    margin: 0 0 $spacing-sm; 
+    font-size: $font-size-sm; 
+    color: var(--text-primary); 
+    display: flex; 
+    align-items: center; 
+    gap: $spacing-xs; 
+  }
+}
+
+.docList { 
+  display: flex; 
+  flex-wrap: wrap; 
+  gap: $spacing-sm; 
+}
+
+.docBtn { 
+  padding: $spacing-xs $spacing-md; 
+  background: var(--bg-card); 
+  border: 1px solid var(--border-color); 
+  border-radius: $border-radius-sm; 
+  font-size: $font-size-xs; 
+  color: $primary; 
+  text-decoration: none; 
+  
+  &:hover { 
+    border-color: $primary; 
+  } 
+}
+
+.actions { 
+  display: flex; 
+  gap: $spacing-md; 
+  padding-top: $spacing-md; 
+  border-top: 1px solid var(--border-color); 
+}
+
+.approveBtn, .declineBtn {
+  flex: 1; 
+  padding: $spacing-sm; 
+  border-radius: $border-radius-md; 
+  border: none; 
+  font-weight: 600; 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: $spacing-xs;
+  
+  &:disabled { 
+    opacity: 0.5; 
+    cursor: not-allowed; 
+  }
+}
+
+.approveBtn { 
+  background: #10b981; 
+  color: white; 
+  &:hover { 
+    background: #059669; 
+  } 
+}
+
+.declineBtn { 
+  background: transparent; 
+  border: 1px solid #ef4444; 
+  color: #ef4444; 
+  &:hover { 
+    background: rgba(239, 68, 68, 0.05); 
+  } 
+}
+
+.resendBtn {
+  flex: 1; 
+  padding: $spacing-sm; 
+  border-radius: $border-radius-md; 
+  border: 1px solid #f59e0b; 
+  background: rgba(245, 158, 11, 0.08); 
+  color: #d97706; 
+  font-weight: $font-weight-semibold; 
+  cursor: pointer; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  gap: $spacing-xs;
+  transition: all $transition-base;
+
+  &:hover:not(:disabled) {
+    background: #f59e0b;
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: $shadow-sm;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Dark mode adjustments */
+  :global(.dark-theme) & {
+    border-color: #fbbf24;
+    color: #fbbf24;
+    background: rgba(251, 191, 36, 0.1);
+
+    &:hover:not(:disabled) {
+      background: #fbbf24;
+      color: #000;
+    }
+  }
+}

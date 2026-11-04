@@ -1,5 +1,5 @@
 // src/account/components/Admin/AdminDashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
@@ -8,80 +8,39 @@ import {
   faUsers,
   faUserTie,
   faUserCog,
+  faUserShield,
   faClock,
   faSearch,
   faCheckCircle,
   faTimesCircle,
-  faEye,
   faGavel,
   faComments,
+  faClipboardList,
 } from '@fortawesome/free-solid-svg-icons';
 import { MessagesView } from '../../../components/Chat';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
 import { DisputesView } from '../../../components/Disputes';
-import { getOpenDisputeCount } from '../../../utils/allDisputes';
 import styles from './AdminDashboard.module.scss';
+import { adminService, type ApiUser } from '../../../services/admin.service';
+import { disputeService } from '../../../services/dispute.service';
+import { StaffBookingsView, StaffUserDetailPanel } from '../../../components/Bookings';
+import { RegistrationRequestsView } from '../../../components/Registration/RegistrationRequestsView';
+import { faFileSignature } from '@fortawesome/free-solid-svg-icons';
 
 // ============================================
 // TYPES
 // ============================================
 
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  status: 'active' | 'pending' | 'inactive';
-  joinDate: string;
-  bookings: number;
-}
-
-interface ServiceProvider {
-  id: string;
-  name: string;
-  email: string;
-  category: string;
-  status: 'active' | 'pending' | 'inactive';
-  rating: number;
-  services: number;
-}
-
-interface Employee {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: 'active' | 'pending' | 'inactive';
-  joinDate: string;
-  lastLogin: string;
-}
-
-type AdminTab = 'employees' | 'providers' | 'clients' | 'disputes' | 'messages';
-
-// ============================================
-// DEMO DATA
-// ============================================
-
-const demoClients: Client[] = [
-  { id: '1', name: 'John Doe', email: 'john@example.com', status: 'active', joinDate: '2026-01-15T10:00:00', bookings: 5 },
-  { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'active', joinDate: '2026-02-20T14:00:00', bookings: 3 },
-  { id: '3', name: 'Mike Johnson', email: 'mike@example.com', status: 'pending', joinDate: '2026-03-10T09:00:00', bookings: 0 },
-  { id: '4', name: 'Sarah Wilson', email: 'sarah@example.com', status: 'inactive', joinDate: '2026-01-05T08:00:00', bookings: 8 },
-];
-
-const demoProviders: ServiceProvider[] = [
-  { id: '1', name: 'Tom Brown', email: 'tom@provider.com', category: 'Plumbing', status: 'active', rating: 4.8, services: 12 },
-  { id: '2', name: 'Emily Davis', email: 'emily@provider.com', category: 'Electrical', status: 'active', rating: 4.9, services: 8 },
-  { id: '3', name: 'Chris Miller', email: 'chris@provider.com', category: 'Gardening', status: 'pending', rating: 4.5, services: 0 },
-  { id: '4', name: 'Lisa Anderson', email: 'lisa@provider.com', category: 'Cleaning', status: 'active', rating: 4.7, services: 15 },
-];
-
-const demoEmployees: Employee[] = [
-  { id: '1', name: 'David Clark', email: 'david@company.com', role: 'Support Agent', status: 'active', joinDate: '2026-01-10T08:00:00', lastLogin: '2026-09-09T14:30:00' },
-  { id: '2', name: 'Emma White', email: 'emma@company.com', role: 'Operations Manager', status: 'active', joinDate: '2026-02-15T09:00:00', lastLogin: '2026-09-09T10:15:00' },
-  { id: '3', name: 'James Taylor', email: 'james@company.com', role: 'Support Agent', status: 'pending', joinDate: '2026-09-01T11:00:00', lastLogin: '-' },
-  { id: '4', name: 'Olivia Martin', email: 'olivia@company.com', role: 'Finance', status: 'active', joinDate: '2026-03-20T13:00:00', lastLogin: '2026-09-08T16:45:00' },
-];
+type AdminTab =
+  | 'admins'
+  | 'employees'
+  | 'providers'
+  | 'clients'
+  | 'bookings'
+  | 'disputes'
+  | 'messages'
+  | 'applications';
 
 // ============================================
 // ADMIN THEME CONSTANTS
@@ -97,37 +56,129 @@ const ADMIN_ROLE_BG = 'rgba(239, 68, 68, 0.1)';
 // COMPONENT
 // ============================================
 
-interface AdminDashboardProps {
-  // Props can be added later
-}
-
-export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
+export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { theme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<AdminTab>('employees');
   const [loading, setLoading] = useState(true);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [providers, setProviders] = useState<ServiceProvider[]>([]);
-  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [users, setUsers] = useState<ApiUser[]>([]);
+  const [openDisputeCount, setOpenDisputeCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedUserId(null);
+  }, [activeTab]);
 
   // ------------------------------------------
-  // Load demo data
+  // Data fetch
   // ------------------------------------------
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setClients(demoClients);
-      setProviders(demoProviders);
-      setEmployees(demoEmployees);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [allUsers, disputes] = await Promise.all([
+        adminService.getAllUsers(),
+        disputeService.getMyDisputes(),
+      ]);
+      setUsers(allUsers);
+      setOpenDisputeCount(
+        disputes.filter(
+          (d) => d.status === 'open' || d.status === 'awaiting_info'
+        ).length
+      );
+    } catch (error) {
+      console.error('Failed to fetch admin data', error);
+    } finally {
       setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
   }, []);
 
   // ------------------------------------------
-  // Actions
+  // Derived lists
   // ------------------------------------------
+  const admins = useMemo(
+    () => users.filter((u) => u.role === 'ADMIN'),
+    [users]
+  );
+  const employees = useMemo(
+    () => users.filter((u) => u.role === 'EMPLOYEE'),
+    [users]
+  );
+  const providers = useMemo(
+    () => users.filter((u) => u.role === 'PROVIDER'),
+    [users]
+  );
+  const clients = useMemo(
+    () => users.filter((u) => u.role === 'CLIENT'),
+    [users]
+  );
+
+  // ------------------------------------------
+  // Search filtering
+  // ------------------------------------------
+  const filterList = (list: ApiUser[]) => {
+    if (!searchQuery.trim()) return list;
+    const q = searchQuery.toLowerCase();
+    return list.filter(
+      (u) =>
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+    );
+  };
+
+  const filteredAdmins = useMemo(
+    () => filterList(admins),
+    [admins, searchQuery]
+  );
+  const filteredEmployees = useMemo(
+    () => filterList(employees),
+    [employees, searchQuery]
+  );
+  const filteredProviders = useMemo(
+    () => filterList(providers),
+    [providers, searchQuery]
+  );
+  const filteredClients = useMemo(
+    () => filterList(clients),
+    [clients, searchQuery]
+  );
+
+  // ------------------------------------------
+  // Approve / Reject actions
+  // ------------------------------------------
+  const handleApprove = async (userId: string) => {
+    try {
+      setActionLoading(userId);
+      await adminService.approveUser(userId, true);
+      await fetchData();
+    } catch {
+      alert('Failed to approve user');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleReject = async (userId: string) => {
+    const reason = window.prompt('Reason for rejection:');
+    if (!reason) return;
+    try {
+      setActionLoading(userId);
+      await adminService.approveUser(userId, false, reason);
+      await fetchData();
+    } catch {
+      alert('Failed to reject user');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleLogout = async () => {
     await logout();
     navigate('/login');
@@ -146,7 +197,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   };
 
   const formatDateTime = (dateString: string) => {
-    if (dateString === '-') return '-';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-ZA', {
       day: '2-digit',
@@ -158,11 +208,53 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   };
 
   // ------------------------------------------
+  // Status helpers (aligned with backend User.status enum)
+  // ------------------------------------------
+  const getStatusClass = (status: string) => {
+    switch (status) {
+      case 'active':
+        return styles.statusActive;
+      case 'pending_email':
+      case 'email_verified':
+      case 'pending_approval':
+        return styles.statusPending;
+      case 'rejected':
+      case 'deactivated':
+        return styles.statusInactive;
+      default:
+        return styles.statusInactive;
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'active':
+        return 'Active';
+      case 'pending_email':
+        return 'Pending email';
+      case 'email_verified':
+        return 'Email verified';
+      case 'pending_approval':
+        return 'Pending approval';
+      case 'rejected':
+        return 'Rejected';
+      case 'deactivated':
+        return 'Deactivated';
+      default:
+        return status;
+    }
+  };
+
+  // ------------------------------------------
   // Stats
   // ------------------------------------------
-  const pendingCount = [...employees, ...providers, ...clients].filter(
-    (item) => item.status === 'pending'
-  ).length;
+  const pendingCount = useMemo(
+    () =>
+      [...employees, ...providers].filter(
+        (u) => u.status === 'pending_approval'
+      ).length,
+    [employees, providers]
+  );
 
   const stats = [
     { key: 'employees', label: 'Total Employees', value: employees.length, icon: faUserCog, className: styles.statEmployees },
@@ -172,45 +264,20 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   ];
 
   // ------------------------------------------
-  // Helpers
+  // Content title
   // ------------------------------------------
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'active':
-        return styles.statusActive;
-      case 'pending':
-        return styles.statusPending;
-      case 'inactive':
-        return styles.statusInactive;
-      case 'completed':
-        return styles.statusCompleted;
-      default:
-        return '';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'active':
-      case 'completed':
-        return <FontAwesomeIcon icon={faCheckCircle} />;
-      case 'pending':
-        return <FontAwesomeIcon icon={faClock} />;
-      case 'inactive':
-        return <FontAwesomeIcon icon={faTimesCircle} />;
-      default:
-        return null;
-    }
-  };
-
   const getContentTitle = () => {
     switch (activeTab) {
+      case 'admins':
+        return 'Administrators';
       case 'employees':
         return 'Employee Management';
       case 'providers':
         return 'Service Provider Management';
       case 'clients':
         return 'Client Management';
+      case 'bookings':
+        return 'Bookings';
       default:
         return 'Admin Dashboard';
     }
@@ -220,48 +287,215 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
   // Sidebar nav items
   // ------------------------------------------
   const navItems: SidebarNavItem[] = [
+    { key: 'admins', label: 'Administrators', icon: faUserShield, badge: admins.length },
+    { key: 'applications', label: 'Applications', icon: faFileSignature },
     { key: 'employees', label: 'Employees', icon: faUserCog, badge: employees.length },
     { key: 'providers', label: 'Service Providers', icon: faUserTie, badge: providers.length },
     { key: 'clients', label: 'Clients', icon: faUsers, badge: clients.length },
-    {
-      key: 'disputes',
-      label: 'Disputes',
-      icon: faGavel,
-      badge: getOpenDisputeCount() || undefined,
-    },
-    {
-      key: 'messages',
-      label: 'Messages',
-      icon: faComments,
-    },
+    { key: 'bookings', label: 'Bookings', icon: faClipboardList },
+    { key: 'disputes', label: 'Disputes', icon: faGavel, badge: openDisputeCount || undefined },
+    { key: 'messages', label: 'Messages', icon: faComments },
   ];
 
-  // ============================================
-  // MAIN CONTENT — dispatches per tab
-  // ============================================
-  // When activeTab === 'disputes', we short-circuit and render only the
-  // DisputesView. Otherwise we render the stats grid + tab content as before.
+  // ------------------------------------------
+  // Card renderer
+  // ------------------------------------------
+  // `allowApproval` is passed per list — only employees & providers
+  // can approve/reject pending accounts. Clients are auto-active
+  // (backend registration sets status='active' for CLIENT). Admins
+  // are created by another admin with status='active' directly, so
+  // there is nothing to approve — and the backend's approveEmployee
+  // endpoint hard-rejects non-EMPLOYEE/PROVIDER roles anyway.
+  const renderUserCard = (u: ApiUser, allowApproval: boolean) => (
+    <div
+      key={u.id}
+      className={styles.activityCard}
+      onClick={() => setSelectedUserId(u.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setSelectedUserId(u.id);
+        }
+      }}
+      style={{ cursor: 'pointer' }}
+    >
+      <div className={styles.activityHeader}>
+        <div className={styles.activityTitle}>
+          <h4>
+            {u.firstName} {u.lastName}
+          </h4>
+          <span className={`${styles.statusBadge} ${getStatusClass(u.status)}`}>
+            {getStatusLabel(u.status)}
+          </span>
+        </div>
+      </div>
+      <div className={styles.activityDetails}>
+        <div className={styles.activityInfo}>
+          <span className={styles.infoLabel}>Email:</span>
+          <span className={styles.infoValue}>{u.email}</span>
+        </div>
+        {u.phone && (
+          <div className={styles.activityInfo}>
+            <span className={styles.infoLabel}>Phone:</span>
+            <span className={styles.infoValue}>{u.phone}</span>
+          </div>
+        )}
+        <div className={styles.activityInfo}>
+          <span className={styles.infoLabel}>Joined:</span>
+          <span className={styles.infoValue}>{formatDate(u.createdAt)}</span>
+        </div>
+        {u.lastLogin && (
+          <div className={styles.activityInfo}>
+            <span className={styles.infoLabel}>Last login:</span>
+            <span className={styles.infoValue}>{formatDateTime(u.lastLogin)}</span>
+          </div>
+        )}
+      </div>
 
-  const renderMainContent = () => {
-    if (activeTab === 'messages') {
-       return (
-         <div className={styles.mainContent}>
-        <MessagesView viewerRole="CLIENT" observerMode />
-         </div>
-           );
-    }
-    
-    if (activeTab === 'disputes') {
-  return (
-    <div className={styles.mainContent}>
-      <DisputesView viewerRole="ADMIN" />
+      {allowApproval && u.status === 'pending_approval' && (
+        <div
+          className={styles.activityActions}
+          onClick={(e) => e.stopPropagation()}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <button
+            onClick={() => handleApprove(u.id)}
+            disabled={actionLoading === u.id}
+            className={styles.approveBtn}
+          >
+            <FontAwesomeIcon icon={faCheckCircle} /> Approve
+          </button>
+          <button
+            onClick={() => handleReject(u.id)}
+            disabled={actionLoading === u.id}
+            className={styles.rejectBtn}
+          >
+            <FontAwesomeIcon icon={faTimesCircle} /> Reject
+          </button>
+        </div>
+      )}
+
+      {u.role === 'PROVIDER' && u.serviceType && (
+        <div className={styles.activityInfo}>
+          <span className={styles.infoLabel}>Service type:</span>
+          <span className={styles.infoValue}>{u.serviceType}</span>
+        </div>
+      )}
+      {u.role === 'PROVIDER' && u.companyName && (
+        <div className={styles.activityInfo}>
+          <span className={styles.infoLabel}>Company:</span>
+          <span className={styles.infoValue}>{u.companyName}</span>
+        </div>
+      )}
+      {u.role === 'PROVIDER' && u.registrationNumber && (
+        <div className={styles.activityInfo}>
+          <span className={styles.infoLabel}>Reg. number:</span>
+          <span className={styles.infoValue}>{u.registrationNumber}</span>
+        </div>
+      )}
     </div>
   );
-}
+
+  // ------------------------------------------
+  // Main content
+  // ------------------------------------------
+  const renderMainContent = () => {
+    if (activeTab === 'applications') {
+      return (
+        <div className={styles.mainContent}>
+          <RegistrationRequestsView />
+        </div>
+      );
+    }
+    if (activeTab === 'disputes') {
+      return (
+        <div className={styles.mainContent}>
+          <DisputesView viewerRole="ADMIN" />
+        </div>
+      );
+    }
+
+    if (activeTab === 'messages') {
+      return (
+        <div className={styles.mainContent}>
+          <MessagesView viewerRole="ADMIN" observerMode />
+        </div>
+      );
+    }
+
+    if (activeTab === 'bookings') {
+      return (
+        <div className={styles.mainContent}>
+          <StaffBookingsView viewerRole="ADMIN" users={users} />
+        </div>
+      );
+    }
+
+    // Admins / Employees / Providers / Clients
+    let list: ApiUser[] = [];
+    let emptyIcon = '👥';
+    let emptyTitle = 'No data';
+    let emptyMessage = '';
+    let allowApproval = false;
+
+    if (activeTab === 'admins') {
+      list = filteredAdmins;
+      emptyIcon = '🛡️';
+      emptyTitle = searchQuery ? 'No matches found' : 'No administrators found';
+      emptyMessage = searchQuery
+        ? `No administrators match "${searchQuery}".`
+        : 'There are no administrators registered.';
+      allowApproval = false; // Admins are pre-active; nothing to approve
+    } else if (activeTab === 'employees') {
+      list = filteredEmployees;
+      emptyIcon = '👔';
+      emptyTitle = searchQuery ? 'No matches found' : 'No employees found';
+      emptyMessage = searchQuery
+        ? `No employees match "${searchQuery}".`
+        : 'There are no employees registered yet.';
+      allowApproval = true;
+    } else if (activeTab === 'providers') {
+      list = filteredProviders;
+      emptyIcon = '🛠️';
+      emptyTitle = searchQuery ? 'No matches found' : 'No service providers found';
+      emptyMessage = searchQuery
+        ? `No providers match "${searchQuery}".`
+        : 'There are no service providers registered yet.';
+      allowApproval = true;
+    } else {
+      list = filteredClients;
+      emptyIcon = '👥';
+      emptyTitle = searchQuery ? 'No matches found' : 'No clients found';
+      emptyMessage = searchQuery
+        ? `No clients match "${searchQuery}".`
+        : 'There are no clients registered yet.';
+      allowApproval = false; // Clients auto-activate on register
+    }
+
+        const selectedUser = selectedUserId
+      ? users.find((u) => u.id === selectedUserId) ?? null
+      : null;
+
+    if (selectedUser) {
+      return (
+        <div className={styles.mainContent}>
+          <StaffUserDetailPanel
+            user={selectedUser}
+            allUsers={users}
+            canApprove={activeTab === 'employees' || activeTab === 'providers'}
+            onApprove={handleApprove}
+            onReject={handleReject}
+            actionLoading={actionLoading}
+            onBack={() => setSelectedUserId(null)}
+          />
+        </div>
+      );
+    }
 
     return (
       <div className={styles.mainContent}>
-        {/* Header */}
         <div className={styles.contentHeader}>
           <h2>{getContentTitle()}</h2>
           <div className={styles.headerActions}>
@@ -270,13 +504,14 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
               <input
                 type="text"
                 placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className={styles.searchInput}
               />
             </div>
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className={styles.statsGrid}>
           {stats.map((stat) => (
             <div key={stat.key} className={`${styles.statCard} ${stat.className}`}>
@@ -291,188 +526,21 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = () => {
           ))}
         </div>
 
-        {/* Content */}
         {loading ? (
           <div className={styles.loading}>
             <div className={styles.spinner}></div>
             <p>Loading data...</p>
           </div>
-        ) : activeTab === 'employees' ? (
-          employees.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>👔</span>
-              <h3>No employees found</h3>
-              <p>There are no employees registered yet.</p>
-            </div>
-          ) : (
-            <div className={styles.activityList}>
-              {employees.map((employee) => (
-                <div key={employee.id} className={styles.activityCard}>
-                  <div className={styles.activityHeader}>
-                    <div className={styles.activityTitle}>
-                      <h4>{employee.name}</h4>
-                      <span className={`${styles.statusBadge} ${getStatusClass(employee.status)}`}>
-                        {getStatusIcon(employee.status)}
-                        {employee.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.activityDetails}>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Email:</span>
-                      <span className={styles.infoValue}>{employee.email}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Role:</span>
-                      <span className={styles.infoValue}>{employee.role}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Joined:</span>
-                      <span className={styles.infoValue}>{formatDate(employee.joinDate)}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Last Login:</span>
-                      <span className={styles.infoValue}>{formatDateTime(employee.lastLogin)}</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityActions}>
-                    <button className={styles.viewBtn}>
-                      <FontAwesomeIcon icon={faEye} />
-                      View Details
-                    </button>
-                    {employee.status === 'pending' && (
-                      <>
-                        <button className={styles.approveBtn}>
-                          <FontAwesomeIcon icon={faCheckCircle} />
-                          Approve
-                        </button>
-                        <button className={styles.rejectBtn}>
-                          <FontAwesomeIcon icon={faTimesCircle} />
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        ) : activeTab === 'providers' ? (
-          providers.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>👔</span>
-              <h3>No service providers found</h3>
-              <p>There are no service providers registered yet.</p>
-            </div>
-          ) : (
-            <div className={styles.activityList}>
-              {providers.map((provider) => (
-                <div key={provider.id} className={styles.activityCard}>
-                  <div className={styles.activityHeader}>
-                    <div className={styles.activityTitle}>
-                      <h4>{provider.name}</h4>
-                      <span className={`${styles.statusBadge} ${getStatusClass(provider.status)}`}>
-                        {getStatusIcon(provider.status)}
-                        {provider.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.activityDetails}>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Email:</span>
-                      <span className={styles.infoValue}>{provider.email}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Category:</span>
-                      <span className={styles.infoValue}>{provider.category}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Rating:</span>
-                      <span className={styles.infoValue}>⭐ {provider.rating.toFixed(1)}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Services:</span>
-                      <span className={styles.infoValue}>{provider.services}</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityActions}>
-                    <button className={styles.viewBtn}>
-                      <FontAwesomeIcon icon={faEye} />
-                      View Details
-                    </button>
-                    {provider.status === 'pending' && (
-                      <>
-                        <button className={styles.approveBtn}>
-                          <FontAwesomeIcon icon={faCheckCircle} />
-                          Approve
-                        </button>
-                        <button className={styles.rejectBtn}>
-                          <FontAwesomeIcon icon={faTimesCircle} />
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
+        ) : list.length === 0 ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>{emptyIcon}</span>
+            <h3>{emptyTitle}</h3>
+            <p>{emptyMessage}</p>
+          </div>
         ) : (
-          clients.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>👥</span>
-              <h3>No clients found</h3>
-              <p>There are no clients registered yet.</p>
-            </div>
-          ) : (
-            <div className={styles.activityList}>
-              {clients.map((client) => (
-                <div key={client.id} className={styles.activityCard}>
-                  <div className={styles.activityHeader}>
-                    <div className={styles.activityTitle}>
-                      <h4>{client.name}</h4>
-                      <span className={`${styles.statusBadge} ${getStatusClass(client.status)}`}>
-                        {getStatusIcon(client.status)}
-                        {client.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.activityDetails}>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Email:</span>
-                      <span className={styles.infoValue}>{client.email}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Joined:</span>
-                      <span className={styles.infoValue}>{formatDate(client.joinDate)}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Bookings:</span>
-                      <span className={styles.infoValue}>{client.bookings}</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityActions}>
-                    <button className={styles.viewBtn}>
-                      <FontAwesomeIcon icon={faEye} />
-                      View Details
-                    </button>
-                    {client.status === 'pending' && (
-                      <>
-                        <button className={styles.approveBtn}>
-                          <FontAwesomeIcon icon={faCheckCircle} />
-                          Approve
-                        </button>
-                        <button className={styles.rejectBtn}>
-                          <FontAwesomeIcon icon={faTimesCircle} />
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
+          <div className={styles.activityList}>
+            {list.map((u) => renderUserCard(u, allowApproval))}
+          </div>
         )}
       </div>
     );

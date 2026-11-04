@@ -103,6 +103,7 @@ export interface Dispute {
 // ============================================
 
 export interface RaiseDisputeFormData {
+  id?: string;
   category: DisputeCategory;
   reason: string;
   photos?: string[];

@@ -1,43 +1,6 @@
 // src/services/booking.service.ts
-//
-// Phase 1 of the bookings migration. Only the requested → accepted/declined
-// flow is wired to the backend. Price negotiation, consultation tracking,
-// work sessions, and dispute flow still live in localStorage via
-// localBookingOverrides.ts.
-
 import { api } from './api.service';
 import type { Booking, ProgressStage, WorkPhoto, WorkSession } from '../types';
-import {
-  getBookingsForProvider as getLocalProviderBookings,
-  getBookingsForClient as getLocalClientBookings,
-  getBookingById as getLocalBookingById,
-} from '../utils/allBookings';
-import { setBookingOverride } from '../utils/localBookingOverrides';
-import { addLocalBooking } from '../utils/localBookings';
-import { getLocalWorkSessionByBooking, updateGateEvent, updateLocalWorkSession } from '../utils/localWorkSessions';
-
-// ============================================================
-// FALLBACK WRAPPER
-// ============================================================
-async function withFallback<T>(
-  label: string,
-  backendCall: () => Promise<T>,
-  fallback: () => T
-): Promise<T> {
-  try {
-    return await backendCall();
-  } catch (err) {
-    console.warn(
-      `[booking.service] Backend unreachable for "${label}". Using demo data.`,
-      err instanceof Error ? err.message : err
-    );
-    return fallback();
-  }
-}
-
-// ============================================================
-// SERVICE
-// ============================================================
 
 export const bookingService = {
   // ==========================================
@@ -46,6 +9,7 @@ export const bookingService = {
 
   /** Create a new booking (client only) */
   createBooking: async (payload: {
+    id?: string;
     providerId: string;
     providerDisplayName: string;
     serviceTitle: string;
@@ -56,150 +20,47 @@ export const bookingService = {
     suggestedPrice: number;
     clientDisplayName?: string;
   }): Promise<Booking> => {
-    return withFallback(
-      'createBooking',
-      () => api.post<{ booking: Booking }>('/bookings', payload).then((r) => r.booking),
-      () => {
-        // Offline: build a synthetic local booking and store it.
-        const now = new Date().toISOString();
-        const fakeId = `local-${Date.now()}`;
-        const synthetic: Booking = {
-          id: fakeId,
-          requestRef: `REQ-${new Date().getFullYear()}-OFFLINE`,
-          clientId: '',
-          clientDisplayName: payload.clientDisplayName || 'You',
-          providerId: payload.providerId,
-          providerDisplayName: payload.providerDisplayName,
-          serviceTitle: payload.serviceTitle,
-          serviceCategory: payload.serviceCategory,
-          description: payload.description,
-          requestPhotos: payload.requestPhotos,
-          requestedDate: payload.requestedDate,
-          createdAt: now,
-          updatedAt: now,
-          status: 'requested',
-          suggestedPrice: payload.suggestedPrice,
-          consultationFee: 0,
-          priceHistory: [
-            {
-              stage: 'suggested',
-              amount: payload.suggestedPrice,
-              at: now,
-              byUserId: '',
-              note: 'Client-suggested price — not binding.',
-            },
-          ],
-          siteVisited: false,
-          clientSharedFields: {
-            displayName: true,
-            phone: false,
-            address: false,
-            gateCode: false,
-            specialInstructions: false,
-          },
-        };
-        addLocalBooking(synthetic);
-        return synthetic;
-      }
-    );
+    const res = await api.post<{ booking: Booking }>('/bookings', payload);
+    return res.booking;
   },
 
   /** Get all bookings where the current user is the client */
-  getMyBookings: async (clientId: string): Promise<Booking[]> => {
-    return withFallback(
-      'getMyBookings',
-      () => api.get<{ bookings: Booking[] }>('/bookings').then((r) => r.bookings),
-      () => getLocalClientBookings(clientId)
-    );
+  getMyBookings: async (_clientId: string): Promise<Booking[]> => {
+    const res = await api.get<{ bookings: Booking[] }>('/bookings');
+    return res.bookings;
   },
     
-    /** Get a single booking by id (client side) */
+  /** Get a single booking by id (client side) */
   getClientBookingById: async (bookingId: string): Promise<Booking | undefined> => {
-    return withFallback(
-      'getClientBookingById',
-      () =>
-        api
-          .get<{ bookings: Booking[] }>('/bookings')
-          .then((r) => r.bookings.find((b) => b.id === bookingId)),
-      () => getLocalBookingById(bookingId)
-    );
+    const res = await api.get<{ bookings: Booking[] }>('/bookings');
+    return res.bookings.find((b) => b.id === bookingId);
   },
 
   /** Get a single booking by id (provider side) */
   getProviderBookingById: async (bookingId: string): Promise<Booking | undefined> => {
-    return withFallback(
-      'getProviderBookingById',
-      () =>
-        api
-          .get<{ booking: Booking }>(`/provider/bookings/${bookingId}`)
-          .then((r) => r.booking),
-      () => getLocalBookingById(bookingId)
-    );
+    const res = await api.get<{ booking: Booking }>(`/provider/bookings/${bookingId}`);
+    return res.booking;
   },
 
-    /** Clock in to start a consultation (provider only) */
+  /** Clock in to start a consultation (provider only) */
   clockInConsultation: async (
     bookingId: string,
     referenceCode: string,
     expiresAt: string
   ): Promise<Booking> => {
-    return withFallback(
-      'clockInConsultation',
-      () =>
-        api
-          .patch<{ booking: Booking }>(
-            `/provider/bookings/${bookingId}/consultation/clock-in`,
-            { referenceCode, expiresAt }
-          )
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        const now = new Date().toISOString();
-        setBookingOverride(bookingId, {
-          consultationClockIn: now,
-          consultationReferenceCode: referenceCode,
-          consultationReferenceExpiresAt: expiresAt,
-          updatedAt: now,
-        });
-        return {
-          ...b,
-          consultationClockIn: now,
-          consultationReferenceCode: referenceCode,
-          consultationReferenceExpiresAt: expiresAt,
-        };
-      }
+    const res = await api.patch<{ booking: Booking }>(
+      `/provider/bookings/${bookingId}/consultation/clock-in`,
+      { referenceCode, expiresAt }
     );
+    return res.booking;
   },
 
   /** Clock out of a consultation (provider only) */
   clockOutConsultation: async (bookingId: string): Promise<Booking> => {
-    return withFallback(
-      'clockOutConsultation',
-      () =>
-        api
-          .patch<{ booking: Booking }>(
-            `/provider/bookings/${bookingId}/consultation/clock-out`
-          )
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        const now = new Date().toISOString();
-        setBookingOverride(bookingId, {
-          consultationClockOut: now,
-          consultationReferenceCode: undefined,
-          consultationReferenceExpiresAt: undefined,
-          updatedAt: now,
-        });
-        return {
-          ...b,
-          consultationClockOut: now,
-          consultationReferenceCode: undefined,
-          consultationReferenceExpiresAt: undefined,
-        };
-      }
+    const res = await api.patch<{ booking: Booking }>(
+      `/provider/bookings/${bookingId}/consultation/clock-out`
     );
+    return res.booking;
   },
 
   /** Submit consultation findings (provider only) */
@@ -208,58 +69,17 @@ export const bookingService = {
     notes: string,
     photos: string[]
   ): Promise<Booking> => {
-    return withFallback(
-      'submitConsultation',
-      () =>
-        api
-          .patch<{ booking: Booking }>(
-            `/provider/bookings/${bookingId}/consultation/submit`,
-            { notes, photos }
-          )
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        const now = new Date().toISOString();
-        setBookingOverride(bookingId, {
-          status: 'evaluated',
-          siteVisited: true,
-          consultationNotes: notes,
-          consultationPhotos: photos,
-          updatedAt: now,
-        });
-        return {
-          ...b,
-          status: 'evaluated' as const,
-          siteVisited: true,
-          consultationNotes: notes,
-          consultationPhotos: photos,
-        };
-      }
+    const res = await api.patch<{ booking: Booking }>(
+      `/provider/bookings/${bookingId}/consultation/submit`,
+      { notes, photos }
     );
+    return res.booking;
   },
 
-    /** Pay the consultation fee (client only) */
+  /** Pay the consultation fee (client only) */
   payConsultation: async (bookingId: string): Promise<Booking> => {
-    return withFallback(
-      'payConsultation',
-      () =>
-        api
-          .patch<{ booking: Booking }>(`/bookings/${bookingId}/pay-consultation`)
-          .then((r) => r.booking),
-      () => {
-        // Offline: mirror the old behaviour using local overrides.
-        const paidAt = new Date().toISOString();
-        setBookingOverride(bookingId, {
-          status: 'consultation_paid',
-          consultationPaidAt: paidAt,
-          updatedAt: paidAt,
-        });
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        return { ...b, status: 'consultation_paid' as const, consultationPaidAt: paidAt };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/pay-consultation`);
+    return res.booking;
   },
 
   // ==========================================
@@ -267,69 +87,24 @@ export const bookingService = {
   // ==========================================
 
   /** Get all bookings for the current provider */
-  getProviderBookings: async (providerId: string): Promise<Booking[]> => {
-    return withFallback(
-      'getProviderBookings',
-      () =>
-        api
-          .get<{ bookings: Booking[] }>('/provider/bookings')
-          .then((r) => r.bookings),
-      () => getLocalProviderBookings(providerId)
-    );
+  getProviderBookings: async (_providerId: string): Promise<Booking[]> => {
+    const res = await api.get<{ bookings: Booking[] }>('/provider/bookings');
+    return res.bookings;
   },
 
-    // ==========================================
-  // COMPLAINTS & CONFIRM COMPLETE (Phase 8.6)
-  // ==========================================
-
   complainOnBooking: async (bookingId: string, text: string): Promise<Booking> => {
-    return withFallback(
-      'complainOnBooking',
-      () =>
-        api
-          .post<{ booking: Booking }>(`/bookings/${bookingId}/complain`, { text })
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          hasComplaint: true,
-          complaintText: text,
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, hasComplaint: true, complaintText: text };
-      }
-    );
+    const res = await api.post<{ booking: Booking }>(`/bookings/${bookingId}/complain`, { text });
+    return res.booking;
   },
 
   confirmComplete: async (bookingId: string): Promise<Booking> => {
-    return withFallback(
-      'confirmComplete',
-      () =>
-        api
-          .post<{ booking: Booking }>(`/bookings/${bookingId}/confirm-complete`)
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          clientConfirmedComplete: true,
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, clientConfirmedComplete: true };
-      }
-    );
+    const res = await api.post<{ booking: Booking }>(`/bookings/${bookingId}/confirm-complete`);
+    return res.booking;
   },
 
   getProviderComplaints: async (): Promise<Booking[]> => {
-    return withFallback(
-      'getProviderComplaints',
-      () =>
-        api
-          .get<{ complaints: Booking[] }>('/provider/complaints')
-          .then((r) => r.complaints),
-      () => []
-    );
+    const res = await api.get<{ complaints: Booking[] }>('/provider/complaints');
+    return res.complaints;
   },
 
   /** Accept a booking (sets status=accepted + consultationFee) */
@@ -337,25 +112,10 @@ export const bookingService = {
     bookingId: string,
     consultationFee: number
   ): Promise<Booking> => {
-    return withFallback(
-      'acceptBooking',
-      () =>
-        api
-          .patch<{ booking: Booking }>(`/provider/bookings/${bookingId}/accept`, {
-            consultationFee,
-          })
-          .then((r) => r.booking),
-      () => {
-        // Offline: fall back to the existing local override mechanism
-        setBookingOverride(bookingId, {
-          status: 'accepted',
-          consultationFee,
-        });
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        return { ...b, status: 'accepted' as const, consultationFee };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/provider/bookings/${bookingId}/accept`, {
+      consultationFee,
+    });
+    return res.booking;
   },
 
   /** Decline a booking (sets status=declined + declineReason) */
@@ -363,151 +123,42 @@ export const bookingService = {
     bookingId: string,
     reason: string
   ): Promise<Booking> => {
-    return withFallback(
-      'declineBooking',
-      () =>
-        api
-          .patch<{ booking: Booking }>(`/provider/bookings/${bookingId}/decline`, {
-            reason,
-          })
-          .then((r) => r.booking),
-      () => {
-        setBookingOverride(bookingId, {
-          status: 'declined',
-          declineReason: reason,
-        });
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        return { ...b, status: 'declined' as const, declineReason: reason };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/provider/bookings/${bookingId}/decline`, {
+      reason,
+    });
+    return res.booking;
   },
 
-    proposePrice: async (
+  proposePrice: async (
     bookingId: string,
     amount: number,
     note: string
   ): Promise<Booking> => {
-    return withFallback(
-      'proposePrice',
-      () =>
-        api
-          .patch<{ booking: Booking }>(
-            `/provider/bookings/${bookingId}/propose-price`,
-            { amount, note }
-          )
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        const now = new Date().toISOString();
-        setBookingOverride(bookingId, {
-          status: 'price_proposed',
-          finalPrice: amount,
-          pendingCounterParty: 'CLIENT',
-          holdFirm: false,
-          priceHistory: [
-            ...(b.priceHistory ?? []),
-            {
-              stage: 'final_proposed',
-              amount,
-              at: now,
-              byUserId: b.providerId,
-              note: note || undefined,
-            },
-          ],
-          updatedAt: now,
-        });
-        return { ...b, status: 'price_proposed' as const, finalPrice: amount };
-      }
+    const res = await api.patch<{ booking: Booking }>(
+      `/provider/bookings/${bookingId}/propose-price`,
+      { amount, note }
     );
+    return res.booking;
   },
 
   acceptCounter: async (bookingId: string): Promise<Booking> => {
-    return withFallback(
-      'acceptCounter',
-      () =>
-        api
-          .patch<{ booking: Booking }>(
-            `/provider/bookings/${bookingId}/accept-counter`
-          )
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          status: 'price_agreed',
-          pendingCounterParty: undefined,
-          holdFirm: false,
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, status: 'price_agreed' as const };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/provider/bookings/${bookingId}/accept-counter`);
+    return res.booking;
   },
 
   providerHoldFirm: async (bookingId: string): Promise<Booking> => {
-    return withFallback(
-      'providerHoldFirm',
-      () =>
-        api
-          .patch<{ booking: Booking }>(
-            `/provider/bookings/${bookingId}/hold-firm`
-          )
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          holdFirm: true,
-          pendingCounterParty: 'CLIENT',
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, holdFirm: true };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/provider/bookings/${bookingId}/hold-firm`);
+    return res.booking;
   },
 
-    /** Hold firm on the client side (client's last proposal) */
   clientHoldFirm: async (bookingId: string): Promise<Booking> => {
-    return withFallback(
-      'clientHoldFirm',
-      () =>
-        api
-          .patch<{ booking: Booking }>(`/bookings/${bookingId}/hold-firm`)
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          holdFirm: true,
-          pendingCounterParty: 'PROVIDER',
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, holdFirm: true, pendingCounterParty: 'PROVIDER' as const };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/hold-firm`);
+    return res.booking;
   },
 
-    acceptFinalPrice: async (bookingId: string): Promise<Booking> => {
-    return withFallback(
-      'acceptFinalPrice',
-      () =>
-        api
-          .patch<{ booking: Booking }>(`/bookings/${bookingId}/accept-price`)
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          status: 'price_agreed',
-          pendingCounterParty: undefined,
-          holdFirm: false,
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, status: 'price_agreed' as const };
-      }
-    );
+  acceptFinalPrice: async (bookingId: string): Promise<Booking> => {
+    const res = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/accept-price`);
+    return res.booking;
   },
 
   counterPrice: async (
@@ -515,431 +166,150 @@ export const bookingService = {
     amount: number,
     note: string
   ): Promise<Booking> => {
-    return withFallback(
-      'counterPrice',
-      () =>
-        api
-          .patch<{ booking: Booking }>(`/bookings/${bookingId}/counter-price`, {
-            amount,
-            note,
-          })
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          finalPrice: amount,
-          holdFirm: false,
-          pendingCounterParty: 'PROVIDER',
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, finalPrice: amount, pendingCounterParty: 'PROVIDER' as const };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/counter-price`, {
+      amount,
+      note,
+    });
+    return res.booking;
   },
 
   disputePrice: async (
     bookingId: string,
     reason: string
   ): Promise<Booking> => {
-    // Dispute is available on both client and provider routes — we'll call
-    // the client endpoint here; booking.service is shared, so for provider
-    // calls add a second wrapper (providerDisputePrice) if needed.
-    return withFallback(
-      'disputePrice',
-      () =>
-        api
-          .patch<{ booking: Booking }>(`/bookings/${bookingId}/dispute-price`, {
-            reason,
-          })
-          .then((r) => r.booking),
-      () => {
-        const b = getLocalBookingById(bookingId);
-        if (!b) throw new Error('Booking not found in local store');
-        setBookingOverride(bookingId, {
-          status: 'price_disputed',
-          declineReason: reason,
-          updatedAt: new Date().toISOString(),
-        });
-        return { ...b, status: 'price_disputed' as const };
-      }
-    );
+    const res = await api.patch<{ booking: Booking }>(`/bookings/${bookingId}/dispute-price`, {
+      reason,
+    });
+    return res.booking;
   },
 
-    // ==========================================
-  // WORK SESSIONS (Phase 4)
+  // ==========================================
+  // WORK SESSIONS
   // ==========================================
 
-  /** Provider arrives on site — creates session with gate code */
   arriveAtSite: async (
     bookingId: string,
     referenceCode: string,
     expiresAt: string
   ): Promise<WorkSession> => {
-    return withFallback(
-      'arriveAtSite',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/arrive`,
-            { referenceCode, expiresAt }
-          )
-          .then((r) => r.session),
-      () => {
-        throw new Error('Cannot arrive offline — please connect to the internet');
-      }
+    const res = await api.post<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/arrive`,
+      { referenceCode, expiresAt }
     );
+    return res.session;
   },
 
-  /** Get work session (provider view) */
-  getProviderWorkSession: async (
-    bookingId: string
-  ): Promise<WorkSession | null> => {
-    return withFallback(
-      'getProviderWorkSession',
-      () =>
-        api
-          .get<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session`
-          )
-          .then((r) => r.session),
-      () => {
-        // Offline — look up from local store
-        const local = getLocalWorkSessionByBooking(bookingId);
-        return local ?? null;
-      }
-    ).catch(() => null);
+  getProviderWorkSession: async (bookingId: string): Promise<WorkSession | null> => {
+    try {
+      const res = await api.get<{ session: WorkSession }>(`/provider/bookings/${bookingId}/work-session`);
+      return res.session;
+    } catch {
+      return null;
+    }
   },
 
-  /** Get work session (client view) */
-  getClientWorkSession: async (
-    bookingId: string
-  ): Promise<WorkSession | null> => {
-    return withFallback(
-      'getClientWorkSession',
-      () =>
-        api
-          .get<{ session: WorkSession }>(
-            `/bookings/${bookingId}/work-session`
-          )
-          .then((r) => r.session),
-      () => {
-        const local = getLocalWorkSessionByBooking(bookingId);
-        return local ?? null;
-      }
-    ).catch(() => null);
+  getClientWorkSession: async (bookingId: string): Promise<WorkSession | null> => {
+    try {
+      const res = await api.get<{ session: WorkSession }>(`/bookings/${bookingId}/work-session`);
+      return res.session;
+    } catch {
+      return null;
+    }
   },
 
-  /** Client confirms gate access */
   confirmGate: async (bookingId: string): Promise<WorkSession> => {
-    return withFallback(
-      'confirmGate',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/bookings/${bookingId}/work-session/confirm-gate`
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        updateLocalWorkSession(s.id, {
-          gateConfirmedByClient: true,
-          gateConfirmedAt: new Date().toISOString(),
-          status: 'confirmed',
-        });
-        return { ...s, gateConfirmedByClient: true, status: 'confirmed' as const };
-      }
-    );
+    const res = await api.post<{ session: WorkSession }>(`/bookings/${bookingId}/work-session/confirm-gate`);
+    return res.session;
   },
 
-  /** Client denies gate access */
   denyGate: async (bookingId: string): Promise<WorkSession> => {
-    return withFallback(
-      'denyGate',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/bookings/${bookingId}/work-session/deny-gate`
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        updateLocalWorkSession(s.id, {
-          currentReferenceCode: undefined,
-          referenceCodeExpiresAt: undefined,
-        });
-        return { ...s, currentReferenceCode: undefined };
-      }
-    );
+    const res = await api.post<{ session: WorkSession }>(`/bookings/${bookingId}/work-session/deny-gate`);
+    return res.session;
   },
 
-  /** Provider proceeds without client confirmation */
-  proceedAnyway: async (
-    bookingId: string,
-    note: string
-  ): Promise<WorkSession> => {
-    return withFallback(
-      'proceedAnyway',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/proceed-anyway`,
-            { note }
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        updateLocalWorkSession(s.id, { status: 'in_progress' });
-        updateGateEvent(s.id, {
-          status: 'auto_proceeded',
-          resolvedAt: new Date().toISOString(),
-          note,
-        });
-        return { ...s, status: 'in_progress' as const };
-      }
+  proceedAnyway: async (bookingId: string, note: string): Promise<WorkSession> => {
+    const res = await api.post<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/proceed-anyway`,
+      { note }
     );
+    return res.session;
   },
 
-  /** Client retroactively confirms or disputes a gate event */
   retroactiveResponse: async (
     bookingId: string,
     action: 'confirm' | 'dispute'
   ): Promise<WorkSession> => {
-    return withFallback(
-      'retroactiveResponse',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/bookings/${bookingId}/work-session/retroactive`,
-            { action }
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        if (action === 'confirm') {
-          updateLocalWorkSession(s.id, {
-            gateConfirmedByClient: true,
-            gateConfirmedAt: new Date().toISOString(),
-          });
-          updateGateEvent(s.id, { status: 'confirmed_late', resolvedAt: new Date().toISOString() });
-        } else {
-          updateGateEvent(s.id, { status: 'contested', resolvedAt: new Date().toISOString() });
-        }
-        return s;
-      }
+    const res = await api.post<{ session: WorkSession }>(
+      `/bookings/${bookingId}/work-session/retroactive`,
+      { action }
     );
+    return res.session;
   },
 
-  /** Provider clocks in */
   clockIn: async (bookingId: string): Promise<WorkSession> => {
-    return withFallback(
-      'clockIn',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/clock-in`
-          )
-          .then((r) => r.session),
-      () => {
-        throw new Error('Cannot clock in offline — please connect to the internet');
-      }
-    );
+    const res = await api.post<{ session: WorkSession }>(`/provider/bookings/${bookingId}/work-session/clock-in`);
+    return res.session;
   },
 
-  /** Provider clocks out */
   clockOut: async (bookingId: string): Promise<WorkSession> => {
-    return withFallback(
-      'clockOut',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/clock-out`
-          )
-          .then((r) => r.session),
-      () => {
-        throw new Error('Cannot clock out offline — please connect to the internet');
-      }
-    );
+    const res = await api.post<{ session: WorkSession }>(`/provider/bookings/${bookingId}/work-session/clock-out`);
+    return res.session;
   },
 
-  /** Provider marks session complete */
   completeSession: async (bookingId: string): Promise<WorkSession> => {
-    return withFallback(
-      'completeSession',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/complete`
-          )
-          .then((r) => r.session),
-      () => {
-        throw new Error('Cannot complete offline — please connect to the internet');
-      }
-    );
+    const res = await api.post<{ session: WorkSession }>(`/provider/bookings/${bookingId}/work-session/complete`);
+    return res.session;
   },
 
-    reopenSession: async (bookingId: string): Promise<WorkSession> => {
-    return withFallback(
-      'reopenSession',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/reopen`
-          )
-          .then((r) => r.session),
-      () => {
-        throw new Error('Cannot reopen offline — please connect to the internet');
-      }
-    );
+  reopenSession: async (bookingId: string): Promise<WorkSession> => {
+    const res = await api.post<{ session: WorkSession }>(`/provider/bookings/${bookingId}/work-session/reopen`);
+    return res.session;
   },
 
-  /** Set full beforePhotos array (PUT — replaces) */
-  setBeforePhotos: async (
-    bookingId: string,
-    photos: WorkPhoto[]
-  ): Promise<WorkSession> => {
-    return withFallback(
-      'setBeforePhotos',
-      () =>
-        api
-          .put<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/before-photos`,
-            { photos }
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        updateLocalWorkSession(s.id, { beforePhotos: photos });
-        return { ...s, beforePhotos: photos };
-      }
+  setBeforePhotos: async (bookingId: string, photos: WorkPhoto[]): Promise<WorkSession> => {
+    const res = await api.put<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/before-photos`,
+      { photos }
     );
+    return res.session;
   },
 
-  /** Delete one before photo */
-  deleteBeforePhoto: async (
-    bookingId: string,
-    photoId: string
-  ): Promise<WorkSession> => {
-    return withFallback(
-      'deleteBeforePhoto',
-      () =>
-        api
-          .delete<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/before-photos/${photoId}`
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        const next = s.beforePhotos.filter((p) => p.id !== photoId);
-        updateLocalWorkSession(s.id, { beforePhotos: next });
-        return { ...s, beforePhotos: next };
-      }
+  deleteBeforePhoto: async (bookingId: string, photoId: string): Promise<WorkSession> => {
+    const res = await api.delete<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/before-photos/${photoId}`
     );
+    return res.session;
   },
 
-  /** Set full finalPhotos array (PUT — replaces) */
-  setFinalPhotos: async (
-    bookingId: string,
-    photos: WorkPhoto[]
-  ): Promise<WorkSession> => {
-    return withFallback(
-      'setFinalPhotos',
-      () =>
-        api
-          .put<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/final-photos`,
-            { photos }
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        updateLocalWorkSession(s.id, { finalPhotos: photos });
-        return { ...s, finalPhotos: photos };
-      }
+  setFinalPhotos: async (bookingId: string, photos: WorkPhoto[]): Promise<WorkSession> => {
+    const res = await api.put<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/final-photos`,
+      { photos }
     );
+    return res.session;
   },
 
-  /** Delete one final photo */
-  deleteFinalPhoto: async (
-    bookingId: string,
-    photoId: string
-  ): Promise<WorkSession> => {
-    return withFallback(
-      'deleteFinalPhoto',
-      () =>
-        api
-          .delete<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/final-photos/${photoId}`
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        const next = s.finalPhotos.filter((p) => p.id !== photoId);
-        updateLocalWorkSession(s.id, { finalPhotos: next });
-        return { ...s, finalPhotos: next };
-      }
+  deleteFinalPhoto: async (bookingId: string, photoId: string): Promise<WorkSession> => {
+    const res = await api.delete<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/final-photos/${photoId}`
     );
+    return res.session;
   },
 
-  /** Upsert progress stage */
-  upsertProgressStage: async (
-    bookingId: string,
-    stage: ProgressStage
-  ): Promise<WorkSession> => {
-    return withFallback(
-      'upsertProgressStage',
-      () =>
-        api
-          .post<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/progress-stages`,
-            { stage }
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        const existing = s.progressStages.some((st) => st.id === stage.id);
-        const next = existing
-          ? s.progressStages.map((st) => (st.id === stage.id ? stage : st))
-          : [...s.progressStages, stage];
-        updateLocalWorkSession(s.id, { progressStages: next });
-        return { ...s, progressStages: next };
-      }
+  upsertProgressStage: async (bookingId: string, stage: ProgressStage): Promise<WorkSession> => {
+    const res = await api.post<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/progress-stages`,
+      { stage }
     );
+    return res.session;
   },
 
-  /** Delete progress stage */
-  deleteProgressStage: async (
-    bookingId: string,
-    stageId: string
-  ): Promise<WorkSession> => {
-    return withFallback(
-      'deleteProgressStage',
-      () =>
-        api
-          .delete<{ session: WorkSession }>(
-            `/provider/bookings/${bookingId}/work-session/progress-stages/${stageId}`
-          )
-          .then((r) => r.session),
-      () => {
-        const s = getLocalWorkSessionByBooking(bookingId);
-        if (!s) throw new Error('Session not found');
-        const next = s.progressStages.filter((st) => st.id !== stageId);
-        updateLocalWorkSession(s.id, { progressStages: next });
-        return { ...s, progressStages: next };
-      }
+  deleteProgressStage: async (bookingId: string, stageId: string): Promise<WorkSession> => {
+    const res = await api.delete<{ session: WorkSession }>(
+      `/provider/bookings/${bookingId}/work-session/progress-stages/${stageId}`
     );
+    return res.session;
   },  
 };
-
-
 
 export default bookingService;

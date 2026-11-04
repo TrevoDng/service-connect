@@ -1,37 +1,30 @@
 // src/hooks/useChatThreads.ts
 //
 // ============================================
-// useChatThreads — live thread list for a user
+// useChatThreads — thread list for a viewer
 // ============================================
 //
-// Reads the user's thread list from allChat.ts and subscribes to chat
-// changes so the list stays fresh across tabs.
+// Reads from the backend (chat.service) for real users, and falls back
+// to localStorage for demo users when the backend is unreachable.
 //
-// Deliberately does NOT mark anything read — opening the sidebar should
-// not clear unread badges. Read transitions happen in useChatThread
-// when the user actually opens a conversation.
+// Polls every 10s while the tab is visible; refreshes on focus.
 //
 // Zero-data safe:
-//   - userId === null          → empty list, no subscription
-//   - observerMode === true    → returns ALL threads, unreadCount: 0
-//   - no threads in storage    → empty list, no crash
+//   - userId === null + not observer  → empty list, no fetch
+//   - observerMode === true            → hits /admin/chat/threads
+//   - backend down                     → falls back to local demo threads
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ChatThread } from '../types';
-import { getThreadsForUser, getAllThreads } from '../utils/allChat';
-import { subscribeToChat } from '../utils/chatApi';
+import { chatService } from '../services/chat.service';
 
 export interface UseChatThreadsOptions {
-  /** Support/observer mode — returns every thread, ignores userId. */
   observerMode?: boolean;
 }
 
 export interface UseChatThreadsResult {
-  /** Threads sorted newest activity first. Empty array while loading. */
   threads: ChatThread[];
-  /** True while the initial load is in flight. */
   loading: boolean;
-  /** Force a re-read from storage. Rarely needed — subscription handles this. */
   reload: () => void;
 }
 
@@ -40,42 +33,82 @@ export const useChatThreads = (
   options: UseChatThreadsOptions = {}
 ): UseChatThreadsResult => {
   const { observerMode = false } = options;
+
   const [threads, setThreads] = useState<ChatThread[]>([]);
   const [loading, setLoading] = useState<boolean>(() =>
     observerMode ? true : !!userId
   );
+  const [refreshTick, setRefreshTick] = useState(0);
 
   // ------------------------------------------
-  // READ
+  // LOAD
   // ------------------------------------------
-  const reload = useCallback(() => {
-    if (observerMode) {
-      setThreads(getAllThreads());
-      setLoading(false);
-      return;
-    }
-    if (!userId) {
-      setThreads([]);
-      setLoading(false);
-      return;
-    }
-    setThreads(getThreadsForUser(userId));
-    setLoading(false);
-  }, [userId, observerMode]);
-
-  // Load on mount + whenever userId or observer mode changes
   useEffect(() => {
-    setLoading(true);
-    reload();
-  }, [reload]);
+    let cancelled = false;
 
-  // Subscribe to chat changes — re-read whenever anyone (any tab) writes
+    (async () => {
+      // Not logged in and not observing → no-op
+      if (!observerMode && !userId) {
+        setThreads([]);
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const data = observerMode
+          ? await chatService.getAllThreadsForStaff()
+          : await chatService.getMyThreads();
+        if (!cancelled) {
+          setThreads(data);
+          setLoading(false);
+        }
+       } catch (err) {
+        console.warn('[chat] backend threads fetch failed', err);
+        if (!cancelled) {
+          setThreads([]);
+          setLoading(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, observerMode, refreshTick]);
+
+  // ------------------------------------------
+  // POLL every 10s while visible
+  // ------------------------------------------
   useEffect(() => {
-    const unsubscribe = subscribeToChat(() => {
-      reload();
-    });
-    return unsubscribe;
-  }, [reload]);
+    if (!observerMode && !userId) return;
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        setRefreshTick((t) => t + 1);
+      }
+    }, 10_000);
+    return () => window.clearInterval(id);
+  }, [observerMode, userId]);
+
+  // ------------------------------------------
+  // REFRESH ON FOCUS
+  // ------------------------------------------
+  useEffect(() => {
+    if (!observerMode && !userId) return;
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') {
+        setRefreshTick((t) => t + 1);
+      }
+    };
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [observerMode, userId]);
+
+  const reload = useCallback(() => setRefreshTick((t) => t + 1), []);
 
   return useMemo(
     () => ({ threads, loading, reload }),

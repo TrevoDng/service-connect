@@ -51,16 +51,19 @@ useEffect(() => {
   let cancelled = false;
   (async () => {
     if (!id) { setLoading(false); return; }
-    // Only show the loading spinner on the very first fetch.
-    // Polling refreshes must NOT unmount the panel or the user's
-    // in-progress upload / form state is lost.
     if (!hasLoadedRef.current) setLoading(true);
     const b = await bookingService.getProviderBookingById(id);
     if (cancelled) return;
     setBooking(b);
     if (b) {
       const s = await bookingService.getProviderWorkSession(b.id);
-      if (!cancelled) setSession(s ?? undefined);
+      if (!cancelled) {
+        // 👇 ONLY update session if the JSON actually changed to prevent UI flicker
+        setSession((prev) => {
+          if (JSON.stringify(prev) === JSON.stringify(s)) return prev;
+          return s ?? undefined;
+        });
+      }
     }
     if (!cancelled) {
       setLoading(false);
@@ -344,26 +347,44 @@ const handleDeleteFinalPhoto = async (_sessionId: string, photoId: string) => {
 
         {/* State 2 — Code generated, not yet confirmed */}
         {session && !isConfirmed && session.currentReferenceCode && (
-  <section className={styles.card}>
-    <div className={styles.iconCircle}>
-      <FontAwesomeIcon icon={faKey} />
-    </div>
-    <h2 className={styles.cardTitle}>Share this code at the gate</h2>
-    <p className={styles.cardText}>
-      Show this code to {booking.clientDisplayName}. They'll confirm it
-      in their dashboard. Once confirmed, you'll be able to clock in.
-    </p>
+        <section className={styles.card}>
+          <div className={styles.iconCircle}>
+            <FontAwesomeIcon icon={faKey} />
+          </div>
+          <h2 className={styles.cardTitle}>Share this code at the gate</h2>
+          <p className={styles.cardText}>
+            Show this code to {booking.clientDisplayName}. They'll confirm it
+            in their dashboard. Once confirmed, you'll be able to clock in.
+          </p>
 
-    <div className={styles.codeBox}>
-      <span className={styles.codeLabel}>Reference code</span>
-      <span className={styles.codeValue}>
-        {session.currentReferenceCode}
-      </span>
-      <div className={styles.codeExpiry}>
-        <span>Expires in</span>
-        <CountdownTimer expiresAt={session.referenceCodeExpiresAt} />
-      </div>
-    </div>
+              <div className={styles.codeBox}>
+            <span className={styles.codeLabel}>Reference code</span>
+            <span className={styles.codeValue}>
+              {session.currentReferenceCode}
+            </span>
+            <div className={styles.codeExpiry}>
+              <span>Expires in</span>
+              <CountdownTimer expiresAt={session.referenceCodeExpiresAt} />
+            </div>
+          </div>
+
+          {/* NEW: Regenerate Code Button */}
+          <button
+            type="button"
+            className={styles.proceedBtn}
+            onClick={handleArriveAndGenerateCode}
+            style={{ 
+              marginTop: '8px', 
+              borderColor: '#667eea', 
+              color: '#667eea',
+              backgroundColor: 'rgba(102, 126, 234, 0.05)',
+              alignSelf: 'center',
+              width: '100%'
+            }}
+          >
+            <FontAwesomeIcon icon={faKey} style={{ marginRight: '8px' }} /> 
+            Regenerate Access Code
+          </button>
 
     <div className={styles.waitingBox}>
       <span className={styles.pulseDot} />

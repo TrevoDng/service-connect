@@ -5,7 +5,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
 import { useNotifications } from '../account/context/NotificationContext';
 import { useTheme } from '../styles/context/ThemeContext';
-import { getBookingById } from '../utils/allBookings';
 import {
   generateClockInCode,
   clockInCodeExpiry,
@@ -163,7 +162,7 @@ export const ConsultationUpload: React.FC = () => {
         })
       );
 
-      navigate('/provider/dashboard');
+      navigate(`/bookings/${booking.id}/outcomes`);
     } catch (err: any) {
       console.error('Failed to submit consultation:', err);
       setError(err?.message || 'Failed to submit. Please try again.');
@@ -320,7 +319,12 @@ export const ConsultationUpload: React.FC = () => {
 
             {remaining > 0 && (
               <div className={styles.uploadRow}>
-                <PhotoUploadButton
+                <PhotoUploadButton 
+                  uploadContext={{
+                  entityType: 'bookings',
+                  entityId: booking.id, // <-- Make sure this matches your variable name (e.g., booking.id)
+                  category: 'consultation',
+                }}
                   onUploaded={handlePhotoUpload}
                   maxFiles={remaining}
                   label={photos.length === 0 ? 'Add photos' : 'Add more'}

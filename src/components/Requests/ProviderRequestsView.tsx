@@ -3,11 +3,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { Booking, Notification } from '../../types';
-import {
-  getBookingById,
-} from '../../utils/allBookings';
-import { getLocalWorkSessions } from '../../utils/localWorkSessions';
-import { setBookingOverride } from '../../utils/localBookingOverrides';
 import { useNotifications } from '../../account/context/NotificationContext';
 import {
   notifyPriceProposed,
@@ -143,21 +138,6 @@ useEffect(() => {
 );
 
   // ------------------------------------------
-  // Resumable work sessions (Step 13.3)
-  // ------------------------------------------
-  const resumableSessions = useMemo(
-    () =>
-      getLocalWorkSessions().filter((s) => {
-        if (s.providerId !== providerId) return false;
-        const b = getBookingById(s.bookingId);
-        if (!b) return false;
-        return b.status === 'price_agreed' || b.status === 'in_progress';
-      }),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [refreshTick]
-  );
-
-  // ------------------------------------------
   // Notification helpers
   // ------------------------------------------
   const notifyClient = (notification: Notification) => {
@@ -174,12 +154,7 @@ useEffect(() => {
     try {
       await bookingService.acceptBooking(booking.id, fee);
     } catch (err) {
-      console.warn('[accept] backend failed, using local override', err);
-      setBookingOverride(booking.id, {
-        status: 'accepted',
-        consultationFee: fee,
-        updatedAt: now,
-      });
+      console.warn('[accept] backend failed', err);
     }
 
     // Optimistic update so the UI doesn't flicker while the effect refetches
@@ -197,8 +172,8 @@ useEffect(() => {
       userId: booking.clientId,
       type: 'booking_accepted',
       priority: 'high',
-      title: 'Request accepted',
-      message: `${booking.providerDisplayName} accepted your request for ${booking.serviceTitle}. Pay the consultation fee of R${fee} to schedule the site visit.`,
+      title: 'Booking accepted',
+      message: `${booking.providerDisplayName} accepted your booking for ${booking.serviceTitle}. Pay the consultation fee of R${fee} to schedule the site visit.`,
       linkTo: '/client/dashboard?tab=requests',
       actorId: booking.providerId,
       actorDisplayName: booking.providerDisplayName,
@@ -224,12 +199,7 @@ useEffect(() => {
     try {
       await bookingService.declineBooking(booking.id, trimmed);
     } catch (err) {
-      console.warn('[decline] backend failed, using local override', err);
-      setBookingOverride(booking.id, {
-        status: 'declined',
-        declineReason: trimmed,
-        updatedAt: now,
-      });
+      console.warn('[decline] backend failed', err);
     }
 
     // Optimistic update
@@ -247,8 +217,8 @@ useEffect(() => {
       userId: booking.clientId,
       type: 'booking_declined',
       priority: 'normal',
-      title: 'Request declined',
-      message: `${booking.providerDisplayName} declined your request for ${booking.serviceTitle}. Reason: ${trimmed}`,
+      title: 'Booking declined',
+      message: `${booking.providerDisplayName} declined your booking for ${booking.serviceTitle}. Reason: ${trimmed}`,
       linkTo: '/client/dashboard?tab=requests',
       actorId: booking.providerId,
       actorDisplayName: booking.providerDisplayName,
@@ -367,63 +337,12 @@ useEffect(() => {
   // Render
   // ------------------------------------------
 
-  // Resume work session banner
-  const renderResumeSection = () => {
-    if (resumableSessions.length === 0) return null;
-
-    return (
-      <div className={styles.resumeSection}>
-        {resumableSessions.map((session) => {
-          const booking = getBookingById(session.bookingId);
-          if (!booking) return null;
-          const gateConfirmed = session.gateConfirmedByClient === true;
-
-          return (
-            <button
-              key={session.id}
-              type="button"
-              className={styles.resumeBanner}
-              onClick={() =>
-                navigate(`/provider/bookings/${booking.id}/start-work`)
-              }
-            >
-              <div className={styles.resumeIcon}>
-                <FontAwesomeIcon icon={faHardHat} />
-              </div>
-              <div className={styles.resumeBody}>
-                <span className={styles.resumeTitle}>
-                  Continue work session
-                </span>
-                <span className={styles.resumeMeta}>
-                  {booking.serviceTitle} · {booking.clientDisplayName}
-                </span>
-                <span
-                  className={`${styles.resumeStatus} ${
-                    gateConfirmed ? styles.resumeReady : styles.resumeWaiting
-                  }`}
-                >
-                  {gateConfirmed
-                    ? 'Cleared to clock in'
-                    : 'Waiting for client to confirm your code'}
-                </span>
-              </div>
-              <FontAwesomeIcon
-                icon={faArrowRight}
-                className={styles.resumeArrow}
-              />
-            </button>
-          );
-        })}
-      </div>
-    );
-  };
-
   return (
     <div className={styles.view}>
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <h2>Requests</h2>
+          <h2>Bookings</h2>
           <p className={styles.subtitle}>
             Incoming jobs and past bookings from clients.
           </p>
@@ -433,16 +352,13 @@ useEffect(() => {
           <FontAwesomeIcon icon={faSearch} />
           <input
             type="text"
-            placeholder="Search requests..."
+            placeholder="Search bookings..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className={styles.searchInput}
           />
         </div>
       </div>
-
-      {/* Resume work session banner */}
-      {renderResumeSection()}
 
       {/* Tabs */}
       <div className={styles.tabs}>
@@ -490,16 +406,16 @@ useEffect(() => {
               : '❌'}
           </span>
           <h3>
-            {activeTab === 'new' ? 'No new requests'
-              : activeTab === 'accepted' ? 'No accepted requests'
+            {activeTab === 'new' ? 'No new bookings'
+              : activeTab === 'accepted' ? 'No accepted bookings'
               : activeTab === 'payed' ? 'No paid consultations'
-              : 'No declined requests'}
+              : 'No declined bookings'}
           </h3>
           <p>
-            {activeTab === 'new' ? 'New requests from clients will appear here.'
-              : activeTab === 'accepted' ? 'Requests you accept will appear here while waiting for client payment.'
+            {activeTab === 'new' ? 'New bookings from clients will appear here.'
+              : activeTab === 'accepted' ? 'Bookings you accept will appear here while waiting for client payment.'
               : activeTab === 'payed' ? 'Consultations where the client has paid will appear here.'
-              : 'Requests you declined will appear here.'}
+              : 'Bookings you declined will appear here.'}
           </p>
           <button
             type="button"

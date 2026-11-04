@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
-import { resolveUserId } from '../account/utils/resolveUserId';
 import { serviceService } from '../services/service.service';
 import type { Service } from '../types/service.types';
 import { BookingRequestForm } from '../components/Requests';
@@ -25,10 +24,6 @@ export const ServiceDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (id) fetchService(id);
-  }, [id]);
-
   const fetchService = async (serviceId: string) => {
     try {
       const data = await serviceService.getServiceById(serviceId);
@@ -39,6 +34,12 @@ export const ServiceDetails: React.FC = () => {
       setLoading(false);
     }
   };
+  
+  useEffect(() => {
+    if (id) fetchService(id);
+  }, [id]);
+
+  
 
   const isClient = user?.role === 'CLIENT';
   const clientDisplayName = user
@@ -168,7 +169,7 @@ export const ServiceDetails: React.FC = () => {
     			serviceCategory={service.category}
     			providerId={service.provider_id || 'p-001'}
     			providerDisplayName={service.provider_name || 'Provider'}
-    			clientId={user ? resolveUserId(user) : 'c-001'}
+    			clientId={user ? user.id : '' }
     			clientDisplayName={clientDisplayName}
     			onSuccess={() => navigate('/client/dashboard')}
                    />

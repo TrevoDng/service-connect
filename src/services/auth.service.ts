@@ -22,8 +22,12 @@ export const authService = {
     return api.post('/auth/logout', {});
   },
 
-  verifyEmail: async (code: string) => {
-    return api.post('/auth/verify-email', { code });
+  validateSecretCode: async (secretCode: string): Promise<{ isValid: boolean; assignedEmail: string; expireAt: string }> => {
+    return api.post('/auth/employee/validate-registration-code', { secretCode });
+  },
+
+  verifyEmail: async (token: string): Promise<{ verified: boolean; message: string; role: string }> => {
+    return api.get(`/auth/verify-email?token=${token}`);
   },
 
   resendVerification: async (email: string) => {

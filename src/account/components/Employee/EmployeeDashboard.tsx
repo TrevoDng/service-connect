@@ -1,5 +1,5 @@
 // src/account/components/Employee/EmployeeDashboard.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
@@ -8,84 +8,27 @@ import {
   faUsers,
   faUserTie,
   faClock,
-  faCalendarCheck,
   faSearch,
   faCheckCircle,
-  faTimesCircle,
-  faEye,
   faClipboardList,
-  faUserPlus,
-  faChartLine,
-  faCog,
   faComments,
   faGavel,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
 import { DisputesView } from '../../../components/Disputes';
-import { getOpenDisputeCount } from '../../../utils/allDisputes';
 import { MessagesView } from '../../../components/Chat';
 import styles from './EmployeeDashboard.module.scss';
+import { disputeService } from '../../../services/dispute.service';
+import { adminService, type ApiUser } from '../../../services/admin.service';
+import { StaffBookingsView } from '../../../components/Bookings';
+import { StaffUserDetailPanel } from '../../../components/Bookings';
 
 // ============================================
 // TYPES
 // ============================================
 
-interface Client {
-  id: string;
-  name: string;
-  email: string;
-  status: 'active' | 'pending' | 'inactive';
-  joinDate: string;
-  bookings: number;
-}
-
-interface ServiceProvider {
-  id: string;
-  name: string;
-  email: string;
-  category: string;
-  status: 'active' | 'pending' | 'inactive';
-  rating: number;
-  services: number;
-}
-
-interface Booking {
-  id: string;
-  clientName: string;
-  providerName: string;
-  serviceTitle: string;
-  date: string;
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
-  price: number;
-}
-
 type EmployeeTab = 'clients' | 'providers' | 'bookings' | 'disputes' | 'messages';
-
-// ============================================
-// DEMO DATA
-// ============================================
-
-const demoClients: Client[] = [
-  { id: '1', name: 'John Doe', email: 'john@example.com', status: 'active', joinDate: '2026-01-15T10:00:00', bookings: 5 },
-  { id: '2', name: 'Jane Smith', email: 'jane@example.com', status: 'active', joinDate: '2026-02-20T14:00:00', bookings: 3 },
-  { id: '3', name: 'Mike Johnson', email: 'mike@example.com', status: 'pending', joinDate: '2026-03-10T09:00:00', bookings: 0 },
-  { id: '4', name: 'Sarah Wilson', email: 'sarah@example.com', status: 'inactive', joinDate: '2026-01-05T08:00:00', bookings: 8 },
-];
-
-const demoProviders: ServiceProvider[] = [
-  { id: '1', name: 'Tom Brown', email: 'tom@provider.com', category: 'Plumbing', status: 'active', rating: 4.8, services: 12 },
-  { id: '2', name: 'Emily Davis', email: 'emily@provider.com', category: 'Electrical', status: 'active', rating: 4.9, services: 8 },
-  { id: '3', name: 'Chris Miller', email: 'chris@provider.com', category: 'Gardening', status: 'pending', rating: 4.5, services: 0 },
-  { id: '4', name: 'Lisa Anderson', email: 'lisa@provider.com', category: 'Cleaning', status: 'active', rating: 4.7, services: 15 },
-];
-
-const demoBookings: Booking[] = [
-  { id: '1', clientName: 'John Doe', providerName: 'Tom Brown', serviceTitle: 'Plumbing Repair', date: '2026-09-10T14:00:00', status: 'pending', price: 350 },
-  { id: '2', clientName: 'Jane Smith', providerName: 'Emily Davis', serviceTitle: 'Electrical Installation', date: '2026-09-08T09:00:00', status: 'confirmed', price: 450 },
-  { id: '3', clientName: 'Mike Johnson', providerName: 'Lisa Anderson', serviceTitle: 'Garden Maintenance', date: '2026-09-05T10:00:00', status: 'completed', price: 250 },
-  { id: '4', clientName: 'Sarah Wilson', providerName: 'Tom Brown', serviceTitle: 'Renovation Project', date: '2026-09-01T08:00:00', status: 'cancelled', price: 800 },
-];
 
 // ============================================
 // EMPLOYEE THEME CONSTANTS
@@ -101,33 +44,76 @@ const EMPLOYEE_ROLE_BG = 'rgba(16, 185, 129, 0.1)';
 // COMPONENT
 // ============================================
 
-interface EmployeeDashboardProps {
-  // Props can be added later
-}
-
-export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
+export const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const { theme } = useTheme();
 
   const [activeTab, setActiveTab] = useState<EmployeeTab>('clients');
   const [loading, setLoading] = useState(true);
-  const [clients, setClients] = useState<Client[]>([]);
-  const [providers, setProviders] = useState<ServiceProvider[]>([]);
-  const [bookings, setBookings] = useState<Booking[]>([]);
+  const [users, setUsers] = useState<ApiUser[]>([]);
+  const [openDisputeCount, setOpenDisputeCount] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedUserId(null);
+  }, [activeTab]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [allUsers, disputes] = await Promise.all([
+          adminService.getAllUsers(),
+          disputeService.getMyDisputes(),
+        ]);
+        setUsers(allUsers);
+        setOpenDisputeCount(
+          disputes.filter(
+            (d) => d.status === 'open' || d.status === 'awaiting_info'
+          ).length
+        );
+      } catch (error) {
+        console.error('Failed to fetch employee data', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  const clients = useMemo(
+    () => users.filter((u) => u.role === 'CLIENT'),
+    [users]
+  );
+  const providers = useMemo(
+    () => users.filter((u) => u.role === 'PROVIDER'),
+    [users]
+  );
 
   // ------------------------------------------
-  // Load demo data
+  // Search filtering
   // ------------------------------------------
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setClients(demoClients);
-      setProviders(demoProviders);
-      setBookings(demoBookings);
-      setLoading(false);
-    }, 500);
-    return () => clearTimeout(timer);
-  }, []);
+  const filteredClients = useMemo(() => {
+    if (!searchQuery.trim()) return clients;
+    const q = searchQuery.toLowerCase();
+    return clients.filter(
+      (u) =>
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+    );
+  }, [clients, searchQuery]);
+
+  const filteredProviders = useMemo(() => {
+    if (!searchQuery.trim()) return providers;
+    const q = searchQuery.toLowerCase();
+    return providers.filter(
+      (u) =>
+        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+        u.email.toLowerCase().includes(q)
+    );
+  }, [providers, searchQuery]);
 
   // ------------------------------------------
   // Actions
@@ -149,80 +135,84 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
     });
   };
 
-  // ------------------------------------------
-  // Stats
-  // ------------------------------------------
-  const pendingCount = [...clients, ...providers].filter(
-    (item) => item.status === 'pending'
-  ).length;
-
-  const stats = [
-    { key: 'clients', label: 'Total Clients', value: clients.length, icon: faUsers, className: styles.statClients },
-    { key: 'providers', label: 'Service Providers', value: providers.length, icon: faUserTie, className: styles.statProviders },
-    { key: 'pending', label: 'Pending Approvals', value: pendingCount, icon: faClock, className: styles.statPending },
-    { key: 'bookings', label: 'Total Bookings', value: bookings.length, icon: faCalendarCheck, className: styles.statBookings },
-  ];
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-ZA', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   // ------------------------------------------
-  // Helpers
+  // Status helpers (aligned with backend User.status enum)
   // ------------------------------------------
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'active':
         return styles.statusActive;
-      case 'pending':
+      case 'pending_email':
+      case 'email_verified':
+      case 'pending_approval':
         return styles.statusPending;
-      case 'inactive':
+      case 'rejected':
+      case 'deactivated':
         return styles.statusInactive;
-      case 'completed':
-        return styles.statusCompleted;
       default:
-        return '';
+        return styles.statusInactive;
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getStatusLabel = (status: string) => {
     switch (status) {
       case 'active':
-      case 'completed':
-        return <FontAwesomeIcon icon={faCheckCircle} />;
-      case 'pending':
-        return <FontAwesomeIcon icon={faClock} />;
-      case 'inactive':
-      case 'cancelled':
-        return <FontAwesomeIcon icon={faTimesCircle} />;
+        return 'Active';
+      case 'pending_email':
+        return 'Pending email';
+      case 'email_verified':
+        return 'Email verified';
+      case 'pending_approval':
+        return 'Pending approval';
+      case 'rejected':
+        return 'Rejected';
+      case 'deactivated':
+        return 'Deactivated';
       default:
-        return null;
+        return status;
     }
   };
 
-  const getContentTitle = () => {
-    switch (activeTab) {
-      case 'clients':
-        return 'Client Management';
-      case 'providers':
-        return 'Service Provider Management';
-      case 'bookings':
-        return 'Booking Overview';
-      default:
-        return 'Dashboard';
-    }
-  };
+  const getStatusBadge = (status: string) => (
+    <span className={`${styles.statusBadge} ${getStatusClass(status)}`}>
+      {getStatusLabel(status)}
+    </span>
+  );
 
-  const getEmptyMessage = () => {
-    switch (activeTab) {
-      case 'clients':
-        return { title: 'No clients found', message: 'There are no clients registered yet.' };
-      case 'providers':
-        return { title: 'No service providers found', message: 'There are no service providers registered yet.' };
-      case 'bookings':
-        return { title: 'No bookings found', message: 'There are no bookings to display at this time.' };
-      default:
-        return { title: 'No data found', message: 'Nothing to display here.' };
-    }
-  };
+  // ------------------------------------------
+  // Stats
+  // ------------------------------------------
+  const pendingCount = useMemo(
+    () =>
+      [...clients, ...providers].filter(
+        (u) => u.status === 'pending_approval'
+      ).length,
+    [clients, providers]
+  );
 
-  const emptyMessage = getEmptyMessage();
+  const activeCount = useMemo(
+    () =>
+      [...clients, ...providers].filter((u) => u.status === 'active').length,
+    [clients, providers]
+  );
+
+  const stats = [
+    { key: 'clients', label: 'Total Clients', value: clients.length, icon: faUsers, className: styles.statClients },
+    { key: 'providers', label: 'Service Providers', value: providers.length, icon: faUserTie, className: styles.statProviders },
+    { key: 'pending', label: 'Pending Accounts', value: pendingCount, icon: faClock, className: styles.statPending },
+    { key: 'active', label: 'Active Users', value: activeCount, icon: faCheckCircle, className: styles.statBookings },
+  ];
 
   // ------------------------------------------
   // Sidebar nav items
@@ -230,62 +220,161 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
   const navItems: SidebarNavItem[] = [
     { key: 'clients', label: 'Clients', icon: faUsers, badge: clients.length },
     { key: 'providers', label: 'Service Providers', icon: faUserTie, badge: providers.length },
-    { key: 'bookings', label: 'Bookings', icon: faClipboardList, badge: bookings.length },
-    {
-      key: 'disputes',
-      label: 'Disputes',
-      icon: faGavel,
-      badge: getOpenDisputeCount() || undefined,
-    },
-    {
-  key: 'messages',
-  label: 'Messages',
-  icon: faComments,
-},
+    { key: 'bookings', label: 'Bookings', icon: faClipboardList },
+    { key: 'disputes', label: 'Disputes', icon: faGavel, badge: openDisputeCount || undefined },
+    { key: 'messages', label: 'Messages', icon: faComments },
   ];
 
-  // ============================================
-  // DISPUTES VIEW — short circuit
-  // ============================================
-  // When the user is on the disputes tab, we skip the stats/quick-actions
-  // wrapper and render only the DisputesView. This keeps the layout clean
-  // and avoids cramming disputes into the tab-content conditional chain.
-
-  const renderMainContent = () => {
-    if (activeTab === 'messages') {
-      return (
-         <div className={styles.mainContent}>
-           <MessagesView viewerRole="CLIENT" observerMode />
-         </div>
-       );
-      }
-
-    if (activeTab === 'disputes') {
-  return (
-    <div className={styles.mainContent}>
-      <DisputesView viewerRole="EMPLOYEE" />
+  // ------------------------------------------
+  // Card renderer (client + provider share the same shape)
+  // ------------------------------------------
+  const renderUserCard = (u: ApiUser) => (
+    <div
+      key={u.id}
+      className={styles.activityCard}
+      onClick={() => setSelectedUserId(u.id)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          setSelectedUserId(u.id);
+        }
+      }}
+      style={{ cursor: 'pointer' }}
+    >
+      <div className={styles.activityHeader}>
+        <div className={styles.activityTitle}>
+          <h4>
+            {u.firstName} {u.lastName}
+          </h4>
+          {getStatusBadge(u.status)}
+        </div>
+      </div>
+      <div className={styles.activityDetails}>
+        <div className={styles.activityInfo}>
+          <span className={styles.infoLabel}>Email:</span>
+          <span className={styles.infoValue}>{u.email}</span>
+        </div>
+        {u.phone && (
+          <div className={styles.activityInfo}>
+            <span className={styles.infoLabel}>Phone:</span>
+            <span className={styles.infoValue}>{u.phone}</span>
+          </div>
+        )}
+        <div className={styles.activityInfo}>
+          <span className={styles.infoLabel}>Joined:</span>
+          <span className={styles.infoValue}>{formatDate(u.createdAt)}</span>
+        </div>
+        {u.lastLogin && (
+          <div className={styles.activityInfo}>
+            <span className={styles.infoLabel}>Last login:</span>
+            <span className={styles.infoValue}>{formatDateTime(u.lastLogin)}</span>
+          </div>
+        )}
+        
+        {u.role === 'PROVIDER' && u.serviceType && (
+          <div className={styles.activityInfo}>
+            <span className={styles.infoLabel}>Service type:</span>
+            <span className={styles.infoValue}>{u.serviceType}</span>
+          </div>
+        )}
+        {u.role === 'PROVIDER' && u.companyName && (
+          <div className={styles.activityInfo}>
+            <span className={styles.infoLabel}>Company:</span>
+            <span className={styles.infoValue}>{u.companyName}</span>
+          </div>
+        )}
+        {u.role === 'PROVIDER' && u.registrationNumber && (
+          <div className={styles.activityInfo}>
+            <span className={styles.infoLabel}>Reg. number:</span>
+            <span className={styles.infoValue}>{u.registrationNumber}</span>
+          </div>
+        )}
+      </div>
     </div>
   );
-}
+
+  // ------------------------------------------
+  // Main content dispatch
+  // ------------------------------------------
+  const renderMainContent = () => {
+    // Disputes
+    if (activeTab === 'disputes') {
+      return (
+        <div className={styles.mainContent}>
+          <DisputesView viewerRole="EMPLOYEE" />
+        </div>
+      );
+    }
+
+    // Messages
+    if (activeTab === 'messages') {
+      return (
+        <div className={styles.mainContent}>
+          <MessagesView viewerRole="EMPLOYEE" observerMode />
+        </div>
+      );
+    }
+
+    // Bookings — placeholder for this step
+    if (activeTab === 'bookings') {
+      return (
+        <div className={styles.mainContent}>
+          <StaffBookingsView viewerRole="EMPLOYEE" users={users} />
+        </div>
+      );
+    }
+
+    // Clients or Providers
+    const isClients = activeTab === 'clients';
+    const list = isClients ? filteredClients : filteredProviders;
+    const title = isClients ? 'Client Management' : 'Service Provider Management';
+    const emptyIcon = isClients ? '👥' : '👔';
+    const emptyTitle = searchQuery
+      ? 'No matches found'
+      : isClients
+      ? 'No clients found'
+      : 'No service providers found';
+    const emptyMessage = searchQuery
+      ? `No ${isClients ? 'clients' : 'providers'} match "${searchQuery}".`
+      : `There are no ${isClients ? 'clients' : 'service providers'} registered yet.`;
+
+    const selectedUser = selectedUserId
+      ? users.find((u) => u.id === selectedUserId) ?? null
+      : null;
+
+    if (selectedUser) {
+      return (
+        <div className={styles.mainContent}>
+          <StaffUserDetailPanel
+            user={selectedUser}
+            allUsers={users}
+            canApprove={false}
+            onBack={() => setSelectedUserId(null)}
+          />
+        </div>
+      );
+    }
 
     return (
       <div className={styles.mainContent}>
-        {/* Header */}
         <div className={styles.contentHeader}>
-          <h2>{getContentTitle()}</h2>
+          <h2>{title}</h2>
           <div className={styles.headerActions}>
             <div className={styles.searchBox}>
               <FontAwesomeIcon icon={faSearch} />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder={isClients ? 'Search clients...' : 'Search providers...'}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 className={styles.searchInput}
               />
             </div>
           </div>
         </div>
 
-        {/* Stats Grid */}
         <div className={styles.statsGrid}>
           {stats.map((stat) => (
             <div key={stat.key} className={`${styles.statCard} ${stat.className}`}>
@@ -300,211 +389,19 @@ export const EmployeeDashboard: React.FC<EmployeeDashboardProps> = () => {
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className={styles.quickActions}>
-          <h3>Quick Actions</h3>
-          <div className={styles.actionsGrid}>
-            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-              <FontAwesomeIcon icon={faUserPlus} />
-              <span>Add New Client</span>
-            </button>
-            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-              <FontAwesomeIcon icon={faUserTie} />
-              <span>Approve Provider</span>
-            </button>
-            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-              <FontAwesomeIcon icon={faChartLine} />
-              <span>View Reports</span>
-            </button>
-            <button className={styles.actionBtn} onClick={() => navigate('/admin-dashboard')}>
-              <FontAwesomeIcon icon={faCog} />
-              <span>Settings</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Tab content */}
         {loading ? (
           <div className={styles.loading}>
             <div className={styles.spinner}></div>
             <p>Loading data...</p>
           </div>
-        ) : activeTab === 'clients' ? (
-          clients.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>👥</span>
-              <h3>{emptyMessage.title}</h3>
-              <p>{emptyMessage.message}</p>
-              <button
-                className={styles.approveBtn}
-                onClick={() => navigate('/admin-dashboard')}
-              >
-                Add New Client
-              </button>
-            </div>
-          ) : (
-            <div className={styles.activityList}>
-              {clients.map((client) => (
-                <div key={client.id} className={styles.activityCard}>
-                  <div className={styles.activityHeader}>
-                    <div className={styles.activityTitle}>
-                      <h4>{client.name}</h4>
-                      <span className={`${styles.statusBadge} ${getStatusClass(client.status)}`}>
-                        {getStatusIcon(client.status)}
-                        {client.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.activityDetails}>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Email:</span>
-                      <span className={styles.infoValue}>{client.email}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Joined:</span>
-                      <span className={styles.infoValue}>{formatDate(client.joinDate)}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Bookings:</span>
-                      <span className={styles.infoValue}>{client.bookings}</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityActions}>
-                    <button className={styles.viewBtn}>
-                      <FontAwesomeIcon icon={faEye} />
-                      View Details
-                    </button>
-                    {client.status === 'pending' && (
-                      <>
-                        <button className={styles.approveBtn}>
-                          <FontAwesomeIcon icon={faCheckCircle} />
-                          Approve
-                        </button>
-                        <button className={styles.rejectBtn}>
-                          <FontAwesomeIcon icon={faTimesCircle} />
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        ) : activeTab === 'providers' ? (
-          providers.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>👔</span>
-              <h3>{emptyMessage.title}</h3>
-              <p>{emptyMessage.message}</p>
-              <button
-                className={styles.approveBtn}
-                onClick={() => navigate('/admin-dashboard')}
-              >
-                Add New Provider
-              </button>
-            </div>
-          ) : (
-            <div className={styles.activityList}>
-              {providers.map((provider) => (
-                <div key={provider.id} className={styles.activityCard}>
-                  <div className={styles.activityHeader}>
-                    <div className={styles.activityTitle}>
-                      <h4>{provider.name}</h4>
-                      <span className={`${styles.statusBadge} ${getStatusClass(provider.status)}`}>
-                        {getStatusIcon(provider.status)}
-                        {provider.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.activityDetails}>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Email:</span>
-                      <span className={styles.infoValue}>{provider.email}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Category:</span>
-                      <span className={styles.infoValue}>{provider.category}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Rating:</span>
-                      <span className={styles.infoValue}>⭐ {provider.rating.toFixed(1)}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Services:</span>
-                      <span className={styles.infoValue}>{provider.services}</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityActions}>
-                    <button className={styles.viewBtn}>
-                      <FontAwesomeIcon icon={faEye} />
-                      View Details
-                    </button>
-                    {provider.status === 'pending' && (
-                      <>
-                        <button className={styles.approveBtn}>
-                          <FontAwesomeIcon icon={faCheckCircle} />
-                          Approve
-                        </button>
-                        <button className={styles.rejectBtn}>
-                          <FontAwesomeIcon icon={faTimesCircle} />
-                          Reject
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
+        ) : list.length === 0 ? (
+          <div className={styles.emptyState}>
+            <span className={styles.emptyIcon}>{emptyIcon}</span>
+            <h3>{emptyTitle}</h3>
+            <p>{emptyMessage}</p>
+          </div>
         ) : (
-          bookings.length === 0 ? (
-            <div className={styles.emptyState}>
-              <span className={styles.emptyIcon}>📋</span>
-              <h3>{emptyMessage.title}</h3>
-              <p>{emptyMessage.message}</p>
-            </div>
-          ) : (
-            <div className={styles.activityList}>
-              {bookings.map((booking) => (
-                <div key={booking.id} className={styles.activityCard}>
-                  <div className={styles.activityHeader}>
-                    <div className={styles.activityTitle}>
-                      <h4>{booking.serviceTitle}</h4>
-                      <span className={`${styles.statusBadge} ${getStatusClass(booking.status)}`}>
-                        {getStatusIcon(booking.status)}
-                        {booking.status}
-                      </span>
-                    </div>
-                  </div>
-                  <div className={styles.activityDetails}>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Client:</span>
-                      <span className={styles.infoValue}>{booking.clientName}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Provider:</span>
-                      <span className={styles.infoValue}>{booking.providerName}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Date:</span>
-                      <span className={styles.infoValue}>{formatDate(booking.date)}</span>
-                    </div>
-                    <div className={styles.activityInfo}>
-                      <span className={styles.infoLabel}>Price:</span>
-                      <span className={styles.infoValue}>R{booking.price.toLocaleString()}</span>
-                    </div>
-                  </div>
-                  <div className={styles.activityActions}>
-                    <button className={styles.viewBtn}>
-                      <FontAwesomeIcon icon={faEye} />
-                      View Details
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
+          <div className={styles.activityList}>{list.map(renderUserCard)}</div>
         )}
       </div>
     );

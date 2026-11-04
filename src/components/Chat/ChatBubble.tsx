@@ -78,7 +78,25 @@ export const ChatBubble: React.FC<ChatBubbleProps> = ({
         {!isOwn && <span className={styles.senderName}>{senderName}</span>}
 
         <div className={`${styles.bubble} ${isOwn ? styles.bubbleOwn : styles.bubbleOther}`}>
-          <p className={styles.text}>{message.text}</p>
+                  <div className={`${styles.bubble} ${isOwn ? styles.bubbleOwn : styles.bubbleOther}`}>
+          {message.text && <p className={styles.text}>{message.text}</p>}
+          
+          {message.attachments && message.attachments.length > 0 && (
+            <div className={styles.attachmentGrid}>
+              {message.attachments.map((att) => (
+                <a 
+                  key={att.id} 
+                  href={att.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer" 
+                  className={styles.attachmentLink}
+                >
+                  <img src={att.url} alt={att.name || 'Attachment'} loading="lazy" />
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
         </div>
 
         <div className={`${styles.meta} ${isOwn ? styles.metaOwn : styles.metaOther}`}>

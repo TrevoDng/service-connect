@@ -7,6 +7,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { PhotoGrid } from './PhotoGrid';
 import { PhotoUploadButton } from './PhotoUploadButton';
 import styles from './PhotoSection.module.scss';
+import type { UploadContext } from '../../utils/imageUpload';
 
 export interface PhotoSectionProps {
   icon: IconDefinition;
@@ -40,6 +41,7 @@ export interface PhotoSectionProps {
 
   /** Free-form children rendered between the header and the grid (e.g. ProgressStageForm) */
   children?: React.ReactNode;
+  uploadContext?: UploadContext; 
 }
 
 export const PhotoSection: React.FC<PhotoSectionProps> = ({
@@ -55,6 +57,7 @@ export const PhotoSection: React.FC<PhotoSectionProps> = ({
   secondaryAction,
   emptyMessage,
   children,
+  uploadContext,
 }) => {
   const count = currentCount ?? photos?.length ?? 0;
   const remaining = Math.max(0, maxPhotos - count);
@@ -80,11 +83,12 @@ export const PhotoSection: React.FC<PhotoSectionProps> = ({
             </button>
           )}
 
-          {canUpload && (
+          {canUpload && uploadContext && (
             <PhotoUploadButton
               onUploaded={onUpload!}
               maxFiles={remaining}
               label={count === 0 ? 'Upload' : 'Add more'}
+              uploadContext={uploadContext} // <-- Pass it down
             />
           )}
         </div>

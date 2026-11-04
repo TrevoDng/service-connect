@@ -5,8 +5,6 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../account/context/AuthContext';
 import { useTheme } from '../styles/context/ThemeContext';
 import { useNotifications } from '../account/context/NotificationContext';
-import { getBookingById } from '../utils/allBookings';
-import { setBookingOverride } from '../utils/localBookingOverrides';
 import { notifyConsultationPaid } from '../utils/notify';
 import { formatDate, formatPrice } from '../utils/formatters';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';

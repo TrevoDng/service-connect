@@ -1,7 +1,7 @@
 // src/account/components/common/ConfirmModal.tsx
 import React from 'react';
 //@ts-ignore
-import './ConfirmModal.css';
+import './ConfirmModal.scss';
 
 interface ConfirmModalProps {
   isOpen: boolean;

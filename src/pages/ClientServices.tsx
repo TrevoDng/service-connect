@@ -23,17 +23,6 @@ export const ClientServices: React.FC = () => {
     sortBy: 'recent',
   });
 
-  useEffect(() => {
-    fetchCategories();
-    fetchServices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  useEffect(() => {
-    fetchServices();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filters]);
-
   const fetchCategories = async () => {
     try {
       const data = await serviceService.getCategories();
@@ -56,6 +45,18 @@ export const ClientServices: React.FC = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCategories();
+    fetchServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    fetchServices();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters]);
+
 
   const handleFilterChange = (newFilters: ServiceFilterOptions) => {
     setFilters(newFilters);

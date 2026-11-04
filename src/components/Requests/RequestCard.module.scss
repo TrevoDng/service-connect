@@ -829,3 +829,70 @@
     background: rgba(102, 126, 234, 0.05);
   }
 }
+
+/* ============================================
+   NEGOTIATION ACTION BUTTONS
+   ============================================ */
+
+.acceptBtn {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-md;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  transition: all $transition-base;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+.counterBtn {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-md;
+  background: transparent;
+  border: 2px solid $primary;
+  color: $primary;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  transition: all $transition-base;
+
+  &:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+.holdFirmBtn {
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-md;
+  background: transparent;
+  border: 2px solid $error;
+  color: $error;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  transition: all $transition-base;
+
+  &:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.1);
+    transform: translateY(-2px);
+  }
+}

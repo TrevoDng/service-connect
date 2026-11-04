@@ -1,5 +1,5 @@
 // src/account/components/Auth/customer/CustomerLogin.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext'; 
 import type { LoginCredentials } from '../../../types/user';
@@ -9,6 +9,8 @@ import styles from './CustomerLogin.module.scss';
 const CustomerLogin: React.FC = () => {
   const { login, isLoading, user, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const errorRef = useRef<HTMLDivElement>(null);
+  
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
@@ -37,6 +39,13 @@ const CustomerLogin: React.FC = () => {
     }
   }, []);
 
+  // Scroll to error if it appears
+  useEffect(() => {
+    if (error && errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [error]);
+
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === 'ADMIN') {
@@ -58,9 +67,13 @@ const CustomerLogin: React.FC = () => {
 
     try {
       await login(credentials);
-    } catch (error: any) {
-      const errorMessage = error.message || "Invalid email or password";
+    } catch (err: any) {
+      // Log the raw error to the console so you can see exactly what hit the UI
+      console.log("🔥 Login UI caught error:", err);
       
+      const errorMessage = err.message || "Invalid email or password";
+      console.log("🔥 Error message to display:", errorMessage);
+
       if (errorMessage.includes('EMAIL_NOT_VERIFIED') || 
           errorMessage.includes('Please verify your email')) {
         setError('Please verify your email before logging in.');
@@ -71,6 +84,8 @@ const CustomerLogin: React.FC = () => {
         setError('Your account is pending admin approval. You will be notified once approved.');
       } else if (errorMessage.includes('ACCOUNT_INACTIVE')) {
         setError('Your account is not active. Please contact support for assistance.');
+      } else if (errorMessage.includes('Too many login attempts')) {
+        setError('Too many login attempts. Please try again after 15 minutes.');
       } else {
         setError(errorMessage);
       }
@@ -83,7 +98,10 @@ const CustomerLogin: React.FC = () => {
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
     }));
-    if (error) setError('');
+    // Only clear the error if the user starts typing a new email/password
+    if (error && name !== 'rememberMe') {
+      setError('');
+    }
   };
 
   return (
@@ -100,12 +118,15 @@ const CustomerLogin: React.FC = () => {
         </div>
 
         <form className={styles.loginForm} onSubmit={handleSubmit}>
+          
+          {/* ERROR MESSAGE */}
           {error && (
-            <div className={styles.loginError}>
+            <div className={styles.loginError} ref={errorRef}>
               <div className={styles.loginErrorText}>{error}</div>
             </div>
           )}
           
+          {/* SUCCESS MESSAGE */}
           {successMessage && (
             <div className={styles.loginSuccess}>
               <div className={styles.loginSuccessText}>{successMessage}</div>
@@ -208,7 +229,9 @@ const CustomerLogin: React.FC = () => {
           <div className={styles.loginRegisterLink}>
             <Link to={getUrl('/register', 'CLIENT')[0]}>Don't have an account? Register</Link>
             <div className={styles.loginRegisterDivider}>
-              <Link to={getUrl('/service-provider-register', 'EMPLOYEE')[0]}>Register here as a Service provider</Link>
+              <Link to={getUrl('/apply', 'PROVIDER')[0]}>
+                Apply to register as a Provider or Employee
+              </Link>
             </div>
           </div>
         </form>

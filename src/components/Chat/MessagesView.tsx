@@ -4,11 +4,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../account/context/AuthContext';
-import { resolveChatUserId } from '../../utils/chatIdentity';
 import { useChatThreads } from '../../hooks/useChatThreads';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faComments, faEye } from '@fortawesome/free-solid-svg-icons';
 import { ChatPanel } from './ChatPanel';
+import type { ViewerRole } from '../../types';
 import { ChatThreadListItem } from './ChatThreadListItem';
 import styles from './MessagesView.module.scss';
 
@@ -18,7 +18,7 @@ import styles from './MessagesView.module.scss';
 
 export interface MessagesViewProps {
   /** Which side the current viewer is on. Ignored when observerMode is true. */
-  viewerRole: 'CLIENT' | 'PROVIDER';
+  viewerRole: ViewerRole;
   /** Optional: fired when the client clicks "Book This Provider" */
   onBookProvider?: (providerId: string) => void;
   /** Support mode — shows all threads, read-only */
@@ -51,7 +51,8 @@ export const MessagesView: React.FC<MessagesViewProps> = ({
   // get flipped and no "personal" filter is applied.
   const viewerUserId = observerMode
     ? null
-    : resolveChatUserId(user);
+    : (user?.id ?? null);
+    //: (user?.id ?? null) || null;
 
   // ------------------------------------------
   // LIVE THREAD LIST
@@ -200,7 +201,7 @@ useEffect(() => {
               <ChatThreadListItem
                 key={thread.id}
                 thread={thread}
-                viewerRole={observerMode ? 'CLIENT' : viewerRole}
+                viewerRole={viewerRole}
                 isActive={thread.id === selectedThreadId}
                 onClick={handleSelectThread}
               />

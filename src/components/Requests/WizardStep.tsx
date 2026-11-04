@@ -7,8 +7,8 @@ import {
   getMilestoneState,
   getWizardStep,
 } from './wizardSteps';
-import { SubstepTimeline } from './SubstepTimeline';
-import { getWorkSessionByBooking } from '../../utils/allWorkSessions';
+// import { SubstepTimeline } from './SubstepTimeline'; // Temporarily disabled
+// import { getWorkSessionByBooking } from '../../utils/allWorkSessions'; // Deleted
 import type { WizardAction } from './wizardSteps';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
@@ -20,10 +20,6 @@ import {
   faHardHat,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './WizardStep.module.scss';
-
-// ============================================
-// PROPS
-// ============================================
 
 export interface WizardStepProps {
   booking: Booking;
@@ -37,10 +33,6 @@ export interface WizardStepProps {
   onAddWorkDay?: (booking: Booking) => void;
   onOpenWorkDay?: (booking: Booking, dayIndex: number) => void;
 }
-
-// ============================================
-// COMPONENT
-// ============================================
 
 export const WizardStep: React.FC<WizardStepProps> = ({
   booking,
@@ -64,17 +56,9 @@ export const WizardStep: React.FC<WizardStepProps> = ({
   const step = getWizardStep(booking, role);
   const milestone = getMilestoneState(booking.status);
 
-  // Work session for in_progress bookings — powers the substep timeline
-  const activeWorkSession = booking.status === 'in_progress'
-    ? getWorkSessionByBooking(booking.id)
-    : undefined;
+  // We will re-enable this once we fetch the session from the API
+  // const activeWorkSession = booking.status === 'in_progress' ? ... : undefined;
 
-  // ------------------------------------------
-  // WORK-SESSION CHOICE INTERCEPT
-  // ------------------------------------------
-  // When the provider is on step 5 (price_agreed), the wizard's primary
-  // action is "view-work-session". Instead of firing that action directly,
-  // we open the two-button choice panel below the actions.
   const isProviderAtPriceAgreed =
     viewerRole === 'PROVIDER' &&
     booking.status === 'price_agreed' &&
@@ -88,9 +72,6 @@ export const WizardStep: React.FC<WizardStepProps> = ({
     onAction(action.key, booking);
   };
 
-  // ------------------------------------------
-  // ACTION RENDER
-  // ------------------------------------------
   const renderAction = (action: WizardAction, key: 'primary' | 'secondary') => (
     <button
       key={key}
@@ -105,10 +86,6 @@ export const WizardStep: React.FC<WizardStepProps> = ({
       {action.label}
     </button>
   );
-
-  // ============================================
-  // RENDER
-  // ============================================
 
   return (
     <div className={`${styles.wizard} ${step.passive ? styles.passive : ''}`}>
@@ -170,7 +147,7 @@ export const WizardStep: React.FC<WizardStepProps> = ({
         </div>
       )}
 
-      {/* Work-session choice panel (Step 13.2) */}
+      {/* Work-session choice panel */}
       {showWorkChoice && (
         <div className={styles.choicePanel}>
           <h5 className={styles.choiceTitle}>How do you want to proceed?</h5>
@@ -206,48 +183,33 @@ export const WizardStep: React.FC<WizardStepProps> = ({
           </div>
 
           <button
-  type="button"
-  onClick={() => setShowWorkChoice(false)}
-  style={{
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '8px',
-    padding: '12px 24px',
-    borderRadius: '9999px',
-    border: '1px solid #ef476f',
-    background: 'transparent',
-    color: 'var(--text-light, #8a8aaa)',
-    fontSize: '14px',
-    fontWeight: 600,
-    cursor: 'pointer',
-    alignSelf: 'flex-start',
-    margin: 0,
-    transition: 'all 250ms ease',
-  }}
->
-  Cancel
-</button>
+            type="button"
+            onClick={() => setShowWorkChoice(false)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              padding: '12px 24px',
+              borderRadius: '9999px',
+              border: '1px solid #ef476f',
+              background: 'transparent',
+              color: 'var(--text-light, #8a8aaa)',
+              fontSize: '14px',
+              fontWeight: 600,
+              cursor: 'pointer',
+              alignSelf: 'flex-start',
+              margin: 0,
+              transition: 'all 250ms ease',
+            }}
+          >
+            Cancel
+          </button>
         </div>
       )}
 
-      {/* Substep timeline (Step 13.4) */}
-	{activeWorkSession && (
-  	   <SubstepTimeline
-	     session={activeWorkSession}
-             viewerRole={viewerRole}
-             onAddDay={
-                   onAddWorkDay ? () => onAddWorkDay(booking) : undefined
-            }
-
-             onOpenDay={
-                onOpenWorkDay
-                  ? (_s, idx) => onOpenWorkDay(booking, idx)
-              : undefined
-            }
-          />
-           )}
-
+      {/* Substep timeline temporarily disabled until API is wired up */}
+      
       {/* Passive hint */}
       {step.passive && (
         <div className={styles.passiveHint}>

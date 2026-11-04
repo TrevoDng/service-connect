@@ -270,11 +270,17 @@
 .registerSuccessMessage {
   text-align: center;
   margin: $spacing-xl 0;
+  
+  p {
+    color: var(--text-primary, $text-primary); /* <-- THIS FIXES THE TEXT */
+    font-size: $font-size-base;
+    line-height: $line-height-normal;
+  }
 }
 
 .registerInfoBox {
-  background-color: rgba(59, 130, 246, 0.05);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  background-color: var(--bg-primary, #f8f9fa); /* <-- Uses theme background */
+  border: 1px solid var(--border-color, $border-color); /* <-- Uses theme border */
   border-radius: $border-radius-md;
   padding: $spacing-md;
   margin-top: $spacing-lg;
@@ -283,6 +289,11 @@
   p {
     margin: $spacing-xs 0;
     color: var(--text-secondary, $text-secondary);
+    
+    /* Make the bold text (📧 Check your email) pop */
+    strong {
+      color: var(--text-primary, $text-primary);
+    }
     
     &:first-child { margin-top: 0; }
     &:last-child { margin-bottom: 0; }

@@ -114,15 +114,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      // DEV MODE: if the token is a demo token, skip the backend call and
-// trust the stored user object. Remove before production.
-      if (token.startsWith('demo-')) {
-        const storedUser = getStoredUser();
-        if (storedUser) setUser(storedUser);
-           setIsLoading(false);
-           return;
-        }
-
       try {
         const response = await fetch(`${API_BASE_URL}/auth/me`, {
           method: 'GET',

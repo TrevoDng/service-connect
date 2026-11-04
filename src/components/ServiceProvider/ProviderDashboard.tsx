@@ -8,35 +8,30 @@ import { ProviderServicesList } from './ProviderServicesList';
 import { serviceService } from '../../services/service.service';
 import type { ServiceStats } from '../../types/service.types';
 import type { WorkSession, ProgressStage, WorkPhoto, Booking } from '../../types';
-import { demoWorkSessions } from '../../data/demoWorkSessions';
-import { getBookingById } from '../../utils/allBookings';
-//import { getLocalWorkSessions } from '../../utils/localWorkSessions';
+import { useNotifications } from '../../account/context/NotificationContext';
 import {
   generateClockInCode,
   clockInCodeExpiry,
   generateId,
 } from '../../utils/referenceCode';
-import { formatRelative, formatDuration } from '../../utils/formatters';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faList,
   faComments,
   faHardHat,
   faInbox,
+  faHandshake,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../layout';
 import type { SidebarNavItem } from '../layout';
 import { MessagesView } from '../Chat';
-import { WorkSessionPanel } from '../WorkSession';
+import { isCurrentRequest } from '../../utils/allBookings';
 import { ProviderRequestsView } from '../Requests';
-import { getUnreadCount } from '../../data/demoNotifications';
 import { faGavel } from '@fortawesome/free-solid-svg-icons';
 import { DisputesView } from '../Disputes';
-import { getOpenDisputeCountForUser } from '../../utils/allDisputes';
-import { getBookingsForProvider, isCurrentRequest } from '../../utils/allBookings';
 import styles from './ProviderDashboard.module.scss';
 import { disputeService } from '../../services/dispute.service';
 import { bookingService } from '../../services/booking.service';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 // ============================================
 // THEME CONSTANTS
@@ -67,38 +62,39 @@ export const ProviderDashboard: React.FC = () => {
   const { theme } = useTheme();
 
   const [searchParams, setSearchParams] = useSearchParams();
-const tabFromUrl = searchParams.get('tab');
-const threadIdFromUrl = searchParams.get('thread');
+  const tabFromUrl = searchParams.get('tab');
+  const subtabFromUrl = searchParams.get('subtab'); // <-- Add this
+  const threadIdFromUrl = searchParams.get('thread');
 
-const VALID_PROVIDER_TABS: ProviderView[] = [
-  'consultations',
-  'requests',
-  'my-services',
-  'work-log',
-  'messages',
-  'support',
-];
+  const VALID_PROVIDER_TABS: ProviderView[] = [
+    'consultations',
+    'requests',
+    'my-services',
+    'work-log',
+    'messages',
+    'support',
+  ];
 
- const activeView: ProviderView = VALID_PROVIDER_TABS.includes(
-  tabFromUrl as ProviderView
-)
-  ? (tabFromUrl as ProviderView)
-  : 'requests';
+  const activeView: ProviderView = VALID_PROVIDER_TABS.includes(
+    tabFromUrl as ProviderView
+  )
+    ? (tabFromUrl as ProviderView)
+    : 'requests';
 
-const [activeTab, setActiveTab] = useState<ServicesTab>('list');
+  const [activeTab, setActiveTab] = useState<ServicesTab>('list');
 
-// Deep-link: a ?thread= param (from chat notifications) should force
-// the Messages tab, then normalize the URL to include ?tab=messages.
-// Mirrors the same effect in ClientDashboard.
-useEffect(() => {
-  if (threadIdFromUrl && activeView !== 'messages') {
-    setSearchParams(
-      { tab: 'messages', thread: threadIdFromUrl },
-      { replace: true }
-    );
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [threadIdFromUrl]);
+  // Deep-link: a ?thread= param (from chat notifications) should force
+  // the Messages tab, then normalize the URL to include ?tab=messages.
+  // Mirrors the same effect in ClientDashboard.
+  useEffect(() => {
+    if (threadIdFromUrl && activeView !== 'messages') {
+      setSearchParams(
+        { tab: 'messages', thread: threadIdFromUrl },
+        { replace: true }
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [threadIdFromUrl]);
 
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(null);
 
@@ -110,24 +106,11 @@ useEffect(() => {
   });
   const [loading, setLoading] = useState(true);
 
-  const [sessions, setSessions] = useState<WorkSession[]>(() =>
-    demoWorkSessions.map((s) => ({
-      ...s,
-      clockEvents: [...s.clockEvents],
-      beforePhotos: [...s.beforePhotos],
-      progressStages: s.progressStages.map((st) => ({ ...st, photos: [...st.photos] })),
-      finalPhotos: [...s.finalPhotos],
-    }))
-  );
+  const [sessions, setSessions] = useState<WorkSession[]>([]);
 
   const providerId = user?.id || '';
 
-  useEffect(() => {
-    fetchStats();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const fetchStats = async () => {
+    const fetchStats = async () => {
     try {
       const data = await serviceService.getProviderStats();
       setStats(data);
@@ -138,15 +121,27 @@ useEffect(() => {
     }
   };
 
+  useEffect(() => {
+    fetchStats();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+
   const [openDisputeCount, setOpenDisputeCount] = useState(0);
 
-    type WorkSubTab = 'new_jobs' | 'active' | 'completed' | 'closed' | 'complaints';
-    const [workSubTab, setWorkSubTab] = useState<WorkSubTab>('active');
-    const [providerBookings, setProviderBookings] = useState<Booking[]>([]);
-    const [workRefresh, setWorkRefresh] = useState(0);
+  type WorkSubTab = 'new_jobs' | 'active' | 'completed' | 'closed' | 'complaints';
+  const [workSubTab, setWorkSubTab] = useState<WorkSubTab>('active');
+  const [providerBookings, setProviderBookings] = useState<Booking[]>([]);
+  const [workRefresh, setWorkRefresh] = useState(0);
 
-    type ConsultSubTab = 'waiting' | 'active' | 'completed';
-    const [consultSubTab, setConsultSubTab] = useState<ConsultSubTab>('active');
+  type ConsultSubTab = 'waiting' | 'active' | 'completed';
+  const [consultSubTab, setConsultSubTab] = useState<ConsultSubTab>(() => {
+      // If the URL says subtab=completed, open that tab. Otherwise default to 'active'.
+    if (subtabFromUrl === 'completed' || subtabFromUrl === 'waiting' || subtabFromUrl === 'active') {
+        return subtabFromUrl;
+      }
+      return 'active';
+    });
 
   useEffect(() => {
     if (!providerId) return;
@@ -247,13 +242,11 @@ useEffect(() => {
   // ------------------------------------------
   // Sidebar badge counts
   // ------------------------------------------
-  const unreadMessages = getUnreadCount(providerId);
+  const { unreadCount: unreadMessages } = useNotifications();
   const activeRequestCount = useMemo(
-    () => getBookingsForProvider(providerId).filter(isCurrentRequest).length,
-    // Recomputed each render of the dashboard — cheap enough for demo
-    // and reflects any overrides written from the Requests view.
-    [providerId, sessions]
-  );
+  () => providerBookings.filter(isCurrentRequest).length,
+  [providerBookings]
+);
 
   // ------------------------------------------
   // Actions
@@ -393,6 +386,70 @@ useEffect(() => {
     }));
   };
 
+    // ------------------------------------------
+  // PRIORITY ACTION BANNER
+  // ------------------------------------------
+  const renderPriorityBanner = () => {
+    // 1. Highest priority: New booking requests
+    const newRequests = providerBookings.filter(b => b.status === 'requested');
+    if (newRequests.length > 0) {
+      return (
+        <div style={{ padding: '16px', background: 'rgba(102, 126, 234, 0.1)', border: '1px solid #667eea', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: '#667eea', color: 'white', padding: '8px', borderRadius: '50%' }}><FontAwesomeIcon icon={faHardHat} /></div>
+            <div>
+              <strong style={{ display: 'block', color: 'var(--text-primary)' }}>You have {newRequests.length} new booking request{newRequests.length > 1 ? 's' : ''}!</strong>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>Review the requests and accept or decline them.</span>
+            </div>
+          </div>
+          <button onClick={() => handleSidebarNavigate('requests')} style={{ padding: '8px 16px', background: '#667eea', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 600, cursor: 'pointer' }}>
+            View Requests
+          </button>
+        </div>
+      );
+    }
+
+    // 2. Second priority: Consultation paid, ready to start
+    const readyForConsult = providerBookings.find(b => b.status === 'consultation_paid' && !b.consultationClockIn);
+    if (readyForConsult) {
+      return (
+        <div style={{ padding: '16px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid #10b981', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: '#10b981', color: 'white', padding: '8px', borderRadius: '50%' }}><FontAwesomeIcon icon={faHardHat} /></div>
+            <div>
+              <strong style={{ display: 'block', color: 'var(--text-primary)' }}>Consultation Ready</strong>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>The client paid the fee for {readyForConsult.serviceTitle}. Start the site visit.</span>
+            </div>
+          </div>
+          <button onClick={() => navigate(`/provider/bookings/${readyForConsult.id}/consultation`)} style={{ padding: '8px 16px', background: '#10b981', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 600, cursor: 'pointer' }}>
+            Start Consultation
+          </button>
+        </div>
+      );
+    }
+
+    // 3. Third priority: Client countered the price
+    const clientCountered = providerBookings.find(b => b.status === 'price_proposed' && b.pendingCounterParty === 'PROVIDER');
+    if (clientCountered) {
+      return (
+        <div style={{ padding: '16px', background: 'rgba(245, 158, 11, 0.1)', border: '1px solid #f59e0b', borderRadius: '8px', marginBottom: '16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: '#f59e0b', color: 'white', padding: '8px', borderRadius: '50%' }}><FontAwesomeIcon icon={faHandshake} /></div>
+            <div>
+              <strong style={{ display: 'block', color: 'var(--text-primary)' }}>Client Countered Your Price</strong>
+              <span style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>They proposed R{clientCountered.finalPrice} for {clientCountered.serviceTitle}.</span>
+            </div>
+          </div>
+          <button onClick={() => navigate(`/bookings/${clientCountered.id}/outcomes`)} style={{ padding: '8px 16px', background: '#f59e0b', color: 'white', border: 'none', borderRadius: '999px', fontWeight: 600, cursor: 'pointer' }}>
+            Review Counter
+          </button>
+        </div>
+      );
+    }
+
+    return null;
+  };
+
   // ------------------------------------------
   // Sidebar
   // ------------------------------------------
@@ -409,8 +466,8 @@ useEffect(() => {
         ).length || undefined,
     },
     {
-      key: 'requests',
-      label: 'Requests',
+      key: 'requests',        // ← unchanged
+      label: 'Bookings',      // ← was 'Requests'
       icon: faInbox,
       badge: activeRequestCount || undefined,
     },
@@ -525,7 +582,11 @@ useEffect(() => {
               key={key}
               type="button"
               className={`${styles.subTabBtn} ${consultSubTab === key ? styles.subTabActive : ''}`}
-              onClick={() => setConsultSubTab(key)}
+              onClick={() => {
+                setConsultSubTab(key);
+                // Optional: update URL to reflect the tab click
+                setSearchParams({ tab: 'consultations', subtab: key }, { replace: true });
+              }}
             >
               {label}
               <span className={styles.subTabCount}>{consultSubCounts[key]}</span>
@@ -559,7 +620,15 @@ useEffect(() => {
               key={b.id}
               type="button"
               className={styles.sessionCard}
-              onClick={() => navigate(`/provider/bookings/${b.id}/consultation`)}
+              onClick={() => {
+                if (b.status === 'consultation_paid') {
+                  // If it's paid but not done, go to the upload/clock-in page
+                  navigate(`/provider/bookings/${b.id}/consultation`);
+                } else {
+                  // If it's evaluated, proposed, or disputed, go to the outcomes page
+                  navigate(`/bookings/${b.id}/outcomes`);
+                }
+              }}
             >
               <div className={styles.sessionLeft}>
                 <span className={styles.sessionRef}>{b.requestRef}</span>
@@ -745,6 +814,13 @@ useEffect(() => {
           />
         }
       >
+
+        {/* 👇 ADD IT HERE SO IT SHOWS ON ALL TABS 👇 
+        <div style={{ padding: '0 16px', paddingTop: '16px' }}>
+          {renderPriorityBanner()}
+        </div>
+        */}
+
         {activeView === 'consultations' && renderConsultations()}
         {activeView === 'requests' && renderRequests()}
         {activeView === 'my-services' && renderMyServices()}

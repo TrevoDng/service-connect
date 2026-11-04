@@ -622,3 +622,180 @@
   background: var(--bg-card, #ffffff);
   border-radius: $border-radius-md;
 }
+
+/* ============================================
+   PROPOSE PRICE SECTION
+   ============================================ */
+
+.proposeSection {
+  background: rgba(102, 126, 234, 0.08);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  border-radius: $border-radius-lg;
+  padding: $spacing-lg;
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.proposeHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+
+  h2 {
+    margin: 0;
+    font-size: $font-size-lg;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: $spacing-xs;
+  }
+}
+
+.laterBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  font-size: $font-size-sm;
+  cursor: pointer;
+  text-decoration: underline;
+  
+  &:hover { color: var(--text-primary); }
+}
+
+.proposeHint {
+  margin: 0;
+  font-size: $font-size-sm;
+  color: var(--text-secondary);
+}
+
+.proposeForm {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+  align-items: flex-end;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xxs;
+  flex: 1;
+  min-width: 200px;
+
+  label {
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    color: var(--text-primary);
+  }
+}
+
+.input {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: $font-size-base;
+  
+  &:focus {
+    border-color: $primary;
+    outline: none;
+  }
+}
+
+.proposeBtn {
+  padding: $spacing-sm $spacing-xl;
+  background: $primary-gradient;
+  color: white;
+  border: none;
+  border-radius: $border-radius-md;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  transition: all $transition-base;
+  height: 42px;
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  
+  @include mobile {
+    width: 100%;
+  }
+}
+
+/* ============================================
+   NEGOTIATION ACTION BUTTONS
+   ============================================ */
+
+.actionRow {
+  display: flex;
+  gap: $spacing-sm;
+  flex-wrap: wrap;
+  margin-top: $spacing-sm;
+}
+
+.negotiationBtn {
+  flex: 1;
+  min-width: 140px;
+  padding: $spacing-sm $spacing-md;
+  border-radius: $border-radius-md;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-xs;
+  transition: all $transition-base;
+  
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+}
+
+/* Accept Button (Green) */
+.acceptBtn {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  border: none;
+  
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}
+
+/* Propose New Price Button (Primary/Purple Outline) */
+.counterBtn {
+  background: transparent;
+  border: 2px solid $primary;
+  color: $primary;
+  
+  &:hover:not(:disabled) {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
+}
+
+/* Hold Firm Button (Danger/Red Outline) */
+.holdFirmBtn {
+  background: transparent;
+  border: 2px solid $error;
+  color: $error;
+  
+  &:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.1);
+    transform: translateY(-2px);
+  }
+}
