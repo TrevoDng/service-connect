@@ -77,10 +77,21 @@ export const compressImage = async (file: File): Promise<File> => {
 // UPLOAD TO BACKEND
 // ============================================
 
+export type UploadEntityType =
+  | 'bookings'
+  | 'disputes'
+  | 'worksessions'
+  | 'reviews'
+  | 'chats'
+  | 'registrations'
+  | 'support';
+
 export interface UploadContext {
-  entityType: 'bookings' | 'disputes' | 'worksessions' | 'reviews' | 'chats' | 'registrations';
+  entityType: UploadEntityType;
   entityId: string;
-  category: 'request' | 'consultation' | 'evidence' | 'before' | 'progress' | 'final' | 'review' | 'attachments' | 'documents';
+  category:
+    | 'request' | 'consultation' | 'evidence' | 'before'
+    | 'progress' | 'final' | 'review' | 'attachments' | 'documents';
 }
 
 /**

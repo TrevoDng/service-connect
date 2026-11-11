@@ -6,200 +6,243 @@ import { serviceService } from '../services/service.service';
 import type { Service } from '../types/service.types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { getServiceIcon } from '../utils/serviceIcons';
+import { faArrowRight, faStar, faBolt, faShieldHalved, faMessage, faSearch } from '@fortawesome/free-solid-svg-icons';
 import styles from './Home.module.scss';
 
-interface HomeProps {
-  currentPage: string;
-  setCurrentPage: (page: string) => void;
-}
+interface HomeProps { currentPage: string; setCurrentPage: (p: string) => void; }
 
 const Home: React.FC<HomeProps> = ({ setCurrentPage }) => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('All');
-  
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<string[]>(['All']);
   const [filteredServices, setFilteredServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
+    (async () => {
       try {
-        setLoading(true);
-        const [fetchedServices, fetchedCategories] = await Promise.all([
-          serviceService.getServices(),
-          serviceService.getCategories()
-        ]);
-        setServices(fetchedServices);
-        setFilteredServices(fetchedServices);
-        setCategories(['All', ...fetchedCategories]);
-      } catch (err) {
-        console.error('Failed to load home data', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
+        const [s, c] = await Promise.all([serviceService.getServices(), serviceService.getCategories()]);
+        setServices(s); setFilteredServices(s); setCategories(['All', ...c]);
+      } catch (e) { console.error(e); } finally { setLoading(false); }
+    })();
   }, []);
 
   useEffect(() => {
-    let filtered = services;
-    if (selectedCategory !== 'All') {
-      filtered = filtered.filter(service => service.category === selectedCategory);
-    }
+    let f = services;
+    if (selectedCategory !== 'All') f = f.filter((s) => s.category === selectedCategory);
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase().trim();
-      filtered = filtered.filter(service => 
-        service.title.toLowerCase().includes(query) ||
-        service.description.toLowerCase().includes(query) ||
-        service.category.toLowerCase().includes(query)
-      );
+      const q = searchQuery.toLowerCase();
+      f = f.filter((s) =>
+        s.title.toLowerCase().includes(q) ||
+        s.description.toLowerCase().includes(q) ||
+        s.category.toLowerCase().includes(q));
     }
-    setFilteredServices(filtered);
+    setFilteredServices(f);
   }, [searchQuery, selectedCategory, services]);
 
-  const handleGetStarted = (serviceId: string) => {
-    navigate(getUrl('/login', '')[0]);
-    setCurrentPage(getUrl('/login', '')[0]);
-  };
-
-  const handleServiceClick = (serviceId: string) => {
-    navigate(getUrl(`/services/${serviceId}`, '')[0]);
-    setCurrentPage(getUrl(`/services/${serviceId}`, '')[0]);
-  };
+  const go = (path: string) => { navigate(getUrl(path, '')[0]); setCurrentPage(getUrl(path, '')[0]); };
 
   return (
-    <div className={styles.homePage}>
+    <div className={styles.page}>
+      {/* HERO */}
       <header className={styles.hero}>
-        <div className={styles.heroBackground}>
-          <svg viewBox="0 0 1000 600" preserveAspectRatio="none">
-            <circle cx="100" cy="80" r="60" fill="rgba(255,255,255,0.08)" className={styles.floatingShape} />
-            <circle cx="850" cy="120" r="80" fill="rgba(255,255,255,0.06)" className={styles.floatingShapeReverse} />
-            <polygon points="200,400 250,320 300,400" fill="rgba(255,255,255,0.07)" className={styles.floatingShape} style={{ animationDelay: '2s' }} />
-            <rect x="700" y="350" width="80" height="80" rx="10" fill="rgba(255,255,255,0.05)" className={styles.floatingShapeReverse} style={{ animationDelay: '3s' }} />
-            <circle cx="450" cy="480" r="40" fill="rgba(255,255,255,0.06)" className={styles.floatingShape} style={{ animationDelay: '1s' }} />
-          </svg>
+        <div className={styles.gridBg} aria-hidden="true" />
+        <div className={styles.heroInner}>
+          <span className={styles.tag}><span className={styles.dot} /> Live in South Africa</span>
+          <h1 className={styles.h1}>
+            Home services, <span className={styles.blue}>engineered</span> around you.
+          </h1>
+          <p className={styles.subhead}>
+            Compare, chat, and book vetted professionals — with transparent quotes
+            and real-time updates at every step.
+          </p>
+
+          <div className={styles.heroCta}>
+            <button className={styles.heroPrimaryBtn} onClick={() => go('/services')}>
+              Find a pro
+              <FontAwesomeIcon icon={faArrowRight} className={styles.heroPrimaryArrow} />
+            </button>
+            <span className={styles.heroCtaMeta}>
+              <span className={styles.heroDot} />
+              Free to browse — no sign-up required
+            </span>
+          </div>
+
+          <div className={styles.stats}>
+            <div><strong>1.2k+</strong><span>vetted pros</span></div>
+            <div><strong>4.8★</strong><span>avg. rating</span></div>
+            <div><strong>R0</strong><span>to chat</span></div>
+          </div>
         </div>
 
-        <div className={styles.heroContent}>
-          <h1>
-            <span className={styles.highlight}>Service</span>Connect
-          </h1>
-          <p className={styles.subtitle}>Find the right professional for your home services</p>
-          
-          <div className={styles.searchSection}>
-            <input
-              type="text"
-              placeholder="Search services..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className={styles.searchInput}
-              aria-label="Search services"
-            />
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className={styles.categorySelect}
-              aria-label="Filter by category"
-            >
-              {categories.map((category) => (
-                <option key={category} value={category}>{category}</option>
-              ))}
-            </select>
-          </div>
+        {/* Blueprint illustration */}
+        <div className={styles.blueprint} aria-hidden="true">
+          <svg viewBox="0 0 500 500">
+            <defs>
+              <pattern id="bp-grid" width="20" height="20" patternUnits="userSpaceOnUse">
+                <path d="M20 0 L0 0 0 20" stroke="#1e3a8a" strokeWidth="0.5" opacity="0.5" fill="none" />
+              </pattern>
+            </defs>
+            <rect width="500" height="500" fill="url(#bp-grid)" />
+            <rect x="40" y="40" width="420" height="420" fill="none" stroke="#3b82f6" strokeWidth="1.5" strokeDasharray="3 6" />
+            {/* Corner marks */}
+            <path d="M40 70 L40 40 L70 40" stroke="#60a5fa" strokeWidth="3" fill="none" />
+            <path d="M460 70 L460 40 L430 40" stroke="#60a5fa" strokeWidth="3" fill="none" />
+            <path d="M40 430 L40 460 L70 460" stroke="#60a5fa" strokeWidth="3" fill="none" />
+            <path d="M460 430 L460 460 L430 460" stroke="#60a5fa" strokeWidth="3" fill="none" />
+
+            {/* Hammer (main) */}
+            <g transform="translate(160 140)" stroke="#60a5fa" strokeWidth="3" strokeLinecap="round" fill="none">
+              <line x1="20" y1="200" x2="100" y2="30" />
+              <line x1="80" y1="20" x2="180" y2="60" strokeWidth="18" />
+              <line x1="80" y1="20" x2="180" y2="60" strokeWidth="4" stroke="#0f172a" />
+            </g>
+
+            {/* Wrench (top right) */}
+            <g transform="translate(370 110) rotate(-30)" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" fill="none">
+              <line x1="0" y1="120" x2="0" y2="30" />
+              <path d="M-14 30 a14 14 0 1 0 28 0" />
+            </g>
+
+            {/* Screwdriver (bottom left) */}
+            <g transform="translate(100 340) rotate(20)" stroke="#60a5fa" strokeWidth="2.5" strokeLinecap="round" fill="none">
+              <rect x="-8" y="0" width="16" height="40" rx="3" fill="#1e40af" opacity="0.4" />
+              <line x1="0" y1="40" x2="0" y2="90" />
+              <line x1="-4" y1="90" x2="4" y2="90" strokeWidth="4" />
+            </g>
+
+            {/* Dimension annotation */}
+            <g stroke="#f59e0b" strokeWidth="1" fill="none">
+              <line x1="60" y1="410" x2="440" y2="410" />
+              <line x1="60" y1="400" x2="60" y2="420" />
+              <line x1="440" y1="400" x2="440" y2="420" />
+            </g>
+            <text x="250" y="435" textAnchor="middle" fill="#f59e0b" fontSize="11" fontFamily="ui-monospace, monospace">400mm</text>
+            <text x="60" y="90" fill="#f59e0b" fontSize="10" fontFamily="ui-monospace, monospace">REV. 04</text>
+          </svg>
         </div>
       </header>
 
+      {/* SERVICES */}
       <section className={styles.servicesSection}>
-        <div className={styles.sectionHeader}>
-          <h2>Our Services</h2>
-          <p>Choose from a wide range of professional services</p>
+        <div className={styles.sectionHead}>
+          <div>
+            <span className={styles.sectionTag}>/ services</span>
+            <h2 className={styles.sectionTitle}>Pick a trade. Get matched.</h2>
+          </div>
+          <p className={styles.sectionSub}>All providers vetted. All quotes in writing.</p>
+        </div>
+
+        <div className={styles.servicesToolbar}>
+          <div className={styles.toolbarInputWrap}>
+            <FontAwesomeIcon icon={faSearch} className={styles.toolbarSearchIcon} />
+            <input
+              type="text"
+              placeholder="Search a service, a trade, or a problem…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className={styles.toolbarInput}
+              aria-label="Search services"
+            />
+          </div>
+          <select
+            value={selectedCategory}
+            onChange={(e) => setSelectedCategory(e.target.value)}
+            className={styles.toolbarSelect}
+            aria-label="Filter by category"
+          >
+            {categories.map((c) => <option key={c}>{c}</option>)}
+          </select>
+          <button type="button" className={styles.toolbarBtn} onClick={() => go('/services')}>
+            <FontAwesomeIcon icon={faArrowRight} />
+          </button>
         </div>
 
         {loading ? (
-          <div className={styles.loading}>
-            <div className={styles.spinner}></div>
-            <p>Loading services...</p>
-          </div>
+          <div className={styles.loading}><div className={styles.spinner} /><p>Loading…</p></div>
         ) : filteredServices.length === 0 ? (
-          <div className={styles.noResults}>
-            <span className={styles.noResultsIcon}>🔍</span>
-            <p>No services found</p>
-          </div>
+          <div className={styles.noResults}>No matches. Try another term.</div>
         ) : (
           <div className={styles.servicesGrid}>
-            {filteredServices.map((service) => {
-              const icon = getServiceIcon(service.title);
-              return (
-                <div key={service.id} className={styles.serviceCard} onClick={() => handleServiceClick(service.id)}>
-                  <div className={styles.cardHeader}>
-                    <div className={styles.serviceIconWrapper}>
-                      <FontAwesomeIcon icon={icon} className={styles.serviceIcon} />
-                    </div>
-                    <h3 className={styles.serviceTitle}>{service.title}</h3>
-                  </div>
-                  <p className={styles.serviceDescription}>{service.description}</p>
-                  <div className={styles.serviceMeta}>
-                    {service.rating && <span className={styles.rating}>⭐ {service.rating.toFixed(1)}</span>}
-                    {service.price > 0 && <span className={styles.price}>From R{service.price}</span>}
-                  </div>
-                  <div className={styles.cardFooter}>
-                    <button className={styles.getStartedBtn} onClick={(e) => { e.stopPropagation(); handleGetStarted(service.id); }}>
-                      Get Started →
-                    </button>
-                  </div>
+            {filteredServices.map((s, i) => (
+              <div
+                key={s.id}
+                className={styles.serviceCard}
+                onClick={() => go(`/services/${s.id}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && go(`/services/${s.id}`)}
+              >
+                <div className={styles.cardIndex}>{String(i + 1).padStart(2, '0')}</div>
+                <div className={styles.cardIcon}><FontAwesomeIcon icon={getServiceIcon(s.title)} /></div>
+                <h3 className={styles.cardTitle}>{s.title}</h3>
+                <p className={styles.cardDesc}>{s.description}</p>
+                <div className={styles.cardFoot}>
+                  {s.rating && <span className={styles.rating}><FontAwesomeIcon icon={faStar} /> {s.rating.toFixed(1)}</span>}
+                  <span className={styles.view}><FontAwesomeIcon icon={faArrowRight} /></span>
                 </div>
-              );
-            })}
+              </div>
+            ))}
           </div>
         )}
       </section>
 
-      {/* CHAT-FIRST SECTION */}
-      <section className={styles.chatFirstSection}>
-        <div className={styles.chatFirstGrid}>
-          <div className={styles.chatFirstCopy}>
-            <span className={styles.chatFirstEyebrow}>💬 Chat before you commit</span>
-            <h2 className={styles.chatFirstTitle}>Talk to providers before you book</h2>
-            <p className={styles.chatFirstSubtitle}>
-              Ask questions, share photos, agree on scope — all inside ServiceConnect. Your contact details stay private until you choose to share them.
+      {/* CHAT */}
+      <section className={styles.chatSection}>
+        <div className={styles.chatInner}>
+          <div className={styles.chatCopy}>
+            <span className={styles.sectionTag}>/ chat-first</span>
+            <h2 className={styles.chatTitle}>Real conversations. No phone tag.</h2>
+            <p className={styles.chatSub}>
+              Message providers before you book. Share photos, compare quotes, keep
+              your details private until you're ready.
             </p>
-            <ul className={styles.chatFirstFeatures}>
-              <li className={styles.chatFirstFeature}>
-                <span className={styles.featureIcon}>💬</span>
-                <div><strong>Chat first</strong><p>Message multiple providers, compare, then decide.</p></div>
-              </li>
-              <li className={styles.chatFirstFeature}>
-                <span className={styles.featureIcon}>📸</span>
-                <div><strong>Share photos</strong><p>Show the job so quotes are accurate from day one.</p></div>
-              </li>
-              <li className={styles.chatFirstFeature}>
-                <span className={styles.featureIcon}>🛡️</span>
-                <div><strong>Stay private</strong><p>Your address and phone stay hidden until you choose.</p></div>
-              </li>
-            </ul>
-            <button type="button" className={styles.chatFirstCta} onClick={() => navigate(getUrl('/services', '')[0])}>
-              Browse providers →
-            </button>
+            <div className={styles.pillars}>
+              <div className={styles.pillar}>
+                <FontAwesomeIcon icon={faMessage} className={styles.pillarIcon} />
+                <div><strong>Message first</strong><span>Compare up to 5 pros side by side.</span></div>
+              </div>
+              <div className={styles.pillar}>
+                <FontAwesomeIcon icon={faBolt} className={styles.pillarIcon} />
+                <div><strong>Real-time replies</strong><span>Live updates the moment they respond.</span></div>
+              </div>
+              <div className={styles.pillar}>
+                <FontAwesomeIcon icon={faShieldHalved} className={styles.pillarIcon} />
+                <div><strong>Private by default</strong><span>Address shared only when you choose.</span></div>
+              </div>
+            </div>
           </div>
 
-          <div className={styles.chatFirstMock}>
+          <div className={styles.chatMock}>
             <div className={styles.mockCard}>
               <div className={styles.mockHeader}>
                 <div className={styles.mockAvatar}>TB</div>
-                <div className={styles.mockHeaderInfo}>
-                  <span className={styles.mockName}>Tom Brown</span>
-                  <span className={styles.mockMeta}>⭐ 4.8 · 46 jobs</span>
+                <div className={styles.mockHeaderText}>
+                  <strong>Thabo Brown</strong>
+                  <span>⭐ 4.8 · 46 jobs</span>
                 </div>
+                <span className={styles.mockStatus}>online</span>
               </div>
               <div className={styles.mockBody}>
-                <div className={styles.mockBubbleOther}><span>Hi! My kitchen sink is leaking. Can you help this week?</span></div>
-                <div className={styles.mockBubbleOwn}><span>Looks like a worn seal — around R350, confirmed on-site.</span></div>
+                <div className={styles.mockBubbleLeft}>My sink is leaking — can you help this week?</div>
+                <div className={styles.mockBubbleRight}>Yes. Worn seal likely — R350, confirmed on-site.</div>
+                <div className={styles.mockBubbleLeft}>Perfect. Can you come Thursday AM?</div>
               </div>
             </div>
-            <div className={styles.mockGlow} aria-hidden="true" />
           </div>
+        </div>
+      </section>
+
+      {/* FINAL */}
+      <section className={styles.finalCta}>
+        <div className={styles.finalInner}>
+          <h2 className={styles.finalTitle}>Ready when you are.</h2>
+          <p className={styles.finalSub}>No commitments. No sign-up fees. Just pros you can trust.</p>
+          <button className={styles.primaryCta} onClick={() => go('/services')}>
+            Find a pro <FontAwesomeIcon icon={faArrowRight} />
+          </button>
         </div>
       </section>
     </div>

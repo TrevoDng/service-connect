@@ -20,6 +20,7 @@ import { generateId } from '../../utils/referenceCode';
 import { bookingService } from '../../services/booking.service';
 import { useAuth } from '../../account/context/AuthContext';
 import styles from './ProviderRequestsView.module.scss';
+import { useSseEvent } from '../../hooks/useSseEvent';
 
 // ============================================
 // CONFIG
@@ -85,16 +86,10 @@ useEffect(() => {
   };
 }, [providerId, refreshTick]);
 
-
-  // Auto-refresh every 10s while the tab is visible
-useEffect(() => {
-  const id = window.setInterval(() => {
-    if (document.visibilityState === 'visible') {
-      setRefreshTick((t) => t + 1);
-    }
-  }, 10_000);
-  return () => window.clearInterval(id);
-}, []);
+//new
+ useSseEvent('booking:updated', () =>  setRefreshTick((t) => t + 1));
+ useSseEvent('booking:created', () =>  setRefreshTick((t) => t + 1));
+ useSseEvent('sse:reconnected', () =>  setRefreshTick((t) => t + 1));
 
 // Refresh immediately when the tab regains focus
 useEffect(() => {

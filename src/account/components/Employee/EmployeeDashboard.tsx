@@ -1,6 +1,6 @@
 // src/account/components/Employee/EmployeeDashboard.tsx
 import React, { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../../styles/context/ThemeContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -13,6 +13,7 @@ import {
   faClipboardList,
   faComments,
   faGavel,
+  faHeadset,
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
@@ -23,12 +24,14 @@ import { disputeService } from '../../../services/dispute.service';
 import { adminService, type ApiUser } from '../../../services/admin.service';
 import { StaffBookingsView } from '../../../components/Bookings';
 import { StaffUserDetailPanel } from '../../../components/Bookings';
+import { StaffSupportView } from '../../../components/Support';
+import { useStaffSupportUnreadCount } from '../../../hooks/useStaffSupportUnreadCount';
 
 // ============================================
 // TYPES
 // ============================================
 
-type EmployeeTab = 'clients' | 'providers' | 'bookings' | 'disputes' | 'messages';
+type EmployeeTab = 'clients' | 'providers' | 'bookings' | 'disputes' | 'messages'  | 'support-tickets';
 
 // ============================================
 // EMPLOYEE THEME CONSTANTS
@@ -46,15 +49,35 @@ const EMPLOYEE_ROLE_BG = 'rgba(16, 185, 129, 0.1)';
 
 export const EmployeeDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { theme } = useTheme();
-
-  const [activeTab, setActiveTab] = useState<EmployeeTab>('clients');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [openDisputeCount, setOpenDisputeCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
+  const supportBadge = useStaffSupportUnreadCount(user?.id ?? null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const VALID_TABS: EmployeeTab[] = [
+    'clients', 'providers', 'bookings', 'disputes', 'messages', 'support-tickets'
+  ];
+
+  const tabFromUrl = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<EmployeeTab>(()=> 
+    VALID_TABS.includes(tabFromUrl as EmployeeTab)
+      ? (tabFromUrl as EmployeeTab)
+      : 'clients');
+
+  useEffect(() => {
+    if (
+      tabFromUrl &&
+      VALID_TABS.includes(tabFromUrl as EmployeeTab) &&
+      tabFromUrl !== activeTab
+    ) {
+      setActiveTab(tabFromUrl as EmployeeTab);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [tabFromUrl]);
 
   useEffect(() => {
     setSelectedUserId(null);
@@ -223,6 +246,10 @@ export const EmployeeDashboard: React.FC = () => {
     { key: 'bookings', label: 'Bookings', icon: faClipboardList },
     { key: 'disputes', label: 'Disputes', icon: faGavel, badge: openDisputeCount || undefined },
     { key: 'messages', label: 'Messages', icon: faComments },
+    { key: 'support-tickets', label: 'Support Tickets', icon: faHeadset,
+      badge:
+    activeTab === 'support-tickets' ? undefined : supportBadge || undefined,
+    },
   ];
 
   // ------------------------------------------
@@ -313,6 +340,14 @@ export const EmployeeDashboard: React.FC = () => {
       return (
         <div className={styles.mainContent}>
           <MessagesView viewerRole="EMPLOYEE" observerMode />
+        </div>
+      );
+    }
+
+    if (activeTab === 'support-tickets') {
+      return (
+        <div className={styles.mainContent}>
+          <StaffSupportView viewerRole="EMPLOYEE" />
         </div>
       );
     }
@@ -425,7 +460,10 @@ export const EmployeeDashboard: React.FC = () => {
             roleLabel="Employee"
             navItems={navItems}
             activeKey={activeTab}
-            onNavigate={(key) => setActiveTab(key as EmployeeTab)}
+            onNavigate={(key) => {
+              setActiveTab(key as EmployeeTab);
+              setSearchParams({ tab: key }, { replace: false });
+            }}
             onLogout={handleLogout}
           />
         }

@@ -18,6 +18,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChatMessage, ChatThread, ChatAttachment } from '../types';
 import { chatService } from '../services/chat.service';
+import { useSseEvent } from './useSseEvent';
 
 export interface UseChatThreadResult {
   messages: ChatMessage[];
@@ -98,17 +99,19 @@ export const useChatThread = (
   }, [threadId, viewerId, observerMode, refreshTick]);
 
   // ------------------------------------------
-  // POLL every 5s while visible
+  // POLL every 5s while visible but now it is REAL-TIME (SSE)
   // ------------------------------------------
-  useEffect(() => {
+  useSseEvent('chat:message:new', (data) => {
     if (!threadId) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        setRefreshTick((t) => t + 1);
-      }
-    }, 5_000);
-    return () => window.clearInterval(id);
-  }, [threadId]);
+    const p = data as { threadId?: string } | null;
+    if (p?.threadId === threadId) setRefreshTick((t) => t + 1);
+  });
+
+  useSseEvent('chat:thread:read', (data) => {
+    if (!threadId) return;
+    const p = data as { threadId?: string } | null;
+    if (p?.threadId === threadId) setRefreshTick((t) => t + 1);
+  });
 
   // ------------------------------------------
   // SEND (async, optimistic)

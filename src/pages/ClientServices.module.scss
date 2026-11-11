@@ -3,24 +3,13 @@
 @use "../styles/mixins" as *;
 
 .clientServices {
-  max-width: $container-max-width;
-  margin: 0 auto;
-  padding: $spacing-2xl $spacing-lg;
-  min-height: 70vh;
-  background: var(--bg-primary, #f8f9fa);
-  transition: background $transition-base;
-  
-  @include mobile {
-    padding: $spacing-lg $spacing-md;
-  }
+  width: 100%;
+  padding: 0; 
+  background: transparent; 
 }
 
-// ============================================
-// HEADER
-// ============================================
-
 .clientServicesHeader {
-  margin-bottom: $spacing-2xl;
+  margin-bottom: $spacing-xl;
   
   h1 {
     font-size: $font-size-2xl;
@@ -151,4 +140,25 @@
   .clientServicesHeader {
     margin-bottom: $spacing-lg;
   }
+}
+
+/* STANDALONE MODE (guest /services, or any non-dashboard context) */
+.standalone {
+  padding: $spacing-3xl $spacing-xl;
+  background: var(--bg-primary, #f8f9fa);
+  min-height: 80vh;
+  transition: background $transition-base;
+
+  @include tablet {
+    padding: $spacing-2xl $spacing-lg;
+  }
+
+  @include mobile {
+    padding: $spacing-xl $spacing-md;
+  }
+}
+
+.standaloneShell {
+  max-width: $container-max-width;
+  margin: 0 auto;
 }

@@ -20,6 +20,8 @@ import {
   faHardHat,
   faInbox,
   faHandshake,
+  faHeadset,
+  faSearch
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../layout';
 import type { SidebarNavItem } from '../layout';
@@ -32,6 +34,10 @@ import styles from './ProviderDashboard.module.scss';
 import { disputeService } from '../../services/dispute.service';
 import { bookingService } from '../../services/booking.service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { SupportView } from '../Support';
+import { useSupportUnreadCount } from '../../hooks/useSupportUnreadCount';
+import { ClientServices } from '../../pages/ClientServices';
+import { useSseEvent } from '../../hooks/useSseEvent';
 
 // ============================================
 // THEME CONSTANTS
@@ -49,7 +55,7 @@ const PROVIDER_ROLE_BG = 'rgba(245, 158, 11, 0.1)';
 // TYPES
 // ============================================
 
-type ProviderView = 'consultations' | 'requests' | 'my-services' | 'work-log' | 'messages' | 'support';
+type ProviderView = 'consultations' | 'requests' | 'my-services' | 'browse-services' | 'work-log' | 'messages' | 'support' | 'help';
 type ServicesTab = 'list' | 'add';
 
 // ============================================
@@ -70,9 +76,11 @@ export const ProviderDashboard: React.FC = () => {
     'consultations',
     'requests',
     'my-services',
+    'browse-services',
     'work-log',
     'messages',
     'support',
+    'help'
   ];
 
   const activeView: ProviderView = VALID_PROVIDER_TABS.includes(
@@ -109,6 +117,7 @@ export const ProviderDashboard: React.FC = () => {
   const [sessions, setSessions] = useState<WorkSession[]>([]);
 
   const providerId = user?.id || '';
+  const supportUnread = useSupportUnreadCount(providerId || null);
 
     const fetchStats = async () => {
     try {
@@ -157,13 +166,12 @@ export const ProviderDashboard: React.FC = () => {
     return () => { cancelled = true; };
   }, [providerId, workRefresh]);
 
-  useEffect(() => {
-    if (!providerId) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') setWorkRefresh((t) => t + 1);
-    }, 10_000);
-    return () => window.clearInterval(id);
-  }, [providerId]);
+  //new
+   useSseEvent('booking:updated', () =>  setWorkRefresh((t) => t + 1));
+   useSseEvent('worksession:updated', () =>  setWorkRefresh((t) => t + 1));
+   useSseEvent('dispute:updated', () =>  setWorkRefresh((t) => t + 1));
+   useSseEvent('sse:reconnected', () =>  setWorkRefresh((t) => t + 1));
+  
 
   // Derived work-phase bookings
   const workBookings = providerBookings.filter(
@@ -485,11 +493,18 @@ useEffect(() => {
       badge: unreadMessages > 0 ? unreadMessages : undefined,
     },
     {
-  key: 'support',
-  label: 'Support',
-  icon: faGavel,
-  badge: openDisputeCount || undefined,
-},
+      key: 'support',
+      label: 'Support',
+      icon: faGavel,
+      badge: openDisputeCount || undefined,
+    },
+    {
+      key: 'help',
+      label: 'Help & Support',
+      icon: faHeadset,
+      badge: activeView === 'help' ? undefined : supportUnread || undefined,
+  },
+  { key: 'browse-services', label: 'Browse Services', icon: faSearch },
   ];
 
   // ------------------------------------------
@@ -826,7 +841,17 @@ useEffect(() => {
         {activeView === 'my-services' && renderMyServices()}
         {activeView === 'work-log' && renderWorksession()}
         {activeView === 'messages' && renderMessages()}
-	{activeView === 'support' && renderSupport()}
+	      {activeView === 'support' && renderSupport()}
+	      {activeView === 'help' && (
+          <div className={styles.mainContent}>
+            <SupportView viewerRole="PROVIDER"/>
+          </div>
+        )}
+        {activeView === 'browse-services' && (
+          <div className={styles.mainContent}>
+            <ClientServices />
+          </div>
+        )}
 
       </DashboardLayout>
     </div>

@@ -38,7 +38,9 @@ export type NotificationType =
   // account
   | 'account_approved'          // user receives approval
   | 'account_rejected'          // user receives rejection
-  | 'account_pending';          // user receives pending status
+  | 'account_pending'          // user receives pending status
+  | 'support_ticket_new'        // staff receive a new support ticket
+  | 'support_message'; 
 
 export type NotificationPriority = 'low' | 'normal' | 'high';
 

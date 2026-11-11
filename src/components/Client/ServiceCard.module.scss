@@ -21,7 +21,7 @@
 }
 
 .serviceCardBody {
-  padding: $spacing-xl;
+  padding: $spacing-lg;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -136,12 +136,12 @@
   margin-bottom: $spacing-md;
   
   .priceValue {
-    font-size: $font-size-2xl;
+    font-size: $font-size-xl;
     font-weight: $font-weight-bold;
     color: $primary;
     
     @include mobile {
-      font-size: $font-size-xl;
+      font-size: $font-size-lg;
     }
   }
 }
@@ -180,26 +180,31 @@
 
 .serviceActions {
   display: flex;
-  gap: $spacing-sm;
+  flex-wrap: wrap; /* Allow wrapping for smaller cards */
+  gap: $spacing-xs; /* Tighter gap */
   margin-top: auto;
-  
-  @include mobile {
-    flex-direction: column;
-    gap: $spacing-xs;
-  }
+  padding-top: $spacing-sm;
+  border-top: 1px solid var(--border-color, $border-color); /* Nice divider */
 }
 
-.viewDetailsBtn {
-  flex: 1;
-  padding: $spacing-sm $spacing-lg;
-  font-size: $font-size-sm;
-  border: 1px solid var(--border-color, $border-color);
-  background: transparent;
-  color: var(--text-secondary, $text-secondary);
+/* Secondary buttons (View Details, Chat) share the top row */
+.viewDetailsBtn,
+.chatBtn {
+  flex: 1 1 calc(50% - #{$spacing-xs}); /* Split 50/50 */
+  padding: $spacing-xs $spacing-sm; /* Much smaller padding */
+  font-size: $font-size-xs; /* Smaller text to fit */
   border-radius: $border-radius-md;
   cursor: pointer;
   transition: all $transition-base;
   font-weight: $font-weight-medium;
+  text-align: center;
+  white-space: nowrap; /* Prevent text from breaking */
+}
+
+.viewDetailsBtn {
+  border: 1px solid var(--border-color, $border-color);
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
   
   &:hover {
     background: var(--bg-primary, #f8f9fa);
@@ -208,9 +213,20 @@
   }
 }
 
+.chatBtn {
+  border: 1px solid $primary;
+  background: transparent;
+  color: $primary;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.08);
+  }
+}
+
+/* Primary button (Contact Expert) takes full width on the bottom */
 .hireBtn {
-  flex: 1;
-  padding: $spacing-sm $spacing-lg;
+  flex: 1 1 100%; /* Force to its own row */
+  padding: $spacing-sm;
   font-size: $font-size-sm;
   border: none;
   background: $primary-gradient;
@@ -219,10 +235,26 @@
   cursor: pointer;
   transition: all $transition-base;
   font-weight: $font-weight-medium;
+  text-align: center;
   
   &:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-md, $shadow-md);
+  }
+}
+
+@include mobile {
+  .serviceActions {
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+  
+  .viewDetailsBtn,
+  .chatBtn,
+  .hireBtn {
+    flex: 1 1 100%; /* Stack everything on mobile */
+    padding: $spacing-sm;
+    font-size: $font-size-sm;
   }
 }
 

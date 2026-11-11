@@ -4,8 +4,8 @@
 
 .servicesGrid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: $spacing-xl;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: $spacing-lg;
   
   @include desktop {
     grid-template-columns: repeat(3, 1fr);

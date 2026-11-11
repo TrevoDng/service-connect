@@ -2,7 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import type { ChatAttachment } from '../../types';
-import { processImageBatch } from '../../utils/imageUpload';
+import { processImageBatch, type UploadEntityType } from '../../utils/imageUpload';
 import { generateId } from '../../utils/referenceCode';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPaperPlane, faPaperclip, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
@@ -14,6 +14,7 @@ export interface ChatComposerProps {
   placeholder?: string;
   maxHeight?: number;
   threadId: string; // <-- Add threadId for folder structuring
+  uploadEntityType?: UploadEntityType;
 }
 
 export const ChatComposer: React.FC<ChatComposerProps> = ({
@@ -22,6 +23,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
   placeholder = 'Type a message…',
   maxHeight = 140,
   threadId,
+  uploadEntityType = 'chats',
 }) => {
   const [text, setText] = useState('');
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
@@ -46,7 +48,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
     setIsUploading(true);
     try {
       const { urls, rejected } = await processImageBatch(files, {
-        entityType: 'chats',
+        entityType: uploadEntityType,
         entityId: threadId,
         category: 'attachments',
       });

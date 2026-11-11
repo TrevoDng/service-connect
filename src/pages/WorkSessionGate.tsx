@@ -26,6 +26,7 @@ import type { Booking, ProgressStage, WorkPhoto, WorkSession } from '../types';
 //import { generateId } from '../utils/referenceCode';
 import styles from './WorkSessionGate.module.scss';
 import { bookingService } from '../services/booking.service';
+import { useSseEvent } from '../hooks/useSseEvent';
 
 // ============================================
 // COMPONENT
@@ -73,15 +74,10 @@ useEffect(() => {
   return () => { cancelled = true; };
 }, [id, tick]);
 
-// Auto-refresh every 10s while the tab is visible
-useEffect(() => {
-  const id = window.setInterval(() => {
-    if (document.visibilityState === 'visible') {
-      setTick((t) => t + 1);
-    }
-  }, 10_000);
-  return () => window.clearInterval(id);
-}, []);
+//new
+   useSseEvent('worksession:updated', () =>  setTick((t) => t + 1));
+   useSseEvent('booking:updated', () =>  setTick((t) => t + 1));
+   useSseEvent('sse:reconnected', () =>  setTick((t) => t + 1));
 
 // Refresh immediately when the tab regains focus
 useEffect(() => {

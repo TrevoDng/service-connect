@@ -4,7 +4,13 @@ import React from 'react';
 import { useAuth } from '../../account/context/AuthContext';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import type { IconDefinition } from '@fortawesome/fontawesome-svg-core';
-import { faSignOutAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { 
+  faSignOutAlt, 
+  faTimes,
+  faUser, 
+} from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router-dom';
+import { getUrl } from '../../services/getUrl'; 
 import styles from './DashboardSidebar.module.scss';
 
 export interface SidebarNavItem {
@@ -16,33 +22,19 @@ export interface SidebarNavItem {
 }
 
 export interface DashboardSidebarProps {
-  /** CSS gradient string used for the avatar background and active rail */
   avatarGradient: string;
-  /** Accent hex used for hover text/icon, active text/icon, focus ring */
   accentColor: string;
-  /** rgba() background for hovered nav items */
   hoverBg: string;
-  /** rgba() background for the active nav item */
   activeBg: string;
-  /** rgba() background for the role badge */
   roleBg: string;
-  /** Hex color for the role badge text */
   roleColor: string;
-  /** e.g. "Administrator" | "Employee" | "Client" | "Service Provider" */
   roleLabel: string;
-  /** Nav items to render */
   navItems: SidebarNavItem[];
-  /** The currently active nav key */
   activeKey: string;
-  /** Called when a nav item is clicked */
   onNavigate: (key: string) => void;
-  /** Called when Logout is clicked */
   onLogout: () => void;
-  /** Drawer mode - when true, shows a close button in the header */
   isDrawer?: boolean;
-  /** Called when the drawer should close (mobile only) */
   onClose?: () => void;
-  /** Optional className passthrough */
   className?: string;
 }
 
@@ -63,6 +55,7 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
   className = '',
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
 
   const getInitials = (): string => {
     if (!user) return 'U';
@@ -142,8 +135,18 @@ export const DashboardSidebar: React.FC<DashboardSidebarProps> = ({
         })}
       </nav>
 
-      {/* Footer: logout */}
-      <div className={styles.sidebarFooter}>
+      {/* Footer: profile & logout */}
+      <div className={styles.sidebarFooter} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <button 
+          type="button" 
+          className={styles.logoutBtn} 
+          style={{ color: 'var(--text-secondary)' }} // Make profile neutral colored
+          onClick={() => navigate(getUrl('/account')[0])}
+        >
+          <FontAwesomeIcon icon={faUser} />
+          <span>My Profile</span>
+        </button>
+
         <button type="button" className={styles.logoutBtn} onClick={onLogout}>
           <FontAwesomeIcon icon={faSignOutAlt} />
           <span>Logout</span>

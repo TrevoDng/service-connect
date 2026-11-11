@@ -16,6 +16,7 @@ import {
 import { DisputeDetailPanel } from './DisputeDetailPanel';
 import { RaiseDisputePicker } from './RaiseDisputePicker';
 import styles from './DisputesView.module.scss';
+import { useSseEvent } from '../../hooks/useSseEvent';
 
 type Tab = 'open' | 'resolved';
 
@@ -69,14 +70,10 @@ export const DisputesView: React.FC<DisputesViewProps> = ({ viewerRole }) => {
     };
   }, [user, refreshTick]);
 
-  // Poll every 10s + on focus
-  useEffect(() => {
-    if (!user) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') setRefreshTick((t) => t + 1);
-    }, 10_000);
-    return () => window.clearInterval(id);
-  }, [user]);
+ //new
+ useSseEvent('dispute:created', () =>  setRefreshTick((t) => t + 1));
+ useSseEvent('dispute:updated', () =>  setRefreshTick((t) => t + 1));
+ useSseEvent('sse:reconnected', () =>  setRefreshTick((t) => t + 1));
 
   useEffect(() => {
     if (!user) return;

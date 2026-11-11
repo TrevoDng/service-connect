@@ -1,0 +1,149 @@
+/* src/components/Support/NewSupportTicketForm.module.scss */
+@use "../../styles/variables" as *;
+@use "../../styles/mixins" as *;
+
+.wrapper {
+  display: flex; flex-direction: column;
+  height: 100%; min-height: 0;
+  background: var(--bg-card, #ffffff);
+  border-radius: $border-radius-lg;
+  border: 1px solid var(--border-color, $border-color);
+  overflow: hidden;
+}
+
+.header {
+  display: flex; align-items: center; gap: $spacing-md;
+  padding: $spacing-md $spacing-lg;
+  border-bottom: 1px solid var(--border-color, $border-color);
+
+  h2 {
+    margin: 0; font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+  }
+  p {
+    margin: 2px 0 0; font-size: $font-size-xs;
+    color: var(--text-light, $text-light);
+  }
+}
+
+.headerAvatar {
+  width: 44px; height: 44px;
+  border-radius: $border-radius-full;
+  color: $text-white;
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: $font-size-base; flex-shrink: 0;
+}
+
+.body {
+  flex: 1; min-height: 0; overflow-y: auto;
+  padding: $spacing-lg;
+  display: flex; flex-direction: column; gap: $spacing-md;
+}
+
+.field { display: flex; flex-direction: column; gap: $spacing-xs; }
+
+.label {
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+  color: var(--text-secondary, $text-secondary);
+}
+
+.input,
+.textarea {
+  padding: $spacing-sm $spacing-md;
+  border: 1px solid var(--border-color, $border-color);
+  border-radius: $border-radius-md;
+  background: var(--bg-primary, #f8f9fa);
+  color: var(--text-primary, $text-primary);
+  font-family: $font-family-base;
+  font-size: $font-size-sm;
+  outline: none;
+  transition: all $transition-base;
+
+  &::placeholder { color: var(--text-light, $text-light); }
+
+  &:focus {
+    border-color: #3b82f6;
+    background: var(--bg-card, #ffffff);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+}
+
+.textarea { resize: vertical; min-height: 140px; line-height: 1.5; }
+
+.attachmentRow {
+  display: flex; flex-wrap: wrap; gap: $spacing-sm;
+}
+
+.previewTile {
+  position: relative;
+  width: 64px; height: 64px;
+  border-radius: $border-radius-sm;
+  border: 1px solid var(--border-color, $border-color);
+
+  img {
+    width: 100%; height: 100%; object-fit: cover;
+    border-radius: $border-radius-sm;
+  }
+}
+
+.removePreview {
+  position: absolute; top: -6px; right: -6px;
+  width: 20px; height: 20px;
+  background: $error; color: white;
+  border: none; border-radius: 50%;
+  font-size: 10px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.error {
+  padding: $spacing-sm;
+  border-radius: $border-radius-md;
+  background: rgba(239, 71, 111, 0.1);
+  border-left: 3px solid $error;
+  color: $error;
+  font-size: $font-size-sm;
+}
+
+.footer {
+  display: flex; align-items: center; gap: $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  border-top: 1px solid var(--border-color, $border-color);
+  background: var(--bg-card, #ffffff);
+}
+
+.spacer { flex: 1; }
+
+.attachBtn,
+.cancelBtn,
+.submitBtn {
+  display: inline-flex; align-items: center; gap: $spacing-xs;
+  padding: $spacing-xs $spacing-md;
+  border-radius: $border-radius-full;
+  font-size: $font-size-sm; font-weight: $font-weight-semibold;
+  border: none; cursor: pointer;
+  transition: all $transition-base;
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.attachBtn {
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  &:hover:not(:disabled) { color: #3b82f6; }
+}
+
+.cancelBtn {
+  background: transparent;
+  color: var(--text-secondary, $text-secondary);
+  border: 1px solid var(--border-color, $border-color);
+  &:hover:not(:disabled) { background: var(--bg-primary, #f8f9fa); }
+}
+
+.submitBtn {
+  background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+  color: #ffffff;
+  &:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-md, $shadow-md); }
+}

@@ -8,7 +8,14 @@ import { ServicesFilter } from '../components/Client/ServicesFilter';
 import { useStartChat } from '../hooks/useStartChat';
 import styles from './ClientServices.module.scss';
 
-export const ClientServices: React.FC = () => {
+export interface ClientServicesProps {
+  /** True when rendered as a top-level page (e.g. guest /services route). */
+  standalone?: boolean;
+}
+
+export const ClientServices: React.FC<ClientServicesProps> = ({
+  standalone =false,
+}) => {
   const navigate = useNavigate();
   const { startChat, canStartChat } = useStartChat();
 
@@ -69,8 +76,14 @@ export const ClientServices: React.FC = () => {
   };
 
   const handleHire = (service: Service) => {
-  navigate(`/services/${service.id}`);
-};
+    // If the service has a provider attached, go to their profile
+    if (service.provider_id) {
+      navigate(`/providers/${service.provider_id}`);
+    } else {
+      // Fallback just in case a service doesn't have a provider linked
+      navigate(`/services/${service.id}`);
+    }
+  };
 
 const handleChat = (service: Service) => {
   // Guard: need a provider id to create or open a thread.
@@ -86,8 +99,8 @@ const handleChat = (service: Service) => {
   });
 };
 
-  return (
-    <div className={styles.clientServices}>
+    const body = (
+    <>
       <div className={styles.clientServicesHeader}>
         <h1>Find Services</h1>
         <p>Browse available services from our trusted providers</p>
@@ -123,10 +136,16 @@ const handleChat = (service: Service) => {
             services={services}
             onViewDetails={handleViewDetails}
             onHire={handleHire}
-	    onChat={ canStartChat ? handleChat : undefined }
+            onChat={canStartChat ? handleChat : undefined}
           />
         </>
       )}
+    </>
+  );
+
+  return (
+    <div className={`${styles.clientServices} ${standalone ? styles.standalone : ''}`}>
+      {standalone ? <div className={styles.standaloneShell}>{body}</div> : body}
     </div>
   );
 };

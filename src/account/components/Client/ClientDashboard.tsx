@@ -23,6 +23,7 @@ import {
   faHardHat,
   faFileInvoiceDollar,
   faHandshake,
+  faHeadset
 } from '@fortawesome/free-solid-svg-icons';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
 import type { SidebarNavItem } from '../../../components/layout';
@@ -36,6 +37,10 @@ import { faKey } from '@fortawesome/free-solid-svg-icons';
 import styles from './ClientDashboard.module.scss';
 import { bookingService } from '../../../services/booking.service';
 import { disputeService } from '../../../services/dispute.service';
+import { SupportView } from '../../../components/Support';
+import { useSupportUnreadCount } from '../../../hooks/useSupportUnreadCount';
+import { ClientServices } from '../../../pages/ClientServices';
+import { useSseEvent } from '../../../hooks/useSseEvent';
 
 // ============================================
 // THEME CONSTANTS
@@ -53,7 +58,7 @@ const CLIENT_ROLE_BG = 'rgba(102, 126, 234, 0.1)';
 // TYPES
 // ============================================
 
-type ClientTab = 'consultations' | 'requests' | 'worksession' | 'messages' | 'support';
+type ClientTab = 'consultations' | 'requests' | 'worksession' | 'messages' | 'support' | 'help' | 'new'; // <-- Added 'new' tab for services
 type ConsultSubTab = 'not_started' | 'active' | 'completed';
 type RequestSubTab = 'new' | 'accepted' | 'payed' | 'declined';
 
@@ -80,6 +85,7 @@ export const ClientDashboard: React.FC = () => {
   const { theme } = useTheme();
   const { user, logout } = useAuth();
   const clientId = user?.id || '';
+  const supportUnread = useSupportUnreadCount(clientId || null);
 
   const [searchParams, setSearchParams] = useSearchParams();
   const threadIdFromUrl = searchParams.get('thread');
@@ -91,6 +97,8 @@ export const ClientDashboard: React.FC = () => {
     'worksession',
     'messages',
     'support',
+    'help',
+    'new', // <-- Added 'new' tab for services
   ];
 
   // Derive active tab from the URL. Missing/invalid → default to 'requests'.
@@ -345,15 +353,20 @@ useEffect(() => {
     return () => { cancelled = true; };
   }, [allClientBookings, bookingRefresh]);
 
-  // Auto-refresh every 10s while the tab is visible
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        setBookingRefresh((t) => t + 1);
-      }
-    }, 10_000);
-    return () => window.clearInterval(id);
-  }, []);
+  // new
+
+     useSseEvent('booking:updated', () =>  setBookingRefresh((t) => t + 1));
+     useSseEvent('worksession:updated', () =>  setBookingRefresh((t) => t + 1));
+     useSseEvent('dispute:updated', () =>  setBookingRefresh((t) => t + 1));
+     useSseEvent('review:updated', () =>  setBookingRefresh((t) => t + 1));
+     useSseEvent('sse:reconnected', () =>  setBookingRefresh((t) => t + 1));
+
+
+     useSseEvent('booking:updated', () =>  setReviewRefresh((t) => t + 1));
+     useSseEvent('worksession:updated', () =>  setReviewRefresh((t) => t + 1));
+     useSseEvent('dispute:updated', () =>  setReviewRefresh((t) => t + 1));
+     useSseEvent('review:updated', () =>  setReviewRefresh((t) => t + 1));
+     useSseEvent('sse:reconnected', () =>  setReviewRefresh((t) => t + 1));
 
   // Refresh immediately when the tab regains focus
   useEffect(() => {
@@ -395,10 +408,7 @@ useEffect(() => {
   };
 
   const handleSidebarNavigate = (key: string) => {
-  if (key === 'new') {
-    navigate('/services');
-    return;
-  }
+  
   // Write the tab to the URL so notifications / back-button work.
   // Drop ?thread= when leaving messages.
   const next: Record<string, string> = { tab: key };
@@ -804,6 +814,13 @@ const handleDenyArrival = async (sessionId: string) => {
     badge: openDisputeCount || undefined,
   },
   {
+    key: 'help',
+    label: 'Help & Support',
+    icon: faHeadset,     // ← also import from '@fortawesome/free-solid-svg-icons'
+    badge: activeTab === 'help' ? undefined : supportUnread || undefined,
+
+  },
+  {
     key: 'worksession',
     label: 'Worksession',
     icon: faHardHat,
@@ -1204,6 +1221,15 @@ const renderWorksession = () => {
     if (activeTab === 'worksession') {
       return renderWorksession();
     }
+
+    if (activeTab === 'new') {
+      return (
+        <div className={styles.mainContent}>
+          <ClientServices />
+        </div>
+      );
+    }
+
     if (activeTab === 'messages') {
       return (
         <div className={styles.mainContent}>
@@ -1213,12 +1239,20 @@ const renderWorksession = () => {
     }
 
     if (activeTab === 'support') {
-  return (
-    <div className={styles.mainContent}>
-      <DisputesView viewerRole="CLIENT" />
-    </div>
-  );
-}
+      return (
+        <div className={styles.mainContent}>
+          <DisputesView viewerRole="CLIENT" />
+        </div>
+      );
+    }
+
+  if (activeTab === 'help') {
+    return (
+      <div className={styles.mainContent}>
+        <SupportView viewerRole="CLIENT" />
+      </div>
+    );
+  }
 
     const list = filteredByPhase;
 const isConsultations = activeTab === 'consultations';

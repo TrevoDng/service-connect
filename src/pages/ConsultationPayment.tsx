@@ -22,6 +22,7 @@ import {
 import styles from './ConsultationPayment.module.scss';
 import { bookingService } from '../services/booking.service';
 import type { Booking } from '../types';
+import { api } from '../services/api.service';
 
 // ============================================
 // BENEFITS — the four points clients should understand
@@ -128,7 +129,44 @@ useEffect(() => {
   // ------------------------------------------
   // Action
   // ------------------------------------------
-    const handlePay = async () => {
+  
+      const handlePay = async () => {
+    if (!booking) return;
+    setIsPaying(true);
+
+    try {
+      // 1. Get the real payload + signature from your backend
+      const res = await api.post<{ payfastData: Record<string, string> }>('/payfast/create-payment', { bookingId: booking.id });
+      const payfastData = res.payfastData;
+
+      // 2. Dynamically create the form and submit it
+      const form = document.createElement('form');
+      form.method = 'POST';
+      // Use sandbox URL for testing, change to www.payfast.co.za for live
+      form.action = 'https://sandbox.payfast.co.za/eng/process'; 
+
+      Object.keys(payfastData).forEach((key) => {
+        if (payfastData[key] !== null && payfastData[key] !== undefined) {
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = key;
+          input.value = payfastData[key];
+          form.appendChild(input);
+        }
+      });
+
+      document.body.appendChild(form);
+      form.submit();
+      document.body.removeChild(form);
+    } catch (err) {
+      console.error('Failed to initiate payment:', err);
+      alert('Failed to connect to payment gateway. Please try again.');
+      setIsPaying(false);
+    }
+  };
+
+  /*  
+  const handlePay = async () => {
     if (!booking) return;
 
     setIsPaying(true);
@@ -150,6 +188,7 @@ useEffect(() => {
       // so we just log and let them retry.
     }
   };
+  */
 
   const handleCancel = () => {
     navigate('/client/dashboard');

@@ -1,8 +1,11 @@
+// src/components/Registration/RegistrationRequestsView.tsx
+
 import React, { useEffect, useState } from 'react';
 import { adminService } from '../../services/admin.service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCheck, faTimes, faFileAlt, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import ConfirmModal from '../../account/components/common/ConfirmModal'; // <-- Import your modal
+import { useSseEvent } from '../../hooks/useSseEvent';
 import styles from './RegistrationRequestsView.module.scss';
 
 export const RegistrationRequestsView: React.FC = () => {
@@ -15,6 +18,7 @@ export const RegistrationRequestsView: React.FC = () => {
   
   // State for a nice inline success banner instead of window.alert
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [refreshTick, setRefreshTick] = useState(0);
 
   const fetchRequests = async () => {
     try {
@@ -28,7 +32,12 @@ export const RegistrationRequestsView: React.FC = () => {
     }
   };
 
-  useEffect(() => { fetchRequests(); }, []);
+  useEffect(() => { 
+    fetchRequests(); 
+  }, [refreshTick]);
+
+  useSseEvent('registration:updated', () => setRefreshTick((t) => t + 1));
+  useSseEvent('sse:reconnected', () => setRefreshTick((t) => t + 1));
 
   const handleActionClick = (type: 'approve' | 'decline' | 'resend', id: string) => {
     setConfirmAction({ type, id });

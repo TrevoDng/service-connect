@@ -1,0 +1,301 @@
+/* src/pages/About.module.scss */
+@use "../styles/variables" as *;
+@use "../styles/mixins" as *;
+
+.aboutPage {
+  width: 100%;
+  background: transparent; /* Seamless inside dashboard */
+  padding: $spacing-md 0 $spacing-4xl 0;
+  
+  @include mobile {
+    padding: $spacing-sm 0 $spacing-3xl 0;
+  }
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: $spacing-xs;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, $text-secondary);
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  cursor: pointer;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $border-radius-md;
+  margin-bottom: $spacing-md;
+  transition: all $transition-fast;
+
+  &:hover {
+    color: var(--text-primary, $text-primary);
+    background: var(--bg-primary, #f8f9fa);
+    svg { transform: translateX(-4px); }
+  }
+  
+  svg { transition: transform $transition-fast; }
+}
+
+/* ============================================
+   HERO
+   ============================================ */
+   
+.hero {
+  text-align: center;
+  padding: $spacing-4xl $spacing-xl;
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.05) 100%);
+  border-radius: $border-radius-2xl;
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  margin-bottom: $spacing-4xl;
+  
+  @include mobile {
+    padding: $spacing-2xl $spacing-md;
+    margin-bottom: $spacing-2xl;
+  }
+}
+
+.heroContent {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-bold;
+  color: $primary;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: $spacing-sm;
+}
+
+.title {
+  font-size: $font-size-4xl;
+  font-weight: $font-weight-extrabold;
+  color: var(--text-primary, $text-primary);
+  margin-bottom: $spacing-md;
+  line-height: 1.1;
+  
+  @include mobile {
+    font-size: $font-size-2xl;
+  }
+}
+
+.highlight {
+  background: $primary-gradient;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+  font-size: $font-size-lg;
+  color: var(--text-secondary, $text-secondary);
+  line-height: 1.6;
+  margin-bottom: $spacing-xl;
+  
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.ctaButton {
+  padding: $spacing-sm $spacing-2xl;
+  background: $primary-gradient;
+  color: white;
+  border: none;
+  border-radius: $border-radius-full;
+  font-size: $font-size-base;
+  font-weight: $font-weight-bold;
+  cursor: pointer;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-lg;
+  }
+}
+
+/* ============================================
+   SECTIONS
+   ============================================ */
+
+.section {
+  margin-bottom: $spacing-4xl;
+}
+
+.sectionHeader {
+  text-align: center;
+  margin-bottom: $spacing-2xl;
+  
+  h2 {
+    font-size: $font-size-2xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: $spacing-xs;
+  }
+  
+  p {
+    font-size: $font-size-base;
+    color: var(--text-secondary, $text-secondary);
+  }
+}
+
+/* ============================================
+   CARDS GRID
+   ============================================ */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: $spacing-xl;
+}
+
+.card {
+  background: var(--bg-card, white);
+  padding: $spacing-xl;
+  border-radius: $border-radius-xl;
+  border: 1px solid var(--border-color, $border-color);
+  text-align: center;
+  transition: all $transition-base;
+  
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: $shadow-md;
+    border-color: $primary;
+  }
+  
+  h3 {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: $spacing-sm;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    line-height: 1.6;
+  }
+}
+
+.iconWrapper {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto $spacing-md;
+  background: rgba(102, 126, 234, 0.1);
+  color: $primary;
+  border-radius: $border-radius-full;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-xl;
+}
+
+/* ============================================
+   HOW IT WORKS
+   ============================================ */
+
+.stepsContainer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  background: var(--bg-card, white);
+  padding: $spacing-2xl;
+  border-radius: $border-radius-xl;
+  border: 1px solid var(--border-color, $border-color);
+  
+  @include mobile {
+    flex-direction: column;
+    padding: $spacing-lg;
+    gap: $spacing-lg;
+  }
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding: 0 $spacing-md;
+  
+  h4 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semibold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: $spacing-xs;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+    line-height: 1.5;
+  }
+}
+
+.stepNumber {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto $spacing-md;
+  background: $primary;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-lg;
+  font-weight: $font-weight-bold;
+}
+
+.stepDivider {
+  width: 1px;
+  height: 80px;
+  background: var(--border-color, $border-color);
+  margin-top: $spacing-md;
+  
+  @include mobile {
+    display: none;
+  }
+}
+
+/* ============================================
+   STATS
+   ============================================ */
+
+.statsSection {
+  background: var(--bg-primary, #f8f9fa);
+  border-radius: $border-radius-2xl;
+  padding: $spacing-2xl;
+  border: 1px solid var(--border-color, $border-color);
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $spacing-xl;
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: $spacing-lg;
+  }
+}
+
+.statItem {
+  h4 {
+    font-size: $font-size-xl;
+    font-weight: $font-weight-bold;
+    color: var(--text-primary, $text-primary);
+    margin-bottom: $spacing-xxs;
+  }
+  
+  p {
+    font-size: $font-size-sm;
+    color: var(--text-secondary, $text-secondary);
+  }
+}
+
+.statIcon {
+  font-size: $font-size-2xl;
+  color: $primary;
+  margin-bottom: $spacing-sm;
+}

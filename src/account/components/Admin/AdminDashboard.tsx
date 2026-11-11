@@ -16,6 +16,7 @@ import {
   faGavel,
   faComments,
   faClipboardList,
+  faHeadset,
 } from '@fortawesome/free-solid-svg-icons';
 import { MessagesView } from '../../../components/Chat';
 import { DashboardLayout, DashboardSidebar } from '../../../components/layout';
@@ -27,6 +28,9 @@ import { disputeService } from '../../../services/dispute.service';
 import { StaffBookingsView, StaffUserDetailPanel } from '../../../components/Bookings';
 import { RegistrationRequestsView } from '../../../components/Registration/RegistrationRequestsView';
 import { faFileSignature } from '@fortawesome/free-solid-svg-icons';
+import { StaffSupportView } from '../../../components/Support';
+import { useStaffSupportUnreadCount } from '../../../hooks/useStaffSupportUnreadCount';
+import { useSearchParams } from 'react-router-dom';
 
 // ============================================
 // TYPES
@@ -40,7 +44,9 @@ type AdminTab =
   | 'bookings'
   | 'disputes'
   | 'messages'
-  | 'applications';
+  | 'applications'
+  | 'support-tickets';        // ← add
+
 
 // ============================================
 // ADMIN THEME CONSTANTS
@@ -58,16 +64,39 @@ const ADMIN_ROLE_BG = 'rgba(239, 68, 68, 0.1)';
 
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const { theme } = useTheme();
-
-  const [activeTab, setActiveTab] = useState<AdminTab>('employees');
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<ApiUser[]>([]);
   const [openDisputeCount, setOpenDisputeCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+  const supportBadge = useStaffSupportUnreadCount(user?.id ?? null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabFromUrl = searchParams.get('tab');
+  const VALID_TABS: AdminTab[] = [
+    'admins', 'applications', 'employees', 'providers',
+    'clients', 'bookings', 'disputes', 'messages', 'support-tickets',
+  ];
+
+
+  const [activeTab, setActiveTab] = useState<AdminTab>(() =>
+    VALID_TABS.includes(tabFromUrl as AdminTab)
+      ? (tabFromUrl as AdminTab)
+      : 'employees'
+  );
+
+  useEffect(() => {
+  if (
+    tabFromUrl &&
+    VALID_TABS.includes(tabFromUrl as AdminTab) &&
+    tabFromUrl !== activeTab
+  ) {
+    setActiveTab(tabFromUrl as AdminTab);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [tabFromUrl]);
 
   useEffect(() => {
     setSelectedUserId(null);
@@ -295,6 +324,12 @@ export const AdminDashboard: React.FC = () => {
     { key: 'bookings', label: 'Bookings', icon: faClipboardList },
     { key: 'disputes', label: 'Disputes', icon: faGavel, badge: openDisputeCount || undefined },
     { key: 'messages', label: 'Messages', icon: faComments },
+    { key: 'support-tickets', 
+      label: 'Support Tickets', 
+      icon: faHeadset,
+      badge: 
+      activeTab === 'support-tickets' ? undefined : supportBadge || undefined,
+ },
   ];
 
   // ------------------------------------------
@@ -421,6 +456,14 @@ export const AdminDashboard: React.FC = () => {
       return (
         <div className={styles.mainContent}>
           <MessagesView viewerRole="ADMIN" observerMode />
+        </div>
+      );
+    }
+
+    if (activeTab === 'support-tickets') {
+      return (
+        <div className={styles.mainContent}>
+          <StaffSupportView viewerRole="ADMIN" />
         </div>
       );
     }
@@ -564,7 +607,10 @@ export const AdminDashboard: React.FC = () => {
             roleLabel="Administrator"
             navItems={navItems}
             activeKey={activeTab}
-            onNavigate={(key) => setActiveTab(key as AdminTab)}
+            onNavigate={(key) => {
+              setActiveTab(key as AdminTab);
+              setSearchParams({ tab: key }, { replace: false });
+            }}
             onLogout={handleLogout}
           />
         }

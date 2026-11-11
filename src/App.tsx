@@ -10,7 +10,8 @@ import { EmployeeDashboard } from './account/components/Employee/EmployeeDashboa
 import styles from './App.module.scss';
 import CustomerLogin from './account/components/Auth/customer/CustomerLogin';
 import Home from './pages/Home';
-import { PageNotFound } from './pagenotfound/pagenotfound';
+//import { PageNotFound } from './pagenotfound/pagenotfound';
+import { PageNotFound } from './pages/PageNotFound';
 import RequestRegistration from './pages/RequestRegistration';
 import CustomerRegister from './account/components/Auth/customer/CustomerRegister';
 import AccountProfile from './account/components/customer/CustomerAccountProfile';
@@ -31,6 +32,8 @@ import WorkSessionGate from './pages/WorkSessionGate';
 import AdminLogin from './account/components/Auth/admin/AdminLogin';
 import EmailVerification from './account/components/Auth/email-verification/EmailVerification';
 import ResendVerification from './account/components/Auth/email-verification/ResendVerification';
+import { useSseConnection } from './hooks/useSseConnection';
+import { PaymentSuccess } from './pages/PaymentSuccess';
 
 // ============================================
 // ROUTE GUARDS
@@ -81,11 +84,26 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return <Navigate to="/services" replace />;
 };
 
+// Add this inside App.tsx
+const ServicesRedirect: React.FC = () => {
+  const { user } = useAuth();
+  
+  if (user?.role === 'CLIENT') return <Navigate to="/client/dashboard?tab=new" replace />;
+  if (user?.role === 'PROVIDER') return <Navigate to="/provider/dashboard?tab=browse-services" replace />;
+  if (user?.role === 'ADMIN') return <Navigate to="/admin-dashboard?tab=browse-services" replace />;
+  if (user?.role === 'EMPLOYEE') return <Navigate to="/employee-dashboard?tab=browse-services" replace />;
+  
+  // Guest users can access the services page directly
+  return <ClientServices standalone />;
+};
+
 // ============================================
 // APP CONTENT
 // ============================================
 
 const AppContent: React.FC = () => {
+
+  useSseConnection(); // Initialize SSE connection for notifications
   const [currentPage, setCurrentPage] = useState('home');
   const { isAuthenticated, user } = useAuth();
   const { theme } = useTheme();
@@ -102,9 +120,12 @@ const AppContent: React.FC = () => {
         <Routes>
           {/* Public Routes */}
           <Route path="/" element={<Home currentPage={currentPage} setCurrentPage={setCurrentPage} />} />
-          <Route path="/services" element={<ClientServices />} />
-          <Route path="/services/:id" element={<ServiceDetails />} />
-          <Route path="/about" element={<About />} />
+          
+           <Route path="/services" element={<ServicesRedirect />} />
+          <Route path="/services/:id" element={<ServiceDetails />} /> 
+
+          <Route path="/about" element={<About />} 
+          />
           <Route path="/providers/:id" element={<ProviderProfile />} />
 
           {/* Auth Routes */}
@@ -134,6 +155,15 @@ const AppContent: React.FC = () => {
             element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} 
           />
 
+          <Route 
+            path="/settings" 
+            element={<ProtectedRoute><AccountProfile /></ProtectedRoute>} // Points to account for now
+          />
+          <Route 
+            path="/help" 
+            element={<ProtectedRoute><About /></ProtectedRoute>} // Points to About for now
+          />
+
           {/* Dashboards */}
           <Route 
             path="/client/dashboard" 
@@ -159,6 +189,8 @@ const AppContent: React.FC = () => {
             path="/provider/bookings/:id/start-work" 
             element={<ProtectedRoute allowedRoles={['PROVIDER']}><WorkSessionGate /></ProtectedRoute>} 
           />
+
+          <Route path="/payment-success" element={<PaymentSuccess />} />
 
           {/* 404 */}
           <Route path="*" element={<PageNotFound />} />

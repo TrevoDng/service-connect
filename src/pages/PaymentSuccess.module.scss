@@ -1,0 +1,62 @@
+@use "../styles/variables" as *;
+
+.page {
+  min-height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-xl;
+  background: transparent;
+}
+
+.card {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: $border-radius-xl;
+  padding: $spacing-3xl;
+  max-width: 450px;
+  width: 100%;
+  text-align: center;
+  box-shadow: $shadow-lg;
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: $spacing-md;
+
+  h2 {
+    color: var(--text-primary, #111827);
+    margin: 0;
+    font-size: $font-size-2xl;
+  }
+
+  p {
+    color: var(--text-secondary, #4b5563);
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+.iconSpinner { font-size: 3rem; color: $primary; }
+.iconSuccess { font-size: 4rem; color: #10b981; }
+.iconError { font-size: 4rem; color: #ef4444; }
+
+.btn {
+  margin-top: $spacing-lg;
+  padding: $spacing-sm $spacing-2xl;
+  background: $primary-gradient;
+  color: white;
+  border: none;
+  border-radius: $border-radius-full;
+  font-weight: $font-weight-semibold;
+  font-size: $font-size-base;
+  cursor: pointer;
+  transition: all $transition-base;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: $shadow-md;
+  }
+}

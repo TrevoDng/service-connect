@@ -384,3 +384,40 @@
     line-height: $line-height-normal;
   }
 }
+
+.contactGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.contactItem {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm;
+  background: var(--bg-primary, #f8f9fa);
+  border-radius: $border-radius-md;
+  border: 1px solid var(--border-color, $border-color);
+  transition: all $transition-base;
+  color: var(--text-primary, $text-primary); /* Force color on parent */
+
+  svg {
+    color: $primary;
+    flex-shrink: 0;
+  }
+}
+
+/* New specific class for the text */
+.contactText {
+  font-size: $font-size-sm;
+  color: var(--text-primary, $text-primary); /* Force color on text */
+  font-weight: $font-weight-medium;
+  word-break: break-word;
+  margin: 0;
+}

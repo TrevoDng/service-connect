@@ -17,6 +17,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ChatThread } from '../types';
 import { chatService } from '../services/chat.service';
+import { useSseEvent } from './useSseEvent';
 
 export interface UseChatThreadsOptions {
   observerMode?: boolean;
@@ -78,17 +79,26 @@ export const useChatThreads = (
   }, [userId, observerMode, refreshTick]);
 
   // ------------------------------------------
-  // POLL every 10s while visible
+  // PARTICIPANT MODE — real-time via SSE
   // ------------------------------------------
-  useEffect(() => {
-    if (!observerMode && !userId) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        setRefreshTick((t) => t + 1);
-      }
-    }, 10_000);
-    return () => window.clearInterval(id);
-  }, [observerMode, userId]);
+  
+  // Delete the poller block. Replace with:
+
+  // Participant mode → SSE
+  useSseEvent('chat:message:new', () => {
+    if (!observerMode && userId) setRefreshTick((t) => t + 1);
+  });
+  useSseEvent('chat:thread:read', () => {
+    if (!observerMode && userId) setRefreshTick((t) => t + 1);
+  });
+  useSseEvent('sse:reconnected', () => {
+    if (!observerMode && userId) setRefreshTick((t) => t + 1);
+  });
+
+// Observer mode → no SSE (staff don't receive chat participant events).
+// Falls back to the existing focus-refresh effect below (already in the file).
+// No poller — staff refreshes on tab focus / navigation. Acceptable for a peek-mode feature.
+
 
   // ------------------------------------------
   // REFRESH ON FOCUS

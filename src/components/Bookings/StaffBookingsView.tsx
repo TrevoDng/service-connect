@@ -15,6 +15,8 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './StaffBookingsView.module.scss';
 import { StaffBookingDetailPanel } from './StaffBookingDetailPanel';
+import { useSseEvent } from '../../hooks/useSseEvent';
+
 
 // ============================================
 // PROPS
@@ -164,6 +166,10 @@ export const StaffBookingsView: React.FC<StaffBookingsViewProps> = ({
     })();
     return () => { cancelled = true; };
   }, [user, refreshTick]);
+
+  useSseEvent('booking:updated', () => setRefreshTick((t) => t + 1));
+  useSseEvent('worksession:updated', () => setRefreshTick((t) => t + 1));
+  useSseEvent('sse:reconnected', () => setRefreshTick((t) => t + 1));
 
   // ------------------------------------------
   // User lookup for filters

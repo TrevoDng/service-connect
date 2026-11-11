@@ -2,8 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../styles/context/ThemeContext';
-import { formatRelative } from '../utils/formatters';
+import { formatRelative, formatDate } from '../utils/formatters';
 import { useStartChat } from '../hooks/useStartChat';
+import { providerService, type PublicProviderProfile } from '../services/provider.service';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faArrowLeft,
@@ -12,10 +13,15 @@ import {
   faBriefcase,
   faComments,
   faMapPin,
+  faEnvelope,
+  faPhone,
+  faBuilding,
+  faIdCard,
 } from '@fortawesome/free-solid-svg-icons';
 import styles from './ProviderProfile.module.scss';
 import type { ProviderRatingSummary, Review } from '../types';
 import { reviewService } from '../services/review.service';
+import { useSseEvent } from '../hooks/useSseEvent';
 
 const getInitials = (name: string): string => {
   const parts = name.trim().split(/\s+/);
@@ -30,14 +36,35 @@ export const ProviderProfile: React.FC = () => {
   const navigate = useNavigate();
   const { theme } = useTheme();
 
+  const [profile, setProfile] = useState<PublicProviderProfile | null>(null);
+  const [loadingProfile, setLoadingProfile] = useState(true);
+
   const [reviews, setReviews] = useState<Review[]>([]);
   const [summary, setSummary] = useState<ProviderRatingSummary | null>(null);
   const [reviewsLoaded, setReviewsLoaded] = useState(false);
 
+  // Fetch Provider Details
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await providerService.getPublicProfile(id);
+        if (!cancelled) {
+          setProfile(data);
+          setLoadingProfile(false);
+        }
+      } catch (err) {
+        console.warn('[provider-profile] profile fetch failed', err);
+        if (!cancelled) setLoadingProfile(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [id]);
+
+  // Fetch Reviews
   useEffect(() => {
     if (!id) {
-      setReviews([]);
-      setSummary(null);
       setReviewsLoaded(true);
       return;
     }
@@ -58,16 +85,28 @@ export const ProviderProfile: React.FC = () => {
     return () => { cancelled = true; };
   }, [id]);
 
-  const providerName = 'Service Provider';
+
+  // inside the component, next to the existing fetches:
+  useSseEvent('review:updated', () => {
+    // re-fetch reviews
+    if (!id) return;
+    reviewService.getReviewsForProvider(id).then(({ reviews: list, summary: sum }) => {
+      setReviews(list);
+      setSummary(sum);
+    }).catch(() => {});
+  });
+
+  if (loadingProfile) return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading profile...</div>;
+  if (!profile) return <div style={{ padding: '2rem', textAlign: 'center' }}>Provider not found.</div>;
+
+  // Derived Data
+  const displayName = profile.companyName || `${profile.firstName} ${profile.lastName}`;
   const gradient = 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)';
+  const verified = profile.status === 'active';
+  const categories = profile.serviceType ? [profile.serviceType] : [];
 
   const displayRating = summary && summary.count > 0 ? summary.average : null;
   const displayCount = summary && summary.count > 0 ? summary.count : 0;
-  
-  // Cast to Number so TypeScript doesn't complain about 1 vs 0 overlap
-  const completedJobs = Number(0); 
-  const verified = true; 
-  const categories: string[] = [];
 
   return (
     <div className={`${styles.page} ${theme === 'dark' ? 'dark-theme' : ''}`}>
@@ -78,12 +117,12 @@ export const ProviderProfile: React.FC = () => {
 
         <header className={styles.hero}>
           <div className={styles.avatar} style={{ background: gradient }} aria-hidden="true">
-            {getInitials(providerName)}
+            {getInitials(displayName)}
           </div>
 
           <div className={styles.heroBody}>
             <div className={styles.nameRow}>
-              <h1 className={styles.name}>{providerName}</h1>
+              <h1 className={styles.name}>{displayName}</h1>
               {verified && (
                 <span className={styles.verifiedBadge}>
                   <FontAwesomeIcon icon={faCheckCircle} /> Verified
@@ -110,8 +149,8 @@ export const ProviderProfile: React.FC = () => {
 
               <div className={styles.stat}>
                 <FontAwesomeIcon icon={faBriefcase} className={styles.statIcon} />
-                <span className={styles.statValue}>{completedJobs}</span>
-                <span className={styles.statLabel}>jobs completed</span>
+                <span className={styles.statValue}>Since</span>
+                <span className={styles.statLabel}>{formatDate(profile.createdAt)}</span>
               </div>
             </div>
           </div>
@@ -124,17 +163,50 @@ export const ProviderProfile: React.FC = () => {
             className={styles.messageBtn}
             onClick={() => startChat({
               providerId: id,
-              providerDisplayName: providerName,
+              providerDisplayName: displayName,
               providerAvatarGradient: gradient,
               providerRating: displayRating ?? undefined,
-              providerCompletedJobs: completedJobs,
               providerCategories: categories,
               providerVerified: verified,
             })}
           >
-            <FontAwesomeIcon icon={faComments} /> Chat with {providerName.split(' ')[0]}
+            <FontAwesomeIcon icon={faComments} /> Chat with {displayName.split(' ')[0]}
           </button>
         )}
+
+        {/* CONTACT & DETAILS */}
+        <section className={styles.card}>
+          <h2 className={styles.cardTitle}>Contact & Details</h2>
+          
+          <div className={styles.contactGrid}>
+            <div className={styles.contactItem}>
+              <FontAwesomeIcon icon={faEnvelope} />
+              {/* 👇 Add className={styles.contactText} */}
+              <span className={styles.contactText}>{profile.email}</span>
+            </div>
+            
+            {profile.phone && (
+              <div className={styles.contactItem}>
+                <FontAwesomeIcon icon={faPhone} />
+                <span className={styles.contactText}>{profile.phone}</span>
+              </div>
+            )}
+            
+            {profile.companyName && (
+              <div className={styles.contactItem}>
+                <FontAwesomeIcon icon={faBuilding} />
+                <span className={styles.contactText}>{profile.companyName}</span>
+              </div>
+            )}
+            
+            {profile.registrationNumber && (
+              <div className={styles.contactItem}>
+                <FontAwesomeIcon icon={faIdCard} />
+                <span className={styles.contactText}>Reg: {profile.registrationNumber}</span>
+              </div>
+            )}
+          </div>
+        </section>
 
         {/* REVIEWS */}
         <section className={styles.card}>

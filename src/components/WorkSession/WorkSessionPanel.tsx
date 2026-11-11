@@ -182,7 +182,8 @@ export const WorkSessionPanel: React.FC<WorkSessionPanelProps> = ({
       {/* Progress */}
       <PhotoSection
         icon={faImages}
-        title="Progress"
+        title="
+        Progress"
         countLabel={progressLabel}
         currentCount={session.progressStages.length}
         maxPhotos={Infinity}

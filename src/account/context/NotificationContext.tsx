@@ -13,6 +13,7 @@ import type { ReactNode } from 'react';
 import type { Notification } from '../../types';
 import { useAuth } from './AuthContext';
 import { notificationService } from '../../services/notification.service';
+import { useSseEvent } from '../../hooks/useSseEvent';
 
 interface NotificationContextValue {
   notifications: Notification[];
@@ -75,16 +76,11 @@ export const NotificationProvider: React.FC<NotificationProviderProps> = ({ chil
     return () => { cancelled = true; };
   }, [isAuthenticated, refreshTick]);
 
-  // Poll every 10s while the tab is visible
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const id = window.setInterval(() => {
-      if (document.visibilityState === 'visible') {
-        setRefreshTick((t) => t + 1);
-      }
-    }, 10_000);
-    return () => window.clearInterval(id);
-  }, [isAuthenticated]);
+  // it uses to Poll every 10s while the tab is visible and now it uses to Refresh on focus / tab visibility
+  // Real-time — any notification created for this user fires this event
+  useSseEvent('notification:new', () => {
+    if (isAuthenticated) setRefreshTick((t) => t + 1);
+  });
 
   // Refresh on focus
   useEffect(() => {

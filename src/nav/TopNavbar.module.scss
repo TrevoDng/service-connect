@@ -1,100 +1,210 @@
-/* TopNavbar.module.scss */
+/* TopNavbar.module.scss — Blueprint theme */
 @use "../styles/variables" as *;
 @use "../styles/mixins" as *;
 
+// ============================================
+// NAVBAR SHELL
+// ============================================
+
 .topNavbar {
+  --nav-accent: #2563eb;
+  --nav-accent-hover: #1d4ed8;
+  --nav-accent-soft: rgba(37, 99, 235, 0.08);
+  --nav-accent-strong: rgba(37, 99, 235, 0.16);
+  --nav-line: var(--border-color, #e2e8f0);
+  --nav-ink: var(--navbar-text, #0f172a);
+  --nav-ink-soft: var(--text-secondary, #475569);
+  --nav-ink-mute: var(--text-light, #94a3b8);
+  --nav-paper: var(--navbar-bg, #ffffff);
+  --nav-mono: ui-monospace, 'SF Mono', Monaco, 'Cascadia Code', monospace;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: $spacing-md $spacing-xl;
-  background: var(--navbar-bg, #ffffff);
-  color: var(--navbar-text, #1a1a2e);
-  box-shadow: var(--navbar-shadow, 0 2px 4px rgba(0, 0, 0, 0.08));
+  padding: 0 $spacing-xl;
+  background: var(--nav-paper);
+  color: var(--nav-ink);
+  border-bottom: 1px solid var(--nav-line);
   position: sticky;
   top: 0;
   z-index: $z-sticky;
-  backdrop-filter: blur(10px);
-  transition: all $transition-base;
+  backdrop-filter: blur(12px);
+  transition: box-shadow $transition-base, background $transition-base;
   min-height: 64px;
-  
+
+  // Top accent strip — the blueprint signature
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--nav-accent) 30%,
+      var(--nav-accent) 70%,
+      transparent 100%
+    );
+    opacity: 0.55;
+    transition: opacity $transition-base;
+  }
+
   @include mobile {
-    padding: $spacing-sm $spacing-md;
+    padding: 0 $spacing-md;
     min-height: 56px;
   }
 }
 
-// Logo
+.topNavbarScrolled {
+  box-shadow: 0 4px 20px rgba(15, 23, 42, 0.06);
+  &::before { opacity: 1; }
+}
+
+// ============================================
+// LOGO
+// ============================================
+
 .topNavbarLogo {
-  font-size: $font-size-xl;
-  font-weight: $font-weight-bold;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: $font-size-lg;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  color: var(--nav-ink);
   text-decoration: none;
-  background: $primary-gradient;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  transition: all $transition-base;
+  padding: $spacing-xs 0;
+  transition: color $transition-fast;
   white-space: nowrap;
-  
-  &:hover {
-    transform: scale(1.05);
+
+  // Small blue square accent after the wordmark
+  &::after {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--nav-accent);
+    border-radius: 1px;
+    margin-left: 2px;
+    transform: translateY(-3px);
+    transition: transform $transition-base;
   }
-  
+
+  &:hover {
+    color: var(--nav-accent);
+    &::after { transform: translateY(-3px) rotate(45deg); }
+  }
+
   @include mobile {
-    font-size: $font-size-lg;
+    font-size: $font-size-base;
+    gap: 8px;
   }
 }
 
-// Navigation Links - Desktop
+.logoIcon {
+  color: var(--nav-accent);
+  font-size: $font-size-lg;
+  transition: transform $transition-base;
+
+  .topNavbarLogo:hover & {
+    transform: rotate(-8deg);
+  }
+
+  @include mobile {
+    font-size: $font-size-base;
+  }
+}
+
+.logoMobile {
+  display: none;
+  @include mobile { display: inline; }
+}
+
+.logoDesktop {
+  display: inline;
+  @include mobile { display: none; }
+}
+
+// ============================================
+// NAV LINKS
+// ============================================
+
 .topNavbarLinks {
   display: flex;
-  gap: $spacing-lg;
   align-items: center;
-  
+  gap: 4px;
+
   a {
-    color: var(--navbar-text, #1a1a2e);
-    text-decoration: none;
-    font-weight: $font-weight-medium;
-    padding: $spacing-xs $spacing-sm;
-    border-radius: $border-radius-md;
-    transition: all $transition-fast;
     position: relative;
-    
+    padding: 8px 14px;
+    border-radius: 6px;
+    color: var(--nav-ink-soft);
+    text-decoration: none;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+    transition: all $transition-fast;
+
+    // Underline effect — kept, but flat blue (not gradient)
     &::after {
       content: '';
       position: absolute;
-      bottom: -2px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 0;
-      height: 2px;
-      background: $primary-gradient;
-      transition: width $transition-fast;
+      left: 14px;
+      right: 14px;
+      bottom: 4px;
+      height: 1.5px;
+      background: var(--nav-accent);
+      transform: scaleX(0);
+      transform-origin: left center;
+      transition: transform 240ms cubic-bezier(0.4, 0, 0.2, 1);
     }
-    
+
     &:hover {
-      color: $primary;
-      
-      &::after {
-        width: 100%;
-      }
+      color: var(--nav-accent);
+      background: var(--nav-accent-soft);
+      &::after { transform: scaleX(1); }
     }
-    
+
     &.active {
-      color: $primary;
-      
-      &::after {
-        width: 100%;
-      }
+      color: var(--nav-accent);
+      &::after { transform: scaleX(1); }
     }
   }
-  
-  // Hide on mobile
+
+  // Dashboard link — inline with nav but a distinct blue chip
+  .dashboardLink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px !important;
+    background: var(--nav-accent-soft) !important;
+    color: var(--nav-accent) !important;
+    border: 1px solid rgba(37, 99, 235, 0.2);
+    border-radius: 6px !important;
+    font-size: $font-size-sm;
+    font-weight: 600 !important;
+    transition: all $transition-fast;
+
+    &::after { display: none !important; }
+
+    &:hover {
+      background: var(--nav-accent-strong) !important;
+      border-color: rgba(37, 99, 235, 0.4);
+      transform: translateY(-1px);
+    }
+  }
+
   @include mobile {
     display: none;
   }
 }
 
-// Mobile Menu - Hidden by default, shown when .topNavbarMobile is added
+// ============================================
+// MOBILE MENU
+// ============================================
+
 .topNavbarMobile .topNavbarLinks {
   @include mobile {
     display: flex !important;
@@ -103,227 +213,299 @@
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--navbar-bg, #ffffff);
     padding: $spacing-md;
-    box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
-    gap: $spacing-sm;
-    border-top: 1px solid var(--border-color, #e9ecef);
-    animation: slideDown 0.3s ease;
-    
+    background: var(--nav-paper);
+    border-top: 1px solid var(--nav-line);
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+    gap: 4px;
+    animation: slideDown 0.22s ease;
+
     a {
-      padding: $spacing-md $spacing-lg;
       width: 100%;
-      text-align: center;
-      border-radius: $border-radius-md;
-      font-size: $font-size-lg;
-      
-      &:hover {
-        background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
-        color: $primary;
+      padding: $spacing-md $spacing-lg !important;
+      text-align: left;
+      font-size: $font-size-base;
+      border-radius: 8px;
+
+      &::after { display: none; }
+
+      &:hover, &.active {
+        background: var(--nav-accent-soft);
+        color: var(--nav-accent);
       }
-      
-      &::after {
-        display: none;
-      }
-      
-      &.active {
-        background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
-        color: $primary;
-      }
+    }
+
+    .dashboardLink {
+      border-radius: 8px !important;
     }
   }
 }
 
-// Right Section Container
+// ============================================
+// RIGHT SECTION
+// ============================================
+
 .rightSection {
   display: flex;
   align-items: center;
-  gap: $spacing-sm;
-  
-  @include mobile {
-    gap: $spacing-xs;
-  }
+  gap: $spacing-xs;
+
+  @include mobile { gap: 4px; }
 }
 
-// Theme Toggle Button
+// ============================================
+// THEME TOGGLE
+// ============================================
+
 .themeToggle {
-  background: none;
-  border: none;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--nav-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--nav-ink-soft);
+  font-size: 0.9rem;
   cursor: pointer;
-  padding: $spacing-xs;
-  border-radius: $border-radius-full;
-  color: var(--navbar-text, #1a1a2e);
-  font-size: $font-size-xl;
-  transition: all $transition-base;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  
-  &:hover {
-    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
-    transform: rotate(20deg) scale(1.1);
-  }
-  
-  @include mobile {
-    width: 36px;
-    height: 36px;
-    font-size: $font-size-lg;
-  }
-}
+  transition: all $transition-fast;
 
-// User info / Avatar
-.userInfo {
-  display: flex;
-  align-items: center;
-  gap: $spacing-sm;
-  color: var(--navbar-text, #1a1a2e);
-  
-  .avatar {
+  &:hover {
+    border-color: var(--nav-accent);
+    color: var(--nav-accent);
+    background: var(--nav-accent-soft);
+  }
+
+  @include mobile {
     width: 32px;
     height: 32px;
-    border-radius: $border-radius-full;
-    background: $primary-gradient;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: $font-weight-bold;
-    font-size: $font-size-sm;
-  }
-  
-  .userName {
-    font-weight: $font-weight-medium;
-    
-    @include mobile {
-      display: none;
-    }
+    font-size: 0.85rem;
   }
 }
 
-// Auth Buttons
+// ============================================
+// AUTH BUTTONS
+// ============================================
+
 .authButtons {
   display: flex;
-  gap: $spacing-sm;
   align-items: center;
-  
+  gap: $spacing-xs;
+
   .loginBtn {
-    padding: $spacing-xs $spacing-lg;
-    border-radius: $border-radius-full;
-    font-weight: $font-weight-semibold;
-    color: var(--navbar-text, #1a1a2e);
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    font-size: $font-size-sm;
+    font-weight: 500;
+    color: var(--nav-ink);
     text-decoration: none;
     transition: all $transition-fast;
-    border: 2px solid transparent;
     white-space: nowrap;
-    
+
     &:hover {
-      color: $primary;
+      border-color: var(--nav-line);
+      background: var(--nav-accent-soft);
+      color: var(--nav-accent);
     }
-    
+
     @include mobile {
-      padding: $spacing-xs $spacing-md;
-      font-size: $font-size-sm;
+      padding: 6px 12px;
+      font-size: 0.8rem;
     }
   }
-  
+
   .registerBtn {
-    padding: $spacing-xs $spacing-lg;
-    border-radius: $border-radius-full;
-    font-weight: $font-weight-semibold;
-    background: $primary-gradient;
-    color: white;
+    padding: 8px 16px;
+    border-radius: 6px;
+    background: var(--nav-accent);
+    color: #ffffff;
+    font-size: $font-size-sm;
+    font-weight: 600;
     text-decoration: none;
-    transition: all $transition-base;
+    transition: all $transition-fast;
     white-space: nowrap;
-    
+
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+      background: var(--nav-accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
     }
-    
+
     @include mobile {
-      padding: $spacing-xs $spacing-md;
-      font-size: $font-size-sm;
+      padding: 6px 12px;
+      font-size: 0.8rem;
     }
   }
 }
 
 // ============================================
-// LOGOUT BUTTON (top-level, used when logged in)
+// USER DROPDOWN
 // ============================================
 
-.logoutBtn {
-  display: inline-flex;
+.dropdownContainer {
+  position: relative;
+}
+
+.userInfoBtn {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: $spacing-xs $spacing-lg;
-  border-radius: $border-radius-full;
-  font-family: inherit;
-  font-size: $font-size-sm;
-  font-weight: $font-weight-semibold;
+  gap: 8px;
+  padding: 4px 8px 4px 4px;
+  border: 1px solid transparent;
+  border-radius: 999px;
   background: transparent;
-  color: var(--navbar-text, #1a1a2e);
-  border: 2px solid var(--border-color, #e9ecef);
+  color: var(--nav-ink);
   cursor: pointer;
   transition: all $transition-fast;
-  white-space: nowrap;
 
   &:hover {
-    border-color: $error;
-    color: $error;
-    background: rgba(239, 71, 111, 0.05);
-  }
-
-  &:active {
-    transform: translateY(1px);
-  }
-
-  @include mobile {
-    padding: $spacing-xs $spacing-xs;
-    font-size: $font-size-sm;
+    background: var(--nav-accent-soft);
+    border-color: var(--nav-line);
   }
 }
 
-// Mobile Menu Toggle Button
+.avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--nav-accent);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.userName {
+  font-size: $font-size-sm;
+  font-weight: 500;
+  color: var(--nav-ink);
+
+  @include mobile { display: none; }
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 240px;
+  padding: $spacing-xs;
+  background: var(--nav-paper);
+  border: 1px solid var(--nav-line);
+  border-radius: 10px;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.1);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  animation: slideDown 0.18s ease-out;
+}
+
+.dropdownHeader {
+  padding: $spacing-sm $spacing-md;
+  border-bottom: 1px solid var(--nav-line);
+  margin-bottom: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-size: $font-size-sm;
+    font-weight: 600;
+    color: var(--nav-ink);
+  }
+
+  span {
+    font-size: 0.7rem;
+    color: var(--nav-ink-mute);
+    font-family: var(--nav-mono);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--nav-ink-soft);
+  font-size: $font-size-sm;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all $transition-fast;
+
+  svg {
+    color: var(--nav-ink-mute);
+    font-size: 0.8rem;
+    transition: color $transition-fast;
+  }
+
+  &:hover {
+    background: var(--nav-accent-soft);
+    color: var(--nav-accent);
+    svg { color: var(--nav-accent); }
+  }
+}
+
+.logoutItem {
+  color: $error !important;
+
+  svg { color: $error !important; }
+
+  &:hover {
+    background: rgba(239, 71, 111, 0.08) !important;
+  }
+}
+
+.dropdownDivider {
+  height: 1px;
+  background: var(--nav-line);
+  margin: 4px 0;
+}
+
+// ============================================
+// MOBILE MENU TOGGLE + OVERLAY
+// ============================================
+
 .topNavbarMenuBtn {
   display: none;
-  background: none;
-  border: none;
-  font-size: $font-size-2xl;
-  cursor: pointer;
-  color: var(--navbar-text, #1a1a2e);
-  padding: $spacing-xs;
-  border-radius: $border-radius-md;
-  transition: all $transition-fast;
-  width: 40px;
-  height: 40px;
-  display: none;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
-  
+  border: 1px solid var(--nav-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--nav-ink);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all $transition-fast;
+
   &:hover {
-    background: var(--navbar-hover, rgba(102, 126, 234, 0.1));
+    border-color: var(--nav-accent);
+    color: var(--nav-accent);
+    background: var(--nav-accent-soft);
   }
-  
+
   @include mobile {
     display: flex;
   }
 }
 
-// Mobile Menu Overlay
 .mobileOverlay {
   display: none;
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
-  animation: fadeIn 0.3s ease;
-  
+
   @include mobile {
     display: none;
   }
@@ -332,118 +514,47 @@
 .topNavbarMobile .mobileOverlay {
   @include mobile {
     display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.4);
+    z-index: 998;
   }
 }
 
-// Animations
+// ============================================
+// ANIMATIONS
+// ============================================
+
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-// Scroll effect
-.topNavbarScrolled {
-  box-shadow: var(--shadow-lg, 0 10px 15px rgba(0, 0, 0, 0.1));
-  background: var(--navbar-bg, rgba(255, 255, 255, 0.95));
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 // ============================================
-// RESPONSIVE LOGO
+// DARK MODE — deeper navy
 // ============================================
 
-.logoMobile {
-  display: none;
-  
-  @include mobile {
-    display: inline;
-  }
+:global(.dark-theme) .topNavbar {
+  --nav-accent: #60a5fa;
+  --nav-accent-hover: #3b82f6;
+  --nav-accent-soft: rgba(96, 165, 250, 0.1);
+  --nav-accent-strong: rgba(96, 165, 250, 0.2);
+  --nav-ink: #f1f5f9;
+  --nav-ink-soft: #cbd5e1;
+  --nav-ink-mute: #64748b;
+  --nav-paper: #0f172a;
+  --nav-line: #1e293b;
 }
 
-.logoDesktop {
-  display: inline;
-  
-  @include mobile {
-    display: none;
-  }
+:global(.dark-theme) .topNavbarScrolled {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
 }
 
-// In TopNavbar.module.scss
-.logoMobile,
-.logoDesktop {
-  transition: opacity $transition-fast;
+:global(.dark-theme) .registerBtn {
+  color: #0f172a;
+  &:hover { color: #0f172a; }
 }
 
-.logoMobile {
-  display: none;
-
-  @include mobile {
-    display: inline;
-    opacity: 1;
-  }
-}
-
-.logoDesktop {
-  display: inline;
-  opacity: 1;
-
-  @include mobile {
-    display: none;
-    opacity: 0;
-  }
-}
-
-// ============================================
-// LOGO ICON
-// ============================================
-
-.logoIcon {
-  font-size: $font-size-xl;
-  margin-right: $spacing-sm;
- // color: $primary;
-  transition: all $transition-base;
-  
-  @include mobile {
-    font-size: $font-size-lg;
-    margin-right: $spacing-xs;
-  }
-  
-  // Rotate on hover
-  .topNavbarLogo:hover & {
-    transform: rotate(15deg) scale(1.1);
-  }
-}
-
-// ============================================
-// RESPONSIVE LOGO TEXT
-// ============================================
-
-.logoMobile {
-  display: none;
-  
-  @include mobile {
-    display: inline;
-  }
-}
-
-.logoDesktop {
-  display: inline;
-  
-  @include mobile {
-    display: none;
-  }
+:global(.dark-theme) .avatar {
+  color: #0f172a;
 }
